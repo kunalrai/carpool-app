@@ -2,9 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 // Listings auto-expire 60 minutes after their departure time.
-// This helper parses "08:30 AM" and returns a Date for today (or tomorrow if
-// the time has already passed by more than 60 min).
-function parseDepatureMs(departureTime: string, createdAt: number): number {
+// Parses "08:30 AM" relative to the day the listing was created.
+function parseDepartureMs(departureTime: string, createdAt: number): number {
   const [timePart, meridiem] = departureTime.split(" ");
   const [hoursStr, minutesStr] = timePart.split(":");
   let hours = parseInt(hoursStr, 10);
@@ -12,8 +11,7 @@ function parseDepatureMs(departureTime: string, createdAt: number): number {
   if (meridiem === "PM" && hours !== 12) hours += 12;
   if (meridiem === "AM" && hours === 12) hours = 0;
 
-  const created = new Date(createdAt);
-  const departure = new Date(created);
+  const departure = new Date(createdAt);
   departure.setHours(hours, minutes, 0, 0);
 
   // If calculated departure is before creation (edge case), push to next day
@@ -27,8 +25,8 @@ function isExpired(listing: {
   departureTime: string;
   createdAt: number;
 }): boolean {
-  const departureMs = parseDepatureMs(listing.departureTime, listing.createdAt);
-  return Date.now() > departureMs + 30 * 60 * 1000; // 30 min grace period
+  const departureMs = parseDepartureMs(listing.departureTime, listing.createdAt);
+  return Date.now() > departureMs + 60 * 60 * 1000;
 }
 
 export const getActiveListings = query({
