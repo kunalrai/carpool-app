@@ -1,6 +1,16 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+// TEMP: run once from Convex dashboard to clear old string-format listings, then delete this mutation
+export const clearAllListings = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("listings").collect();
+    await Promise.all(all.map((l) => ctx.db.delete(l._id)));
+    return `Deleted ${all.length} listings`;
+  },
+});
+
 // Listings auto-expire 60 minutes after their departure time.
 function isExpired(listing: { departureTime: number }): boolean {
   return Date.now() > listing.departureTime + 60 * 60 * 1000;
@@ -109,7 +119,7 @@ export const postListing = mutation({
   args: {
     userId: v.id("users"),
     direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
-    departureTime: v.string(),
+    departureTime: v.number(),
     totalSeats: v.number(),
     pickupPoint: v.optional(v.string()),
     note: v.optional(v.string()),
