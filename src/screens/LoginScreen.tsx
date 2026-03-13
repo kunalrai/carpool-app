@@ -235,9 +235,16 @@ export default function LoginScreen() {
         {(phase === "otp" || (phase === "register" && isNewUser)) && phase === "otp" && (
           <div className="animate-slide-up">
             <h2 className="text-xl font-semibold text-gray-900 mb-1">Verify OTP</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 text-sm mb-4">
               Sent to <span className="font-medium text-gray-700">{maskedMobile}</span>
             </p>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2">
+              <span className="text-blue-500 text-lg">🔑</span>
+              <p className="text-blue-700 text-sm">
+                Use OTP: <span className="font-bold tracking-widest">123456</span>
+              </p>
+            </div>
 
             {/* 6-digit OTP boxes */}
             <div className="flex gap-2 justify-between mb-6" onPaste={handlePaste}>
