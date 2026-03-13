@@ -247,7 +247,8 @@ export default function HomeScreen() {
     (userProfile.role === "giver" || userProfile.role === "both") &&
     !!userProfile.carName;
 
-  const isInRide = !!myListing || !!myBooking;
+  const isActiveDriver = !!myListing;
+  const isActiveRider = !!myBooking;
 
   // Exclude user's own listing from the feed
   const feedListings = (listings ?? []).filter((l) => l.driverId !== userId);
@@ -307,10 +308,10 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* My Ride Banner */}
+        {/* My Ride Banners — both shown simultaneously for dual-role users */}
         {(myListing || myBooking) && (
-          <div className="mt-4">
-            {myListing ? (
+          <div className="mt-4 space-y-2">
+            {myListing && (
               <DriverBanner
                 listing={myListing}
                 onCancel={() => setConfirmCancelListing(true)}
@@ -318,13 +319,14 @@ export default function HomeScreen() {
                 onEnd={handleEndRide}
                 loading={actionLoading}
               />
-            ) : myBooking ? (
+            )}
+            {myBooking && (
               <RiderBanner
                 booking={myBooking}
                 onCancelSeat={() => setConfirmCancelSeat(true)}
                 loading={actionLoading}
               />
-            ) : null}
+            )}
           </div>
         )}
 
@@ -373,12 +375,12 @@ export default function HomeScreen() {
           feedListings.map((listing) => {
             const alreadyJoined = !!myBooking && myBooking.listingId === listing._id;
             const isFull = listing.seatsLeft === 0 || listing.status === "full";
-            const disableJoin = isFull || isInRide;
+            const disableJoin = isFull || isActiveRider;
             const joinLabel = alreadyJoined
               ? "Joined"
               : isFull
               ? "Full"
-              : isInRide
+              : isActiveRider
               ? "In a ride"
               : "Join Ride";
 
@@ -447,8 +449,8 @@ export default function HomeScreen() {
         )}
       </div>
 
-      {/* FAB — only for drivers with car details who aren't currently a driver */}
-      {hasCarDetails && !myListing && (
+      {/* FAB — only for drivers with car details who aren't currently driving */}
+      {hasCarDetails && !isActiveDriver && (
         <button
           onClick={() => navigate("/post-ride")}
           className="fixed bottom-20 right-4 bg-brand-700 text-white font-semibold text-sm px-5 py-3 rounded-full shadow-lg active:bg-brand-800 z-30 flex items-center gap-1.5"

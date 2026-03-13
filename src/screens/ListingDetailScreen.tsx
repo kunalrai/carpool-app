@@ -28,7 +28,6 @@ export default function ListingDetailScreen() {
     listingId: id as Id<"listings">,
   });
   const myBooking = useQuery(api.bookings.getMyBooking, { userId: userId! });
-  const myListing = useQuery(api.listings.getMyActiveListing, { userId: userId! });
 
   const joinRide = useMutation(api.bookings.joinRide);
 
@@ -36,12 +35,12 @@ export default function ListingDetailScreen() {
   const isFull = listing?.seatsLeft === 0 || listing?.status === "full";
   const isOwn = listing?.driverId === userId;
   const alreadyJoined = !!myBooking && myBooking.listingId === id;
-  const isInRide = !!myListing || !!myBooking;
+  const isActiveRider = !!myBooking;
   const isCancelledOrEnded =
     listing?.status === "cancelled" ||
     listing?.status === "completed";
 
-  const canJoin = !isFull && !isOwn && !isInRide && !isCancelledOrEnded;
+  const canJoin = !isFull && !isOwn && !isActiveRider && !alreadyJoined && !isCancelledOrEnded;
 
   const joinLabel = joined
     ? "Joined!"
@@ -53,7 +52,7 @@ export default function ListingDetailScreen() {
     ? "Already joined"
     : isFull
     ? "Ride is Full"
-    : isInRide
+    : isActiveRider
     ? "Already in a ride"
     : "Join Ride";
 
