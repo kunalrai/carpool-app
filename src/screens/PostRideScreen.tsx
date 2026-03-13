@@ -6,11 +6,19 @@ import { useAuth } from "../contexts/AuthContext";
 
 type Direction = "GC_TO_HCL" | "HCL_TO_GC";
 
-// Minimum datetime-local value (now + 1 min) in "YYYY-MM-DDTHH:MM" format
-function minDateTimeValue(): string {
+// Convert "HH:MM" (24h) to a Unix ms timestamp for today
+function toTimestamp(value: string): number {
+  const [h, m] = value.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.getTime();
+}
+
+// Minimum time value for the input (now + 1 min)
+function minTimeValue(): string {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 1, 0, 0);
-  return now.toISOString().slice(0, 16);
+  now.setMinutes(now.getMinutes() + 1);
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
 export default function PostRideScreen() {
@@ -18,7 +26,7 @@ export default function PostRideScreen() {
   const { userId } = useAuth();
 
   const [direction, setDirection] = useState<Direction>("GC_TO_HCL");
-  const [timeValue, setTimeValue] = useState(""); // "YYYY-MM-DDTHH:MM" (datetime-local)
+  const [timeValue, setTimeValue] = useState(""); // "HH:MM" 24h
   const [seats, setSeats] = useState(2);
   const [pickupPoint, setPickupPoint] = useState("");
   const [note, setNote] = useState("");
@@ -32,7 +40,7 @@ export default function PostRideScreen() {
       setError("Please select a departure time");
       return;
     }
-    const departureMs = new Date(timeValue).getTime();
+    const departureMs = toTimestamp(timeValue);
     if (departureMs <= Date.now()) {
       setError("Departure time must be in the future");
       return;
@@ -108,12 +116,12 @@ export default function PostRideScreen() {
         {/* Departure Time */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Departure Date & Time <span className="text-red-500">*</span>
+            Departure Time <span className="text-red-500">*</span>
           </label>
           <input
-            type="datetime-local"
+            type="time"
             value={timeValue}
-            min={minDateTimeValue()}
+            min={minTimeValue()}
             onChange={(e) => {
               setTimeValue(e.target.value);
               setError(null);

@@ -191,7 +191,7 @@ export default function MyListingScreen() {
               label="Direction"
               value={listing.direction === "GC_TO_HCL" ? "Gaur City → HCL" : "HCL → Gaur City"}
             />
-            <DetailRow label="Departure" value={new Date(listing.departureTime).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: true })} />
+            <DetailRow label="Departure" value={new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })} />
             <DetailRow
               label="Seats"
               value={`${filledSeats} filled · ${listing.seatsLeft} left of ${listing.totalSeats}`}

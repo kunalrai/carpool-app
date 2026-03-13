@@ -7,12 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 type Direction = "GC_TO_HCL" | "HCL_TO_GC";
 
 function formatDeparture(ts: number): string {
-  const d = new Date(ts);
-  const today = new Date();
-  const isToday = d.toDateString() === today.toDateString();
-  const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
-  if (isToday) return time;
-  return `${time}, ${d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}`;
+  return new Date(ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
 function getDefaultDirection(): Direction {
