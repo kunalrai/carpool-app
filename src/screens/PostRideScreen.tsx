@@ -6,27 +6,11 @@ import { useAuth } from "../contexts/AuthContext";
 
 type Direction = "GC_TO_HCL" | "HCL_TO_GC";
 
-// Convert "HH:MM" (24h) → "08:30 AM" display format stored in DB
-function toDisplayTime(value: string): string {
-  const [h, m] = value.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const display = h % 12 || 12;
-  return `${display}:${String(m).padStart(2, "0")} ${period}`;
-}
-
-// Validate that HH:MM (24h) is in the future today
-function isFuture(value: string): boolean {
-  const [h, m] = value.split(":").map(Number);
-  const selected = new Date();
-  selected.setHours(h, m, 0, 0);
-  return selected.getTime() > Date.now();
-}
-
-// Minimum time value for the input (current time rounded up to next minute)
-function minTimeValue(): string {
+// Minimum datetime-local value (now + 1 min) in "YYYY-MM-DDTHH:MM" format
+function minDateTimeValue(): string {
   const now = new Date();
-  now.setMinutes(now.getMinutes() + 1);
-  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  now.setMinutes(now.getMinutes() + 1, 0, 0);
+  return now.toISOString().slice(0, 16);
 }
 
 export default function PostRideScreen() {
@@ -34,7 +18,7 @@ export default function PostRideScreen() {
   const { userId } = useAuth();
 
   const [direction, setDirection] = useState<Direction>("GC_TO_HCL");
-  const [timeValue, setTimeValue] = useState(""); // "HH:MM" 24h
+  const [timeValue, setTimeValue] = useState(""); // "YYYY-MM-DDTHH:MM" (datetime-local)
   const [seats, setSeats] = useState(2);
   const [pickupPoint, setPickupPoint] = useState("");
   const [note, setNote] = useState("");
@@ -48,7 +32,8 @@ export default function PostRideScreen() {
       setError("Please select a departure time");
       return;
     }
-    if (!isFuture(timeValue)) {
+    const departureMs = new Date(timeValue).getTime();
+    if (departureMs <= Date.now()) {
       setError("Departure time must be in the future");
       return;
     }
@@ -58,7 +43,7 @@ export default function PostRideScreen() {
       await postListing({
         userId: userId!,
         direction,
-        departureTime: toDisplayTime(timeValue),
+        departureTime: departureMs,
         totalSeats: seats,
         pickupPoint: pickupPoint.trim() || undefined,
         note: note.trim() || undefined,
@@ -123,23 +108,18 @@ export default function PostRideScreen() {
         {/* Departure Time */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Departure Time <span className="text-red-500">*</span>
+            Departure Date & Time <span className="text-red-500">*</span>
           </label>
           <input
-            type="time"
+            type="datetime-local"
             value={timeValue}
-            min={minTimeValue()}
+            min={minDateTimeValue()}
             onChange={(e) => {
               setTimeValue(e.target.value);
               setError(null);
             }}
             className="input-field"
           />
-          {timeValue && (
-            <p className="text-xs text-gray-500 mt-1 ml-1">
-              {toDisplayTime(timeValue)}
-            </p>
-          )}
         </div>
 
         {/* Seats Available */}

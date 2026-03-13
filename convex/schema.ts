@@ -25,12 +25,12 @@ export default defineSchema({
    * listings — a driver's posted ride offer
    * status lifecycle: open → full (auto) → started → completed | cancelled
    * fare is always 80; stored for display consistency.
-   * Listings auto-expire 30 min after departureTime if not started (enforced in queries).
+   * Listings auto-expire 60 min after departureTime if not started (enforced in queries).
    */
   listings: defineTable({
     driverId: v.id("users"),
     direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
-    departureTime: v.string(), // e.g. "08:30 AM"
+    departureTime: v.number(), // Unix ms timestamp
     pickupPoint: v.optional(v.string()),
     note: v.optional(v.string()),
     totalSeats: v.number(), // 1–4

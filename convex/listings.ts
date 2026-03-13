@@ -2,31 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 // Listings auto-expire 60 minutes after their departure time.
-// Parses "08:30 AM" relative to the day the listing was created.
-function parseDepartureMs(departureTime: string, createdAt: number): number {
-  const [timePart, meridiem] = departureTime.split(" ");
-  const [hoursStr, minutesStr] = timePart.split(":");
-  let hours = parseInt(hoursStr, 10);
-  const minutes = parseInt(minutesStr, 10);
-  if (meridiem === "PM" && hours !== 12) hours += 12;
-  if (meridiem === "AM" && hours === 12) hours = 0;
-
-  const departure = new Date(createdAt);
-  departure.setHours(hours, minutes, 0, 0);
-
-  // If calculated departure is before creation (edge case), push to next day
-  if (departure.getTime() < createdAt) {
-    departure.setDate(departure.getDate() + 1);
-  }
-  return departure.getTime();
-}
-
-function isExpired(listing: {
-  departureTime: string;
-  createdAt: number;
-}): boolean {
-  const departureMs = parseDepartureMs(listing.departureTime, listing.createdAt);
-  return Date.now() > departureMs + 60 * 60 * 1000;
+function isExpired(listing: { departureTime: number }): boolean {
+  return Date.now() > listing.departureTime + 60 * 60 * 1000;
 }
 
 export const getActiveListings = query({
@@ -78,9 +55,7 @@ export const getActiveListings = query({
     // Sort by departure time string (lexicographic works for "HH:MM AM/PM" if
     // we normalise — simpler: sort by createdAt as a tiebreaker, primary sort
     // done on the client where full Date parsing is cheap)
-    return withDriver.sort((a, b) =>
-      a.departureTime.localeCompare(b.departureTime)
-    );
+    return withDriver.sort((a, b) => a.departureTime - b.departureTime);
   },
 });
 
@@ -200,7 +175,7 @@ export const cancelListing = mutation({
       console.log("[FCM] cancelListing →", {
         to: rider?.fcmToken,
         title: "Ride Cancelled",
-        body: `${driver?.name} cancelled the ${listing.departureTime} ride.`,
+        body: `${driver?.name} cancelled the ${new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} ride.`,
       });
     }
 

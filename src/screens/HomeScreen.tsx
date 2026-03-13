@@ -6,6 +6,15 @@ import { useAuth } from "../contexts/AuthContext";
 
 type Direction = "GC_TO_HCL" | "HCL_TO_GC";
 
+function formatDeparture(ts: number): string {
+  const d = new Date(ts);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  const time = d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  if (isToday) return time;
+  return `${time}, ${d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}`;
+}
+
 function getDefaultDirection(): Direction {
   return new Date().getHours() < 12 ? "GC_TO_HCL" : "HCL_TO_GC";
 }
@@ -99,7 +108,7 @@ function DriverBanner({
       </p>
       <div className="flex items-center justify-between">
         <DirectionPill direction={listing.direction as Direction} />
-        <span className="text-sm font-semibold text-gray-800">{listing.departureTime}</span>
+        <span className="text-sm font-semibold text-gray-800">{formatDeparture(listing.departureTime)}</span>
       </div>
       <p className="text-sm text-gray-600 mt-1">
         {started ? "Ride in progress" : `${filled} of ${listing.totalSeats} seats filled`}
@@ -171,7 +180,7 @@ function RiderBanner({
       </p>
       <div className="flex items-center justify-between">
         <DirectionPill direction={listing.direction as Direction} />
-        <span className="text-sm font-semibold text-gray-800">{listing.departureTime}</span>
+        <span className="text-sm font-semibold text-gray-800">{formatDeparture(listing.departureTime)}</span>
       </div>
       <div className="flex items-center justify-between mt-1">
         <p className="text-sm font-medium text-gray-800">{driver?.name ?? "Driver"}</p>
@@ -404,7 +413,7 @@ export default function HomeScreen() {
                     )}
                   </div>
                   <span className="text-sm font-semibold text-gray-800 shrink-0 ml-2">
-                    {listing.departureTime}
+                    {formatDeparture(listing.departureTime)}
                   </span>
                 </div>
 
