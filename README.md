@@ -7,6 +7,8 @@ A fixed-route carpooling PWA connecting **Gaur City (GC1/GC2)** and **HCL campus
 - No in-app payment — fare paid directly to driver
 - Installable on Android & iOS as a PWA
 
+**Live app:** https://carpool-virid.vercel.app
+
 ---
 
 ## Tech Stack
@@ -19,7 +21,7 @@ A fixed-route carpooling PWA connecting **Gaur City (GC1/GC2)** and **HCL campus
 | Auth | Mobile OTP via MSG91 *(mock in dev)* |
 | Push Notifications | Firebase Cloud Messaging *(mock in dev)* |
 | PWA | vite-plugin-pwa + Workbox |
-| Hosting | Render (static site) |
+| Hosting | Vercel |
 
 ---
 
@@ -56,15 +58,6 @@ npm run dev
 ```
 
 App runs at `http://localhost:5173`
-
----
-
-## Dev Login
-
-| User type | OTP |
-|---|---|
-| Regular users | `123456` |
-| Admin user | `007908` |
 
 ---
 
@@ -127,7 +120,6 @@ scripts/         # Icon generation script (sharp)
 - `joinRide` atomically decrements `seatsLeft`
 - Driver cannot join their own ride
 - Rider can only have one confirmed booking at a time
-- Admin OTP is separate from regular user OTP
 
 ---
 
@@ -141,7 +133,17 @@ npm run generate-icons
 
 ---
 
-## Pending (Steps 11–12)
+## Deployment
+
+Hosted on **Vercel**. Every push to `main` auto-deploys.
+
+```bash
+git push origin main  # triggers auto-deploy
+```
+
+---
+
+## Pending
 
 - **Step 11** — Wire up [MSG91](https://msg91.com) for real OTP delivery
 - **Step 12** — Wire up [Firebase Cloud Messaging](https://firebase.google.com) for push notifications
