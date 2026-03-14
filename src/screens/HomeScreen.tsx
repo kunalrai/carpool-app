@@ -163,8 +163,7 @@ function RiderBanner({
   booking: MyBooking;
   onCancelSeat: () => void;
   loading: boolean;
-}) {
-  const navigate = useNavigate();
+) {
   const { listing } = booking;
   const driver = listing.driver;
   const started = listing.status === "started";

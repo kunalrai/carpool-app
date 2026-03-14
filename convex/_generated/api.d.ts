@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
+import type * as chat from "../chat.js";
 import type * as listings from "../listings.js";
 import type * as users from "../users.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   auth: typeof auth;
   bookings: typeof bookings;
+  chat: typeof chat;
   listings: typeof listings;
   users: typeof users;
 }>;
