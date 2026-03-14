@@ -125,6 +125,9 @@ export const postListing = mutation({
     note: v.optional(v.string()),
   },
   handler: async (ctx, { userId, ...args }) => {
+    const user = await ctx.db.get(userId);
+    if (user?.isSuspended) throw new Error("Your account has been suspended.");
+
     // Enforce one active listing per driver
     const existing = await ctx.db
       .query("listings")

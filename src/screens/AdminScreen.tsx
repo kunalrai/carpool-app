@@ -164,6 +164,7 @@ type User = {
   mobile: string;
   role: Role;
   isAdmin?: boolean;
+  isSuspended?: boolean;
   carName?: string;
   carColor?: string;
   carNumber?: string;
@@ -183,12 +184,25 @@ function UserRow({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setAdminStatus = useMutation(api.admin.setAdminStatus);
+  const setSuspendStatus = useMutation(api.admin.setSuspendStatus);
 
   const handleToggleAdmin = async () => {
     setLoading(true);
     setError(null);
     try {
       await setAdminStatus({ adminId, targetUserId: user._id, isAdmin: !user.isAdmin });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleSuspend = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await setSuspendStatus({ adminId, targetUserId: user._id, isSuspended: !user.isSuspended });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     } finally {
@@ -214,6 +228,11 @@ function UserRow({
             {user.isAdmin && (
               <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
                 Admin
+              </span>
+            )}
+            {user.isSuspended && (
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600">
+                Suspended
               </span>
             )}
             {isSelf && (
@@ -253,21 +272,30 @@ function UserRow({
           {error && <p className="text-red-600 text-xs">{error}</p>}
 
           {!isSelf && (
-            <button
-              onClick={handleToggleAdmin}
-              disabled={loading}
-              className={`mt-2 w-full py-2 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 ${
-                user.isAdmin
-                  ? "border-red-300 text-red-600 active:bg-red-50"
-                  : "border-brand-300 text-brand-700 active:bg-brand-50"
-              }`}
-            >
-              {loading
-                ? "Updating…"
-                : user.isAdmin
-                ? "Remove Admin"
-                : "Make Admin"}
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={handleToggleAdmin}
+                disabled={loading || !!user.isSuspended}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                  user.isAdmin
+                    ? "border-red-300 text-red-600 active:bg-red-50"
+                    : "border-brand-300 text-brand-700 active:bg-brand-50"
+                }`}
+              >
+                {loading ? "…" : user.isAdmin ? "Remove Admin" : "Make Admin"}
+              </button>
+              <button
+                onClick={handleToggleSuspend}
+                disabled={loading}
+                className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors disabled:opacity-50 ${
+                  user.isSuspended
+                    ? "border-green-300 text-green-700 active:bg-green-50"
+                    : "border-red-300 text-red-600 active:bg-red-50"
+                }`}
+              >
+                {loading ? "…" : user.isSuspended ? "Unsuspend" : "Suspend"}
+              </button>
+            </div>
           )}
         </div>
       )}

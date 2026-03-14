@@ -18,6 +18,7 @@ export default defineSchema({
     carNumber: v.optional(v.string()),
     fcmToken: v.optional(v.string()),
     isAdmin: v.optional(v.boolean()),
+    isSuspended: v.optional(v.boolean()),
     createdAt: v.number(),
   }).index("by_mobile", ["mobile"]),
 

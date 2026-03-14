@@ -64,6 +64,22 @@ export const setAdminStatus = mutation({
   },
 });
 
+export const setSuspendStatus = mutation({
+  args: {
+    adminId: v.id("users"),
+    targetUserId: v.id("users"),
+    isSuspended: v.boolean(),
+  },
+  handler: async (ctx, { adminId, targetUserId, isSuspended }) => {
+    const admin = await ctx.db.get(adminId);
+    if (!admin?.isAdmin) throw new Error("Unauthorized");
+    if (adminId === targetUserId) throw new Error("You cannot suspend yourself");
+    const target = await ctx.db.get(targetUserId);
+    if (target?.isAdmin) throw new Error("You cannot suspend another admin");
+    await ctx.db.patch(targetUserId, { isSuspended });
+  },
+});
+
 /**
  * Seed mutation — sets the first admin by mobile number.
  * Only works when ZERO admin users exist (safe one-time bootstrap).

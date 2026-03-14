@@ -27,6 +27,9 @@ export const joinRide = mutation({
     riderId: v.id("users"),
   },
   handler: async (ctx, { listingId, riderId }) => {
+    const rider = await ctx.db.get(riderId);
+    if (rider?.isSuspended) throw new Error("Your account has been suspended.");
+
     const listing = await ctx.db.get(listingId);
     if (!listing) throw new Error("Listing not found");
     if (listing.status === "cancelled") throw new Error("Listing is cancelled");
@@ -85,7 +88,6 @@ export const joinRide = mutation({
 
     // Notify driver via FCM
     const driver = await ctx.db.get(listing.driverId);
-    const rider = await ctx.db.get(riderId);
     if (newSeatsLeft === 0) {
       console.log("[FCM] joinRide (full) →", {
         to: driver?.fcmToken,

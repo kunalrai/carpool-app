@@ -39,6 +39,7 @@ export const sendMessage = mutation({
 
     const user = await ctx.db.get(senderId);
     if (!user) throw new Error("User not found");
+    if (user.isSuspended) throw new Error("Your account has been suspended.");
 
     await ctx.db.insert("messages", {
       senderId,
