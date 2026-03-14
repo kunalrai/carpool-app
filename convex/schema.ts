@@ -51,6 +51,17 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
+   * messages — group chat messages scoped to a listing
+   * All members (driver + anyone who ever booked) can read and send.
+   */
+  messages: defineTable({
+    listingId: v.id("listings"),
+    senderId: v.id("users"),
+    text: v.string(), // max 500 chars
+    createdAt: v.number(),
+  }).index("by_listing_time", ["listingId", "createdAt"]),
+
+  /**
    * bookings — a rider's seat reservation on a listing
    * status: confirmed → cancelled
    * One active (confirmed) booking per rider at a time is enforced in mutations.
