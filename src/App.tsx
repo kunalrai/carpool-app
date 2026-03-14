@@ -11,6 +11,7 @@ import AdminScreen from "./screens/AdminScreen";
 import ListingDetailScreen from "./screens/ListingDetailScreen";
 import MyListingScreen from "./screens/MyListingScreen";
 import ChatScreen from "./screens/ChatScreen";
+import ChatsScreen from "./screens/ChatsScreen";
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -68,6 +69,14 @@ function AppRoutes() {
         element={
           <PrivateRoute>
             <TabLayout><ProfileScreen /></TabLayout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/chats"
+        element={
+          <PrivateRoute>
+            <TabLayout><ChatsScreen /></TabLayout>
           </PrivateRoute>
         }
       />

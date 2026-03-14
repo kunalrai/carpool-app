@@ -22,6 +22,17 @@ function ProfileIcon({ filled }: { filled: boolean }) {
   );
 }
 
+function ChatIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path
+        d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+        fill={filled ? "currentColor" : "none"}
+      />
+    </svg>
+  );
+}
+
 function AdminIcon({ filled }: { filled: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -43,6 +54,7 @@ export default function BottomNav() {
 
   const tabs = [
     { label: "Home",    path: "/home",    Icon: HomeIcon },
+    { label: "Chats",   path: "/chats",   Icon: ChatIcon },
     { label: "Profile", path: "/profile", Icon: ProfileIcon },
     ...(isAdmin ? [{ label: "Admin", path: "/admin", Icon: AdminIcon }] : []),
   ];
