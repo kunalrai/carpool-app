@@ -1,31 +1,30 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 
-type ParsedRide = {
-  isRideOffer: boolean;
-  direction: "GC_TO_HCL" | "HCL_TO_GC" | null;
-  departureTime: string | null; // "HH:MM" 24h
-  seats: number | null;
-  pickupPoint: string | null;
-};
+// Convert "HH:MM" 24h string to Unix ms timestamp for today
+function toTimestamp(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.getTime();
+}
 
 export default function ChatScreen() {
-  const navigate = useNavigate();
   const { userId } = useAuth();
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [parsedRide, setParsedRide] = useState<ParsedRide | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [ridePosted, setRidePosted] = useState<string | null>(null); // success banner text
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const messages = useQuery(api.chat.getMessages, { userId: userId! });
   const sendMessage = useMutation(api.chat.sendMessage);
+  const postListing = useMutation(api.listings.postListing);
   const parseRideOffer = useAction(api.ai.parseRideOffer);
 
   // Auto-scroll to bottom on new messages
@@ -33,27 +32,53 @@ export default function ChatScreen() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Auto-dismiss success banner after 4 seconds
+  useEffect(() => {
+    if (!ridePosted) return;
+    const t = setTimeout(() => setRidePosted(null), 4000);
+    return () => clearTimeout(t);
+  }, [ridePosted]);
+
   const handleSend = async () => {
     if (!text.trim() || sending) return;
     const msgText = text.trim();
     setSending(true);
     setError(null);
-    setParsedRide(null);
+    setRidePosted(null);
     try {
       await sendMessage({ senderId: userId!, text: msgText });
       setText("");
       inputRef.current?.focus();
-      // Parse in background — don't block the UI
+      // Parse and auto-post in background
       setParsing(true);
       (async () => {
         try {
           const result = await parseRideOffer({ text: msgText });
           console.log("[Chat] parseRideOffer result:", result);
-          if (result && result.isRideOffer === true) {
-            setParsedRide(result as ParsedRide);
+          if (!result || !result.isRideOffer || !result.direction || !result.departureTime) return;
+
+          const departureMs = toTimestamp(result.departureTime);
+          if (departureMs <= Date.now()) {
+            setError("Detected a ride offer but departure time is in the past.");
+            return;
           }
+
+          await postListing({
+            userId: userId!,
+            direction: result.direction,
+            departureTime: departureMs,
+            totalSeats: result.seats ?? 1,
+            pickupPoint: result.pickupPoint ?? undefined,
+          });
+
+          const dir = result.direction === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC";
+          const time = new Date(departureMs).toLocaleTimeString("en-IN", {
+            hour: "2-digit", minute: "2-digit", hour12: true,
+          });
+          setRidePosted(`🚗 Ride posted: ${dir} at ${time}`);
         } catch (e) {
-          console.error("[Chat] parseRideOffer error:", e);
+          console.error("[Chat] auto-post error:", e);
+          setError(e instanceof Error ? e.message : "Failed to auto-post ride");
         } finally {
           setParsing(false);
         }
@@ -63,17 +88,6 @@ export default function ChatScreen() {
     } finally {
       setSending(false);
     }
-  };
-
-  const handlePostRide = () => {
-    navigate("/post-ride", {
-      state: {
-        direction: parsedRide?.direction,
-        departureTime: parsedRide?.departureTime,
-        seats: parsedRide?.seats,
-        pickupPoint: parsedRide?.pickupPoint,
-      },
-    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -144,36 +158,14 @@ export default function ChatScreen() {
       {/* AI parsing indicator */}
       {parsing && (
         <div className="px-4 py-2 border-t border-gray-100 text-xs text-gray-400 text-center shrink-0">
-          Analysing message…
+          Detecting ride offer…
         </div>
       )}
 
-      {/* Post as Ride card */}
-      {parsedRide && (
-        <div className="mx-4 mb-2 p-3 bg-brand-50 border border-brand-200 rounded-2xl shrink-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-brand-700 mb-0.5">🚗 Looks like a ride offer!</p>
-              <p className="text-xs text-brand-600">
-                {parsedRide.direction === "GC_TO_HCL" ? "Gaur City → HCL" : "HCL → Gaur City"}
-                {parsedRide.departureTime && ` · ${parsedRide.departureTime}`}
-                {parsedRide.pickupPoint && ` · ${parsedRide.pickupPoint}`}
-              </p>
-            </div>
-            <button
-              onClick={() => setParsedRide(null)}
-              className="text-brand-400 text-lg leading-none shrink-0"
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-          </div>
-          <button
-            onClick={handlePostRide}
-            className="mt-2 w-full py-2 bg-brand-700 text-white text-sm font-semibold rounded-xl active:bg-brand-800"
-          >
-            Post as Ride
-          </button>
+      {/* Auto-post success banner */}
+      {ridePosted && (
+        <div className="mx-4 mb-2 px-4 py-2.5 bg-green-50 border border-green-200 rounded-2xl text-xs font-semibold text-green-700 text-center shrink-0">
+          {ridePosted}
         </div>
       )}
 
