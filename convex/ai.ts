@@ -3,29 +3,28 @@ import { action } from "./_generated/server";
 
 const SYSTEM_PROMPT = `You are a ride-offer parser for a carpooling app between Gaur City and HCL campus (Noida, India).
 
-Analyze a chat message and extract ride offer details. Return JSON only — no explanation.
+Analyze a chat message and extract ride offer details. Return JSON only — no explanation, no markdown, no code block.
 
 Location rules:
 - GC, GC1, GC2, Gaur City, gaur = Gaur City side
 - HCL, HCL campus, HCL gate, office, Tech Park = HCL side
-- "going to HCL" / "leaving for HCL" / "to office" → direction: "GC_TO_HCL"
-- "going to GC" / "leaving from HCL" / "returning" / "back" → direction: "HCL_TO_GC"
+- "going to HCL" / "leaving for HCL" / "to office" / "from GC to HCL" → direction: "GC_TO_HCL"
+- "going to GC" / "leaving from HCL" / "from HCL to GC" / "returning" / "back" → direction: "HCL_TO_GC"
 
 Time rules:
 - Convert any time format to 24h "HH:MM" string
-- Examples: "7:30" → "07:30", "7:30 AM" → "07:30", "7:30 PM" → "19:30", "11.30 AM" → "11:30", "9pm" → "21:00"
+- Examples: "7:30" → "07:30", "7:30 AM" → "07:30", "7:30 PM" → "19:30", "05:20 PM" → "17:20", "11.30 AM" → "11:30", "9pm" → "21:00"
 
-Only set isRideOffer=true if the sender is OFFERING to give a ride (has a car, offering seats).
-Set isRideOffer=false if they are ASKING/LOOKING for a ride.
+isRideOffer rules — set to true if the message announces the sender is leaving/going somewhere at a specific time, even without mentioning seats or a car. Examples that ARE ride offers:
+- "I will leave at 5:20 PM from HCL to Gaur City"
+- "leaving @7:30 from HCL gate 2"
+- "going to HCL at 9am"
+- "Will go to HCL at 11.30 AM. Seats available"
 
-Return exactly this JSON:
-{
-  "isRideOffer": boolean,
-  "direction": "GC_TO_HCL" | "HCL_TO_GC" | null,
-  "departureTime": "HH:MM" | null,
-  "seats": number | null,
-  "pickupPoint": string | null
-}`;
+Set isRideOffer=false ONLY if they are explicitly ASKING/LOOKING for a ride (e.g. "anyone going to HCL?", "need a ride to GC").
+
+Return exactly this JSON with no other text:
+{"isRideOffer":boolean,"direction":"GC_TO_HCL"|"HCL_TO_GC"|null,"departureTime":"HH:MM"|null,"seats":number|null,"pickupPoint":string|null}`;
 
 export const parseRideOffer = action({
   args: { text: v.string() },
@@ -56,7 +55,6 @@ export const parseRideOffer = action({
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: text },
           ],
-          response_format: { type: "json_object" },
           temperature: 0,
         }),
       });
@@ -67,8 +65,13 @@ export const parseRideOffer = action({
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+      let content: string = data.choices?.[0]?.message?.content ?? "";
       if (!content) return null;
+
+      // Strip markdown code blocks if model wraps response (e.g. ```json ... ```)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return null;
+      content = jsonMatch[0];
 
       return JSON.parse(content);
     } catch (e) {
