@@ -41,6 +41,8 @@ export const parseRideOffer = action({
       return null;
     }
 
+    console.log("[AI] parsing message:", text);
+
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -60,22 +62,32 @@ export const parseRideOffer = action({
       });
 
       if (!response.ok) {
-        console.error("[AI] OpenRouter error:", response.status, await response.text());
+        const errBody = await response.text();
+        console.error("[AI] OpenRouter HTTP error:", response.status, errBody);
         return null;
       }
 
       const data = await response.json();
-      let content: string = data.choices?.[0]?.message?.content ?? "";
-      if (!content) return null;
+      const raw: string = data.choices?.[0]?.message?.content ?? "";
+      console.log("[AI] raw response:", raw);
 
-      // Strip markdown code blocks if model wraps response (e.g. ```json ... ```)
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) return null;
-      content = jsonMatch[0];
+      if (!raw) {
+        console.error("[AI] empty response from model");
+        return null;
+      }
 
-      return JSON.parse(content);
+      // Strip markdown code blocks if model wraps response
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error("[AI] no JSON object found in response:", raw);
+        return null;
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log("[AI] parsed result:", JSON.stringify(parsed));
+      return parsed;
     } catch (e) {
-      console.error("[AI] parse error:", e);
+      console.error("[AI] exception:", e);
       return null;
     }
   },
