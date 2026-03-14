@@ -43,7 +43,7 @@ export default function ChatScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex flex-col bg-white" style={{ height: "calc(100vh - 65px)" }}>
 
       {/* Header */}
       <div className="px-4 pt-12 pb-4 bg-white border-b border-gray-100 shrink-0">
