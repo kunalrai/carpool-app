@@ -2,17 +2,41 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 
-// DEV: hardcoded OTPs — admin gets a separate OTP, everyone else uses the default.
-// Step 11 will replace this with real MSG91 API calls.
-const DEFAULT_OTP = "123456";
-const ADMIN_OTP = "007908";
+const MSG91_BASE = "https://control.msg91.com/api/v5";
 
 export const sendOtp = action({
   args: { mobile: v.string() },
-  handler: async (ctx, { mobile }) => {
-    const user = await ctx.runQuery(api.users.getUserByMobile, { mobile });
-    const otp = user?.isAdmin ? ADMIN_OTP : DEFAULT_OTP;
-    console.log(`[DEV] OTP for ${mobile}: ${otp}`);
+  handler: async (_ctx, { mobile }) => {
+    const authKey = process.env.MSG91_AUTH_KEY;
+    const templateId = process.env.MSG91_TEMPLATE_ID;
+
+    // Dev fallback — MSG91 keys not configured
+    if (!authKey || !templateId) {
+      console.log(`[DEV] OTP for ${mobile}: 123456`);
+      return { success: true };
+    }
+
+    const response = await fetch(`${MSG91_BASE}/otp`, {
+      method: "POST",
+      headers: {
+        "authkey": authKey,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify({
+        template_id: templateId,
+        mobile: `91${mobile}`,
+        otp_expiry: 10, // minutes
+      }),
+    });
+
+    const data = await response.json();
+    console.log("[MSG91] sendOtp:", JSON.stringify(data));
+
+    if (data.type !== "success") {
+      throw new Error(data.message ?? "Failed to send OTP. Please try again.");
+    }
+
     return { success: true };
   },
 });
@@ -24,13 +48,32 @@ export const verifyOtp = action({
     isNewUser: boolean;
     userId: string | null;
   }> => {
-    const user = await ctx.runQuery(api.users.getUserByMobile, { mobile });
-    const expectedOtp = user?.isAdmin ? ADMIN_OTP : DEFAULT_OTP;
+    const authKey = process.env.MSG91_AUTH_KEY;
 
-    if (otp !== expectedOtp) {
-      throw new Error("Incorrect OTP. Please try again.");
+    if (!authKey) {
+      // Dev fallback
+      if (otp !== "123456") throw new Error("Incorrect OTP. Please try again.");
+    } else {
+      const response = await fetch(
+        `${MSG91_BASE}/otp/verify?mobile=91${mobile}&otp=${encodeURIComponent(otp)}`,
+        {
+          method: "GET",
+          headers: {
+            "authkey": authKey,
+            "Accept": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+      console.log("[MSG91] verifyOtp:", JSON.stringify(data));
+
+      if (data.type !== "success") {
+        throw new Error("Incorrect OTP. Please try again.");
+      }
     }
 
+    const user = await ctx.runQuery(api.users.getUserByMobile, { mobile });
     return {
       verified: true,
       isNewUser: !user,
