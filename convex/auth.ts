@@ -55,13 +55,10 @@ export const verifyOtp = action({
       if (otp !== "123456") throw new Error("Incorrect OTP. Please try again.");
     } else {
       const response = await fetch(
-        `${MSG91_BASE}/otp/verify?mobile=91${mobile}&otp=${encodeURIComponent(otp)}`,
+        `${MSG91_BASE}/otp/verify?mobile=91${mobile}&otp=${encodeURIComponent(otp)}&authkey=${encodeURIComponent(authKey)}`,
         {
           method: "GET",
-          headers: {
-            "authkey": authKey,
-            "Accept": "application/json",
-          },
+          headers: { "Accept": "application/json" },
         }
       );
 
