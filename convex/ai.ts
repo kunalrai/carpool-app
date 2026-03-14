@@ -51,7 +51,7 @@ export const parseRideOffer = action({
           "HTTP-Referer": "https://gaurcity-hcl-carpool.vercel.app",
         },
         body: JSON.stringify({
-          model: "meta-llama/llama-3.1-8b-instruct:free",
+          model: "z-ai/glm-4.5-air:free",
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: text },
