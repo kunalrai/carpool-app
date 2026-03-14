@@ -51,15 +51,14 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
-   * messages — group chat messages scoped to a listing
-   * All members (driver + anyone who ever booked) can read and send.
+   * messages — community group chat for all GaurCity-HCL carpool members.
+   * Any registered user can read and send.
    */
   messages: defineTable({
-    listingId: v.id("listings"),
     senderId: v.id("users"),
     text: v.string(), // max 500 chars
     createdAt: v.number(),
-  }).index("by_listing_time", ["listingId", "createdAt"]),
+  }).index("by_time", ["createdAt"]),
 
   /**
    * bookings — a rider's seat reservation on a listing

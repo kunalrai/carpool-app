@@ -288,24 +288,6 @@ export default function MyListingScreen() {
             )}
           </div>
 
-          {/* Group Chat */}
-          <button
-            onClick={() => navigate(`/chat/${listing._id}`)}
-            className="card w-full flex items-center gap-3 active:bg-gray-50 transition-colors"
-          >
-            <div className="w-9 h-9 rounded-full bg-brand-50 flex items-center justify-center text-brand-700 shrink-0">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold text-gray-900">Group Chat</p>
-              <p className="text-xs text-gray-500">Driver + riders</p>
-            </div>
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </button>
         </div>
 
         {/* Action buttons — sticky at bottom */}

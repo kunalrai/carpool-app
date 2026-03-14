@@ -54,7 +54,7 @@ export default function BottomNav() {
 
   const tabs = [
     { label: "Home",    path: "/home",    Icon: HomeIcon },
-    { label: "Chats",   path: "/chats",   Icon: ChatIcon },
+    { label: "Chat",    path: "/chat",    Icon: ChatIcon },
     { label: "Profile", path: "/profile", Icon: ProfileIcon },
     ...(isAdmin ? [{ label: "Admin", path: "/admin", Icon: AdminIcon }] : []),
   ];
