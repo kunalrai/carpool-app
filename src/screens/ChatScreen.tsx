@@ -45,11 +45,19 @@ export default function ChatScreen() {
       inputRef.current?.focus();
       // Parse in background — don't block the UI
       setParsing(true);
-      parseRideOffer({ text: msgText })
-        .then((result) => {
-          if (result?.isRideOffer) setParsedRide(result);
-        })
-        .finally(() => setParsing(false));
+      (async () => {
+        try {
+          const result = await parseRideOffer({ text: msgText });
+          console.log("[Chat] parseRideOffer result:", result);
+          if (result && result.isRideOffer === true) {
+            setParsedRide(result as ParsedRide);
+          }
+        } catch (e) {
+          console.error("[Chat] parseRideOffer error:", e);
+        } finally {
+          setParsing(false);
+        }
+      })();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send");
     } finally {
