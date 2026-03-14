@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -24,11 +24,19 @@ function minTimeValue(): string {
 export default function PostRideScreen() {
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { state } = useLocation() as {
+    state?: {
+      direction?: "GC_TO_HCL" | "HCL_TO_GC";
+      departureTime?: string; // "HH:MM" 24h
+      seats?: number;
+      pickupPoint?: string;
+    } | null;
+  };
 
-  const [direction, setDirection] = useState<Direction>("GC_TO_HCL");
-  const [timeValue, setTimeValue] = useState(""); // "HH:MM" 24h
-  const [seats, setSeats] = useState(2);
-  const [pickupPoint, setPickupPoint] = useState("");
+  const [direction, setDirection] = useState<Direction>(state?.direction ?? "GC_TO_HCL");
+  const [timeValue, setTimeValue] = useState(state?.departureTime ?? ""); // "HH:MM" 24h
+  const [seats, setSeats] = useState(state?.seats ?? 2);
+  const [pickupPoint, setPickupPoint] = useState(state?.pickupPoint ?? "");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

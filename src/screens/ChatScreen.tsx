@@ -1,19 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 
+type ParsedRide = {
+  isRideOffer: boolean;
+  direction: "GC_TO_HCL" | "HCL_TO_GC" | null;
+  departureTime: string | null; // "HH:MM" 24h
+  seats: number | null;
+  pickupPoint: string | null;
+};
+
 export default function ChatScreen() {
+  const navigate = useNavigate();
   const { userId } = useAuth();
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [parsedRide, setParsedRide] = useState<ParsedRide | null>(null);
+  const [parsing, setParsing] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const messages = useQuery(api.chat.getMessages, { userId: userId! });
   const sendMessage = useMutation(api.chat.sendMessage);
+  const parseRideOffer = useAction(api.ai.parseRideOffer);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -22,17 +35,37 @@ export default function ChatScreen() {
 
   const handleSend = async () => {
     if (!text.trim() || sending) return;
+    const msgText = text.trim();
     setSending(true);
     setError(null);
+    setParsedRide(null);
     try {
-      await sendMessage({ senderId: userId!, text });
+      await sendMessage({ senderId: userId!, text: msgText });
       setText("");
       inputRef.current?.focus();
+      // Parse in background — don't block the UI
+      setParsing(true);
+      parseRideOffer({ text: msgText })
+        .then((result) => {
+          if (result?.isRideOffer) setParsedRide(result);
+        })
+        .finally(() => setParsing(false));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to send");
     } finally {
       setSending(false);
     }
+  };
+
+  const handlePostRide = () => {
+    navigate("/post-ride", {
+      state: {
+        direction: parsedRide?.direction,
+        departureTime: parsedRide?.departureTime,
+        seats: parsedRide?.seats,
+        pickupPoint: parsedRide?.pickupPoint,
+      },
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -99,6 +132,42 @@ export default function ChatScreen() {
         })}
         <div ref={bottomRef} />
       </div>
+
+      {/* AI parsing indicator */}
+      {parsing && (
+        <div className="px-4 py-2 border-t border-gray-100 text-xs text-gray-400 text-center shrink-0">
+          Analysing message…
+        </div>
+      )}
+
+      {/* Post as Ride card */}
+      {parsedRide && (
+        <div className="mx-4 mb-2 p-3 bg-brand-50 border border-brand-200 rounded-2xl shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-brand-700 mb-0.5">🚗 Looks like a ride offer!</p>
+              <p className="text-xs text-brand-600">
+                {parsedRide.direction === "GC_TO_HCL" ? "Gaur City → HCL" : "HCL → Gaur City"}
+                {parsedRide.departureTime && ` · ${parsedRide.departureTime}`}
+                {parsedRide.pickupPoint && ` · ${parsedRide.pickupPoint}`}
+              </p>
+            </div>
+            <button
+              onClick={() => setParsedRide(null)}
+              className="text-brand-400 text-lg leading-none shrink-0"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+          <button
+            onClick={handlePostRide}
+            className="mt-2 w-full py-2 bg-brand-700 text-white text-sm font-semibold rounded-xl active:bg-brand-800"
+          >
+            Post as Ride
+          </button>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
