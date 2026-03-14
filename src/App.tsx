@@ -10,6 +10,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import AdminScreen from "./screens/AdminScreen";
 import ListingDetailScreen from "./screens/ListingDetailScreen";
 import MyListingScreen from "./screens/MyListingScreen";
+import ChatScreen from "./screens/ChatScreen";
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ function AppRoutes() {
       <Route path="/post-ride" element={<PrivateRoute><PostRideScreen /></PrivateRoute>} />
       <Route path="/listing/:id" element={<PrivateRoute><ListingDetailScreen /></PrivateRoute>} />
       <Route path="/my-listing" element={<PrivateRoute><MyListingScreen /></PrivateRoute>} />
+      <Route path="/chat/:id" element={<PrivateRoute><ChatScreen /></PrivateRoute>} />
 
       {/* Default */}
       <Route path="*" element={<Navigate to={userId ? "/home" : "/login"} replace />} />
