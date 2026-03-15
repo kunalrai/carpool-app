@@ -49,6 +49,9 @@ export default function ChatScreen() {
       await sendMessage({ senderId: userId!, text: msgText });
       setText("");
       inputRef.current?.focus();
+      // Only run AI parsing if the message contains a time reference
+      const hasTime = /\b\d{1,2}[:.]\d{2}\s*(am|pm)?|\b\d{1,2}\s*(am|pm)\b/i.test(msgText);
+      if (!hasTime) return;
       // Parse and auto-post in background
       setParsing(true);
       (async () => {
