@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 
-function Avatar({ name }: { name: string }) {
+function InitialsAvatar({ name }: { name: string }) {
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -12,7 +12,7 @@ function Avatar({ name }: { name: string }) {
     .join("")
     .toUpperCase();
   return (
-    <div className="w-20 h-20 rounded-full bg-brand-700 flex items-center justify-center text-white text-2xl font-bold select-none">
+    <div className="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-2xl font-bold select-none">
       {initials}
     </div>
   );
@@ -25,8 +25,6 @@ export default function ProfileScreen() {
   const profile = useQuery(api.users.getUserProfile, { userId: userId! });
   const updateProfile = useMutation(api.users.updateProfile);
 
-  // ── Edit state ────────────────────────────────────────────────────────────
-  const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [offerRides, setOfferRides] = useState(false);
   const [carName, setCarName] = useState("");
@@ -34,19 +32,18 @@ export default function ProfileScreen() {
   const [carNumber, setCarNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  // Populate edit fields when profile loads or edit starts
   useEffect(() => {
-    if (profile && editing) {
+    if (profile) {
       setName(profile.name);
       setOfferRides(profile.role === "giver" || profile.role === "both");
       setCarName(profile.carName ?? "");
       setCarColor(profile.carColor ?? "");
       setCarNumber(profile.carNumber ?? "");
-      setError(null);
     }
-  }, [profile, editing]);
+  }, [profile]);
 
   const handleSave = async () => {
     if (!name.trim()) { setError("Display name is required"); return; }
@@ -66,7 +63,8 @@ export default function ProfileScreen() {
         carColor: offerRides ? carColor.trim() : undefined,
         carNumber: offerRides ? carNumber.trim() : undefined,
       });
-      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -79,222 +77,185 @@ export default function ProfileScreen() {
     navigate("/login", { replace: true });
   };
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // ── Loading skeleton ──────────────────────────────────────────────────────
   if (!profile) {
     return (
-      <div className="pb-16 px-4 pt-14 animate-pulse space-y-4">
-        <div className="flex items-center gap-4">
+      <div className="pb-24 px-5 pt-14 animate-pulse space-y-5">
+        <div className="h-7 bg-gray-200 rounded w-2/3" />
+        <div className="flex flex-col items-center gap-2 py-4">
           <div className="w-20 h-20 rounded-full bg-gray-200" />
-          <div className="space-y-2 flex-1">
-            <div className="h-5 bg-gray-200 rounded w-1/2" />
-            <div className="h-4 bg-gray-100 rounded w-1/3" />
-          </div>
+          <div className="h-3 bg-gray-100 rounded w-20" />
         </div>
-        <div className="h-24 bg-gray-100 rounded-2xl" />
+        <div className="space-y-3">
+          {[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl" />)}
+        </div>
       </div>
     );
   }
 
-  const isDriver = profile.role === "giver" || profile.role === "both";
+  const fieldCls = "w-full bg-gray-100 rounded-xl px-4 py-3.5 text-sm text-gray-800 placeholder-gray-400 outline-none focus:ring-2 focus:ring-brand-500 transition-all";
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
-      <div className="pb-20">
-        {/* Header */}
-        <div className="bg-brand-700 px-4 pt-12 pb-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-lg font-bold">Profile</h1>
-            {!editing && (
-              <button
-                onClick={() => setEditing(true)}
-                className="text-sm font-semibold text-white bg-white/20 px-4 py-1.5 rounded-xl active:bg-white/30"
-              >
-                Edit
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <Avatar name={profile.name} />
-            <div>
-              <p className="text-xl font-bold">{profile.name}</p>
-              <p className="text-brand-200 text-sm">+91 {profile.mobile}</p>
-              <span className={`mt-1 inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
-                isDriver ? "bg-white/20 text-white" : "bg-white/10 text-brand-100"
-              }`}>
-                {profile.role === "both" ? "Driver & Rider" : profile.role === "giver" ? "Driver" : "Rider"}
-              </span>
-            </div>
-          </div>
-        </div>
+      <div className="pb-24 bg-white min-h-screen">
 
-        <div className="px-4 py-5 space-y-4">
-          {/* ── View mode ── */}
-          {!editing && (
-            <>
-              {/* Car details card */}
-              {isDriver && profile.carName ? (
-                <div className="card">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                    Car Details
-                  </p>
-                  <div className="space-y-2">
-                    <Row label="Car" value={profile.carName} />
-                    <Row label="Color" value={profile.carColor ?? "—"} />
-                    <Row label="Number" value={profile.carNumber ?? "—"} />
-                  </div>
-                </div>
-              ) : (
-                <div className="card border-dashed text-center py-5">
-                  <p className="text-sm text-gray-500">No car details added</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Add your car to start offering rides
-                  </p>
-                </div>
-              )}
-
-              {/* Account section */}
-              <div className="card">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                  Account
-                </p>
-                <Row label="Mobile" value={`+91 ${profile.mobile}`} />
-                <p className="text-xs text-gray-400 mt-2">
-                  Mobile number cannot be changed
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* ── Edit mode ── */}
-          {editing && (
-            <div className="space-y-4 animate-slide-up">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Display Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => { setName(e.target.value); setError(null); }}
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              {/* Mobile — read-only */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mobile
-                </label>
-                <div className="input-field bg-gray-50 text-gray-500 cursor-not-allowed">
-                  +91 {profile.mobile}
-                </div>
-              </div>
-
-              {/* Offer rides toggle */}
-              <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">I offer rides</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Show my car and allow posting rides</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => { setOfferRides((v) => !v); setError(null); }}
-                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${
-                    offerRides ? "bg-brand-600" : "bg-gray-300"
-                  }`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                    offerRides ? "translate-x-6" : "translate-x-0"
-                  }`} />
-                </button>
-              </div>
-
-              {/* Car fields */}
-              <div className={`overflow-hidden transition-all duration-300 ${
-                offerRides ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}>
-                <div className="space-y-4 pt-1">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Car Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Swift Dzire"
-                      value={carName}
-                      onChange={(e) => { setCarName(e.target.value); setError(null); }}
-                      className="input-field"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Car Color <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Silver"
-                      value={carColor}
-                      onChange={(e) => { setCarColor(e.target.value); setError(null); }}
-                      className="input-field"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Car Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. UP14 AB 1234"
-                      value={carNumber}
-                      onChange={(e) => { setCarNumber(e.target.value.toUpperCase()); setError(null); }}
-                      className="input-field"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {error && (
-                <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                  {error}
-                </p>
-              )}
-
-              {/* Save / Cancel */}
-              <div className="flex gap-3 pt-1">
-                <button
-                  onClick={() => { setEditing(false); setError(null); }}
-                  disabled={saving}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="btn-primary"
-                >
-                  {saving ? "Saving…" : "Save Changes"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Logout button */}
-          {!editing && (
+        {/* ── Header ── */}
+        <div className="px-5 pt-14 pb-2">
+          <div className="flex items-center justify-between mb-1">
+            <h1 className="text-2xl font-extrabold text-gray-900 leading-tight">
+              Complete your<br />
+              <span className="text-brand-700">profile.</span>
+            </h1>
             <button
               onClick={() => setShowLogoutConfirm(true)}
-              className="w-full mt-2 border border-red-300 text-red-600 font-semibold py-3 px-4 rounded-xl active:bg-red-50 transition-colors"
+              className="text-xs text-gray-400 border border-gray-200 px-3 py-1.5 rounded-xl active:bg-gray-50"
             >
               Log Out
             </button>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            This helps your passengers and fellow commuters identify you.
+          </p>
+        </div>
+
+        {/* ── Avatar ── */}
+        <div className="flex flex-col items-center py-6">
+          <div className="relative">
+            <InitialsAvatar name={name || profile.name} />
+            <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-brand-700 flex items-center justify-center shadow">
+              <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </span>
+          </div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-2">
+            {profile.role === "both" ? "Driver & Rider" : profile.role === "giver" ? "Driver" : "Rider"}
+          </p>
+        </div>
+
+        <div className="px-5 space-y-4">
+
+          {/* ── Personal fields ── */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
+            <input
+              type="text"
+              placeholder="e.g. Rahul Sharma"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setError(null); }}
+              className={fieldCls}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
+            <input
+              type="text"
+              value={`+91 ${profile.mobile}`}
+              readOnly
+              className={`${fieldCls} text-gray-400 cursor-not-allowed`}
+            />
+          </div>
+
+          {/* ── Offer rides toggle ── */}
+          <div className="flex items-center justify-between py-3 px-4 bg-gray-100 rounded-xl">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">I offer rides</p>
+              <p className="text-xs text-gray-500 mt-0.5">Show vehicle details to passengers</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setOfferRides((v) => !v); setError(null); }}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${offerRides ? "bg-brand-600" : "bg-gray-300"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${offerRides ? "translate-x-6" : "translate-x-0"}`} />
+            </button>
+          </div>
+
+          {/* ── Vehicle Details ── */}
+          {offerRides && (
+            <div className="space-y-4 animate-slide-up">
+              <h2 className="text-base font-bold text-gray-900 pt-1">Vehicle Details</h2>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Car Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Swift Dzire"
+                  value={carName}
+                  onChange={(e) => { setCarName(e.target.value); setError(null); }}
+                  className={fieldCls}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Car Number</label>
+                  <input
+                    type="text"
+                    placeholder="UP14 AB 1234"
+                    value={carNumber}
+                    onChange={(e) => { setCarNumber(e.target.value.toUpperCase()); setError(null); }}
+                    className={fieldCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Car Color</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Silver"
+                    value={carColor}
+                    onChange={(e) => { setCarColor(e.target.value); setError(null); }}
+                    className={fieldCls}
+                  />
+                </div>
+              </div>
+            </div>
           )}
+
+          {/* ── Error ── */}
+          {error && (
+            <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              {error}
+            </p>
+          )}
+
+          {/* ── Security banner ── */}
+          <div className="flex items-center gap-3 bg-gray-900 rounded-2xl px-4 py-4">
+            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <polyline points="9 12 11 14 15 10" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Identity Verification</p>
+              <p className="text-xs text-white/50 mt-0.5">Your data is encrypted and secure.</p>
+            </div>
+          </div>
+
+          {/* ── Save button ── */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-brand-700 text-white font-bold py-4 rounded-2xl text-base active:bg-brand-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            {saving ? "Saving…" : saved ? "Saved!" : (
+              <>
+                Save Profile
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Logout confirmation */}
+      {/* ── Logout confirm ── */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-8 bg-black/40">
           <div className="w-full max-w-md bg-white rounded-2xl p-6 animate-slide-up shadow-xl">
@@ -303,16 +264,8 @@ export default function ProfileScreen() {
               You'll need your mobile number and OTP to sign in again.
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex-1 bg-red-600 text-white font-semibold py-3 px-4 rounded-xl active:bg-red-700"
-              >
+              <button onClick={() => setShowLogoutConfirm(false)} className="btn-secondary">Cancel</button>
+              <button onClick={handleLogout} className="flex-1 bg-red-600 text-white font-semibold py-3 px-4 rounded-xl active:bg-red-700">
                 Log Out
               </button>
             </div>
@@ -320,14 +273,5 @@ export default function ProfileScreen() {
         </div>
       )}
     </>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-1">
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className="text-sm font-medium text-gray-900">{value}</span>
-    </div>
   );
 }
