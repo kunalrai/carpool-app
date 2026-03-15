@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, KeyboardEvent, ClipboardEvent } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -9,6 +9,91 @@ type Phase = "splash" | "mobile" | "otp" | "register";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=900&q=80";
+
+// ── Custom numeric keypad ─────────────────────────────────────────────────
+
+const KEYS = [
+  { digit: "1", sub: "" },
+  { digit: "2", sub: "ABC" },
+  { digit: "3", sub: "DEF" },
+  { digit: "4", sub: "GHI" },
+  { digit: "5", sub: "JKL" },
+  { digit: "6", sub: "MNO" },
+  { digit: "7", sub: "PQRS" },
+  { digit: "8", sub: "TUV" },
+  { digit: "9", sub: "WXYZ" },
+  { digit: "", sub: "" },       // empty cell
+  { digit: "0", sub: "" },
+  { digit: "⌫", sub: "" },     // backspace
+];
+
+function Keypad({ onPress }: { onPress: (key: string) => void }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 px-4">
+      {KEYS.map((k, i) =>
+        k.digit === "" ? (
+          <div key={i} />
+        ) : (
+          <button
+            key={i}
+            onPointerDown={(e) => { e.preventDefault(); onPress(k.digit); }}
+            className="flex flex-col items-center justify-center bg-white/10 active:bg-white/20 rounded-2xl py-3 select-none transition-colors"
+          >
+            <span className="text-white text-2xl font-light leading-none">
+              {k.digit === "⌫" ? (
+                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z" />
+                  <line x1="18" y1="9" x2="12" y2="15" />
+                  <line x1="12" y1="9" x2="18" y2="15" />
+                </svg>
+              ) : k.digit}
+            </span>
+            {k.sub && <span className="text-white/50 text-xs mt-0.5 tracking-widest">{k.sub}</span>}
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
+// ── Dark screen shell ─────────────────────────────────────────────────────
+
+function DarkShell({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 bg-gray-950 flex flex-col overflow-hidden">
+      <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-1/2 object-cover object-center" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-gray-950/80 to-gray-950" />
+
+      <div className="relative z-10 flex flex-col h-full" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        {/* Nav bar */}
+        <div className="flex items-center px-4 pt-10 pb-2">
+          <button onPointerDown={onBack} className="p-2 -ml-2 active:opacity-60">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <span className="flex-1 text-center text-sm font-semibold text-white">GC Carpool</span>
+          <div className="w-9" />
+        </div>
+
+        {/* Heading */}
+        <div className="px-6 pt-2 pb-5">
+          <h1 className="text-2xl font-extrabold text-white leading-snug">
+            Welcome to{" "}
+            <span className="text-brand-400">GC Carpool</span>
+          </h1>
+          <p className="text-sm text-white/60 mt-1">
+            Fixed ₹80 per seat · GaurCity ↔ HCL campus.
+          </p>
+        </div>
+
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────
 
 export default function LoginScreen() {
   const navigate = useNavigate();
@@ -46,10 +131,6 @@ export default function LoginScreen() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase === "otp") setTimeout(() => digitRefs.current[0]?.focus(), 100);
   }, [phase]);
 
   const handleSendOtp = async () => {
@@ -131,51 +212,47 @@ export default function LoginScreen() {
     }
   };
 
-  const handleDigitChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newDigits = [...digits];
-    newDigits[index] = value.slice(-1);
-    setDigits(newDigits);
+  // Keypad press handler for mobile phase
+  const handleMobileKey = (key: string) => {
     setError(null);
-    if (value && index < 5) digitRefs.current[index + 1]?.focus();
-  };
-
-  const handleDigitKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      digitRefs.current[index - 1]?.focus();
+    if (key === "⌫") {
+      setMobile((m) => m.slice(0, -1));
+    } else if (mobile.length < 10) {
+      setMobile((m) => m + key);
     }
   };
 
-  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (!pasted) return;
-    const newDigits = Array(6).fill("");
-    for (let i = 0; i < pasted.length; i++) newDigits[i] = pasted[i];
-    setDigits(newDigits);
-    digitRefs.current[Math.min(pasted.length, 5)]?.focus();
+  // Keypad press handler for OTP phase
+  const handleOtpKey = (key: string) => {
+    setError(null);
+    setDigits((prev) => {
+      const next = [...prev];
+      if (key === "⌫") {
+        const lastFilled = [...next].reverse().findIndex((d) => d !== "");
+        if (lastFilled !== -1) next[5 - lastFilled] = "";
+      } else {
+        const emptyIdx = next.findIndex((d) => d === "");
+        if (emptyIdx !== -1) next[emptyIdx] = key;
+      }
+      return next;
+    });
   };
+
+  // Format mobile display: "XXXXX XXXXX"
+  const mobileDisplay = mobile
+    ? mobile.slice(0, 5) + (mobile.length > 5 ? " " + mobile.slice(5) : "")
+    : "";
 
   const maskedMobile = `+91 ${mobile.slice(0, 2)}${"•".repeat(6)}${mobile.slice(8)}`;
 
-  // ── Splash Screen ────────────────────────────────────────────────────────
+  // ── Splash ───────────────────────────────────────────────────────────────
   if (phase === "splash") {
     return (
       <div className="min-h-screen relative overflow-hidden bg-gray-900">
-        {/* Hero image */}
-        <img
-          src={HERO_IMAGE}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        {/* Gradient overlay so card blends in */}
+        <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60" />
-
-        {/* Bottom sheet card */}
         <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl px-6 pt-7 pb-8"
              style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}>
-
-          {/* Heading */}
           <h1 className="text-3xl font-extrabold text-gray-900 leading-tight mb-2">
             The Smarter<br />
             <span className="text-brand-700">Commute</span>
@@ -183,8 +260,6 @@ export default function LoginScreen() {
           <p className="text-sm text-gray-500 mb-5">
             Fixed fare ₹80 per seat · GaurCity ↔ HCL campus. Book or offer a ride in seconds.
           </p>
-
-          {/* Feature badges */}
           <div className="flex gap-3 mb-6">
             <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
               <span className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
@@ -204,21 +279,12 @@ export default function LoginScreen() {
               <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Instant</span>
             </div>
           </div>
-
-          {/* Get Started CTA */}
-          <button
-            onClick={() => setPhase("mobile")}
-            className="w-full bg-brand-700 text-white font-semibold py-4 rounded-2xl text-base active:bg-brand-800 transition-colors mb-4"
-          >
+          <button onClick={() => setPhase("mobile")}
+            className="w-full bg-brand-700 text-white font-semibold py-4 rounded-2xl text-base active:bg-brand-800 transition-colors mb-4">
             Get Started
           </button>
-
-          {/* Log In link */}
-          <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
-            <button
-              onClick={() => setPhase("mobile")}
-              className="font-semibold text-gray-700 active:opacity-60"
-            >
+          <div className="flex items-center justify-center">
+            <button onClick={() => setPhase("mobile")} className="text-sm font-semibold text-gray-700 active:opacity-60">
               Log In
             </button>
           </div>
@@ -227,179 +293,182 @@ export default function LoginScreen() {
     );
   }
 
-  // ── OTP + Register: full white screen ────────────────────────────────────
+  // ── Mobile phase — dark + custom keypad ───────────────────────────────────
+  if (phase === "mobile") {
+    return (
+      <DarkShell onBack={() => { setMobile(""); setError(null); setPhase("splash"); }}>
+        {/* White card */}
+        <div className="mx-4 bg-white rounded-2xl p-5 mb-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Get Started</h2>
+          <p className="text-sm text-gray-500 mb-4">Enter your phone number to continue your journey.</p>
+
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Phone Number</p>
+          <div className="flex items-center bg-gray-100 rounded-xl px-3 py-3 gap-2">
+            {/* Flag + code */}
+            <span className="text-lg leading-none">🇮🇳</span>
+            <span className="text-sm font-semibold text-gray-700">+91</span>
+            <div className="w-px h-5 bg-gray-300 mx-1" />
+            <span className={`flex-1 text-base font-medium tracking-widest ${mobileDisplay ? "text-gray-900" : "text-gray-400"}`}>
+              {mobileDisplay || "00000 00000"}
+            </span>
+            {mobile.length > 0 && (
+              <span className="text-xs text-gray-400">{mobile.length}/10</span>
+            )}
+          </div>
+
+          {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+
+          {mobile.length === 10 && (
+            <button
+              onClick={handleSendOtp}
+              disabled={loading}
+              className="mt-4 w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Sending OTP…" : "Continue"}
+            </button>
+          )}
+        </div>
+
+        {/* Custom keypad */}
+        <div className="flex-1 flex flex-col justify-end pb-6"
+             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
+          <Keypad onPress={handleMobileKey} />
+        </div>
+      </DarkShell>
+    );
+  }
+
+  // ── OTP phase — dark + custom keypad ─────────────────────────────────────
+  if (phase === "otp") {
+    return (
+      <DarkShell onBack={() => { setDigits(Array(6).fill("")); setError(null); setPhase("mobile"); }}>
+        {/* White card */}
+        <div className="mx-4 bg-white rounded-2xl p-5 mb-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Verify OTP</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Sent to <span className="font-medium text-gray-700">{maskedMobile}</span>
+          </p>
+
+          {/* Dev hint */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-4 flex items-center gap-2">
+            <span className="text-base">🔑</span>
+            <p className="text-blue-700 text-xs">Dev OTP: <span className="font-bold tracking-widest">123456</span></p>
+          </div>
+
+          {/* 6 digit boxes */}
+          <div className="flex gap-2 justify-between mb-3">
+            {digits.map((d, i) => (
+              <div
+                key={i}
+                ref={(el) => { digitRefs.current[i] = el as unknown as HTMLInputElement; }}
+                className={`flex-1 h-12 flex items-center justify-center rounded-xl border-2 text-xl font-bold transition-colors ${
+                  d ? "border-brand-600 bg-brand-50 text-brand-700" : "border-gray-200 bg-gray-50 text-gray-300"
+                }`}
+              >
+                {d || "·"}
+              </div>
+            ))}
+          </div>
+
+          {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
+
+          {digits.join("").length === 6 && (
+            <button
+              onClick={handleVerifyOtp}
+              disabled={loading}
+              className="w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Verifying…" : "Verify OTP"}
+            </button>
+          )}
+
+          <div className="flex items-center justify-between mt-3">
+            <button
+              onClick={() => { setPhase("mobile"); setDigits(Array(6).fill("")); setError(null); }}
+              className="text-xs text-gray-500 underline-offset-2 underline"
+            >
+              Change number
+            </button>
+            {canResend ? (
+              <button onClick={handleResend} disabled={loading} className="text-xs text-brand-700 font-semibold">
+                Resend OTP
+              </button>
+            ) : (
+              <span className="text-xs text-gray-400">
+                Resend in {String(Math.floor(countdown / 60)).padStart(2, "0")}:{String(countdown % 60).padStart(2, "0")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Custom keypad */}
+        <div className="flex-1 flex flex-col justify-end pb-6"
+             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
+          <Keypad onPress={handleOtpKey} />
+        </div>
+      </DarkShell>
+    );
+  }
+
+  // ── Register phase — white screen ─────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white flex flex-col">
-
-      {/* Compact header */}
       <div className="bg-brand-700 px-6 pt-14 pb-6 text-white">
         <h1 className="text-xl font-bold">GC Carpool</h1>
         <p className="text-brand-200 text-xs mt-0.5">₹80 fixed fare · Gaur City ↔ HCL</p>
       </div>
 
       <div className="flex-1 px-6 py-8 overflow-y-auto">
+        <div className="animate-slide-up">
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Complete your profile</h2>
+          <p className="text-gray-500 text-sm mb-6">You're new here — tell us a bit about yourself</p>
 
-        {/* ── Phase: Mobile ── */}
-        {phase === "mobile" && (
-          <div className="animate-slide-up">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Enter your mobile</h2>
-            <p className="text-gray-500 text-sm mb-6">We'll send you a one-time password</p>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Display Name <span className="text-red-500">*</span>
+            </label>
+            <input type="text" placeholder="e.g. Rahul Sharma" value={name}
+              onChange={(e) => { setName(e.target.value); setError(null); }}
+              className="input-field" autoFocus />
+          </div>
 
-            <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent mb-4">
-              <span className="px-4 py-3 bg-gray-50 text-gray-600 font-medium border-r border-gray-300 select-none">
-                +91
-              </span>
-              <input
-                type="tel"
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="9876543210"
-                value={mobile}
-                onChange={(e) => { setMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setError(null); }}
-                onKeyDown={(e) => e.key === "Enter" && handleSendOtp()}
-                className="flex-1 px-4 py-3 text-base outline-none bg-white"
-                autoFocus
-              />
+          <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl mb-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900">I also want to offer rides</p>
+              <p className="text-xs text-gray-500 mt-0.5">Add your car details to post rides</p>
             </div>
-
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-            <button
-              onClick={handleSendOtp}
-              disabled={loading || mobile.length < 10}
-              className="btn-primary mb-4"
-            >
-              {loading ? "Sending…" : "Send OTP"}
-            </button>
-
-            <button
-              onClick={() => setPhase("splash")}
-              className="w-full text-sm text-gray-500 text-center active:opacity-60"
-            >
-              Back
+            <button type="button" onClick={() => setOfferRides((v) => !v)}
+              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${offerRides ? "bg-brand-600" : "bg-gray-300"}`}>
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${offerRides ? "translate-x-6" : "translate-x-0"}`} />
             </button>
           </div>
-        )}
 
-        {/* ── Phase: OTP ── */}
-        {phase === "otp" && (
-          <div className="animate-slide-up">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Verify OTP</h2>
-            <p className="text-gray-500 text-sm mb-4">
-              Sent to <span className="font-medium text-gray-700">{maskedMobile}</span>
-            </p>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 mb-6 flex items-center gap-2">
-              <span className="text-blue-500 text-lg">🔑</span>
-              <p className="text-blue-700 text-sm">
-                Use OTP: <span className="font-bold tracking-widest">123456</span>
-              </p>
-            </div>
-
-            <div className="flex gap-2 justify-between mb-6" onPaste={handlePaste}>
-              {digits.map((d, i) => (
-                <input
-                  key={i}
-                  ref={(el) => { digitRefs.current[i] = el; }}
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={(e) => handleDigitChange(i, e.target.value)}
-                  onKeyDown={(e) => handleDigitKeyDown(i, e)}
-                  className="w-12 h-14 text-center text-xl font-semibold border-2 border-gray-300 rounded-xl focus:outline-none focus:border-brand-600 transition-colors"
-                />
-              ))}
-            </div>
-
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-            <button
-              onClick={handleVerifyOtp}
-              disabled={loading || digits.join("").length < 6}
-              className="btn-primary mb-4"
-            >
-              {loading ? "Verifying…" : "Verify OTP"}
-            </button>
-
-            <div className="flex items-center justify-between text-sm">
-              <button
-                onClick={() => { setPhase("mobile"); setDigits(Array(6).fill("")); setError(null); }}
-                className="text-gray-500 underline-offset-2 hover:underline"
-              >
-                Change number
-              </button>
-              {canResend ? (
-                <button onClick={handleResend} disabled={loading} className="text-brand-700 font-semibold">
-                  Resend OTP
-                </button>
-              ) : (
-                <span className="text-gray-400">
-                  Resend in {String(Math.floor(countdown / 60)).padStart(2, "0")}:{String(countdown % 60).padStart(2, "0")}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Phase: Register ── */}
-        {phase === "register" && (
-          <div className="animate-slide-up">
-            <h2 className="text-xl font-bold text-gray-900 mb-1">Complete your profile</h2>
-            <p className="text-gray-500 text-sm mb-6">You're new here — tell us a bit about yourself</p>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Display Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Rahul Sharma"
-                value={name}
-                onChange={(e) => { setName(e.target.value); setError(null); }}
-                className="input-field"
-                autoFocus
-              />
-            </div>
-
-            <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl mb-4">
+          <div className={`overflow-hidden transition-all duration-300 ${offerRides ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
+            <div className="space-y-4 mb-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">I also want to offer rides</p>
-                <p className="text-xs text-gray-500 mt-0.5">Add your car details to post rides</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Car Name <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="e.g. Swift Dzire" value={carName}
+                  onChange={(e) => { setCarName(e.target.value); setError(null); }} className="input-field" />
               </div>
-              <button
-                type="button"
-                onClick={() => setOfferRides((v) => !v)}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${offerRides ? "bg-brand-600" : "bg-gray-300"}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${offerRides ? "translate-x-6" : "translate-x-0"}`} />
-              </button>
-            </div>
-
-            <div className={`overflow-hidden transition-all duration-300 ${offerRides ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
-              <div className="space-y-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Car Name <span className="text-red-500">*</span></label>
-                  <input type="text" placeholder="e.g. Swift Dzire" value={carName} onChange={(e) => { setCarName(e.target.value); setError(null); }} className="input-field" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Car Color <span className="text-red-500">*</span></label>
-                  <input type="text" placeholder="e.g. Silver" value={carColor} onChange={(e) => { setCarColor(e.target.value); setError(null); }} className="input-field" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Car Number <span className="text-red-500">*</span></label>
-                  <input type="text" placeholder="e.g. UP14 AB 1234" value={carNumber} onChange={(e) => { setCarNumber(e.target.value.toUpperCase()); setError(null); }} className="input-field" />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Car Color <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="e.g. Silver" value={carColor}
+                  onChange={(e) => { setCarColor(e.target.value); setError(null); }} className="input-field" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Car Number <span className="text-red-500">*</span></label>
+                <input type="text" placeholder="e.g. UP14 AB 1234" value={carNumber}
+                  onChange={(e) => { setCarNumber(e.target.value.toUpperCase()); setError(null); }} className="input-field" />
               </div>
             </div>
-
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-            <button onClick={handleRegister} disabled={loading} className="btn-primary">
-              {loading ? "Setting up…" : "Get Started"}
-            </button>
           </div>
-        )}
+
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+          <button onClick={handleRegister} disabled={loading} className="btn-primary">
+            {loading ? "Setting up…" : "Get Started"}
+          </button>
+        </div>
       </div>
     </div>
   );
