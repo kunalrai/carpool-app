@@ -24,9 +24,9 @@ export default defineSchema({
 
   /**
    * listings — a driver's posted ride offer
-   * status lifecycle: open → full (auto) → started → completed | cancelled
+   * status lifecycle: open → full (auto) → started → completed | cancelled | expired
    * fare is always 80; stored for display consistency.
-   * Listings auto-expire 60 min after departureTime if not started (enforced in queries).
+   * Listings auto-expire 60 min after departureTime if not started (cron patches to 'expired').
    */
   listings: defineTable({
     driverId: v.id("users"),
@@ -41,7 +41,8 @@ export default defineSchema({
       v.literal("full"),
       v.literal("started"),
       v.literal("completed"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
+      v.literal("expired")
     ),
     fare: v.number(), // always 80
     createdAt: v.number(),

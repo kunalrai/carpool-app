@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 
 // Internal mutation called by cron every 5 min — patches open/full listings
-// that are past departureTime + 60 min to 'cancelled' so reactive queries
+// that are past departureTime + 60 min to 'expired' so reactive queries
 // re-fire and they disappear from the rider feed.
 export const expireListings = internalMutation({
   args: {},
@@ -17,7 +17,7 @@ export const expireListings = internalMutation({
       .withIndex("by_status", (q) => q.eq("status", "full"))
       .collect();
     const expired = [...open, ...full].filter((l) => l.departureTime < cutoff);
-    await Promise.all(expired.map((l) => ctx.db.patch(l._id, { status: "cancelled" })));
+    await Promise.all(expired.map((l) => ctx.db.patch(l._id, { status: "expired" })));
   },
 });
 
@@ -102,7 +102,7 @@ export const getMyActiveListing = query({
         (l.status === "open" || l.status === "full" || l.status === "started") &&
         !isExpired(l)
     ) ?? null;
-    // Note: 'completed' and 'cancelled' are intentionally excluded so the banner clears immediately.
+    // Note: 'completed', 'cancelled', and 'expired' are intentionally excluded so the banner clears immediately.
   },
 });
 
@@ -187,6 +187,7 @@ export const cancelListing = mutation({
     if (!listing) throw new Error("Listing not found");
     if (listing.driverId !== driverId) throw new Error("Unauthorized");
     if (listing.status === "cancelled") throw new Error("Already cancelled");
+    if (listing.status === "expired") throw new Error("Listing has expired");
     if (listing.status === "started") throw new Error("Ride already started");
 
     await ctx.db.patch(listingId, { status: "cancelled" });
@@ -223,6 +224,7 @@ export const startRide = mutation({
     if (!listing) throw new Error("Listing not found");
     if (listing.driverId !== driverId) throw new Error("Unauthorized");
     if (listing.status === "cancelled") throw new Error("Listing is cancelled");
+    if (listing.status === "expired") throw new Error("Listing has expired");
     if (listing.status === "started") throw new Error("Ride already started");
 
     await ctx.db.patch(listingId, { status: "started" });
