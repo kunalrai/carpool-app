@@ -58,15 +58,27 @@ function Keypad({ onPress }: { onPress: (key: string) => void }) {
 
 // ── Dark screen shell ─────────────────────────────────────────────────────
 
-function DarkShell({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
+function DarkShell({
+  onBack,
+  children,
+  keypad,
+}: {
+  onBack: () => void;
+  children: React.ReactNode;
+  keypad: React.ReactNode;
+}) {
   return (
     <div className="fixed inset-0 bg-gray-950 flex flex-col overflow-hidden">
-      <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-1/2 object-cover object-center" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-gray-950/80 to-gray-950" />
+      <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-2/5 object-cover object-center" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-gray-950/75 to-gray-950" />
 
-      <div className="relative z-10 flex flex-col h-full" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      {/* ── Scrollable top area (nav + heading + card) ── */}
+      <div
+        className="relative z-10 flex-1 overflow-y-auto"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         {/* Nav bar */}
-        <div className="flex items-center px-4 pt-10 pb-2">
+        <div className="flex items-center px-4 pt-6 pb-1">
           <button onPointerDown={onBack} className="p-2 -ml-2 active:opacity-60">
             <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
@@ -77,17 +89,25 @@ function DarkShell({ onBack, children }: { onBack: () => void; children: React.R
         </div>
 
         {/* Heading */}
-        <div className="px-6 pt-2 pb-5">
+        <div className="px-6 pt-1 pb-4">
           <h1 className="text-2xl font-extrabold text-white leading-snug">
-            Welcome to{" "}
-            <span className="text-brand-400">GC Carpool</span>
+            Welcome to <span className="text-brand-400">GC Carpool</span>
           </h1>
           <p className="text-sm text-white/60 mt-1">
             GaurCity ↔ HCL campus. Book or offer a ride in seconds.
           </p>
         </div>
 
+        {/* White card */}
         {children}
+      </div>
+
+      {/* ── Keypad pinned to bottom — never cut off ── */}
+      <div
+        className="relative z-10 flex-none bg-gray-950 pt-2"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        {keypad}
       </div>
     </div>
   );
@@ -296,15 +316,16 @@ export default function LoginScreen() {
   // ── Mobile phase — dark + custom keypad ───────────────────────────────────
   if (phase === "mobile") {
     return (
-      <DarkShell onBack={() => { setMobile(""); setError(null); setPhase("splash"); }}>
-        {/* White card */}
-        <div className="mx-4 bg-white rounded-2xl p-5 mb-4">
+      <DarkShell
+        onBack={() => { setMobile(""); setError(null); setPhase("splash"); }}
+        keypad={<Keypad onPress={handleMobileKey} />}
+      >
+        <div className="mx-4 bg-white rounded-2xl p-5 mb-3">
           <h2 className="text-lg font-bold text-gray-900 mb-1">Get Started</h2>
           <p className="text-sm text-gray-500 mb-4">Enter your phone number to continue your journey.</p>
 
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Phone Number</p>
           <div className="flex items-center bg-gray-100 rounded-xl px-3 py-3 gap-2">
-            {/* Flag + code */}
             <span className="text-lg leading-none">🇮🇳</span>
             <span className="text-sm font-semibold text-gray-700">+91</span>
             <div className="w-px h-5 bg-gray-300 mx-1" />
@@ -328,12 +349,6 @@ export default function LoginScreen() {
             </button>
           )}
         </div>
-
-        {/* Custom keypad */}
-        <div className="flex-1 flex flex-col justify-end pb-6"
-             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
-          <Keypad onPress={handleMobileKey} />
-        </div>
       </DarkShell>
     );
   }
@@ -341,9 +356,11 @@ export default function LoginScreen() {
   // ── OTP phase — dark + custom keypad ─────────────────────────────────────
   if (phase === "otp") {
     return (
-      <DarkShell onBack={() => { setDigits(Array(6).fill("")); setError(null); setPhase("mobile"); }}>
-        {/* White card */}
-        <div className="mx-4 bg-white rounded-2xl p-5 mb-4">
+      <DarkShell
+        onBack={() => { setDigits(Array(6).fill("")); setError(null); setPhase("mobile"); }}
+        keypad={<Keypad onPress={handleOtpKey} />}
+      >
+        <div className="mx-4 bg-white rounded-2xl p-5 mb-3">
           <h2 className="text-lg font-bold text-gray-900 mb-1">Verify OTP</h2>
           <p className="text-sm text-gray-500 mb-4">
             Sent to <span className="font-medium text-gray-700">{maskedMobile}</span>
@@ -401,11 +418,6 @@ export default function LoginScreen() {
           </div>
         </div>
 
-        {/* Custom keypad */}
-        <div className="flex-1 flex flex-col justify-end pb-6"
-             style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}>
-          <Keypad onPress={handleOtpKey} />
-        </div>
       </DarkShell>
     );
   }
