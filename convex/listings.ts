@@ -1,5 +1,25 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+
+// Internal mutation called by cron every 5 min — patches open/full listings
+// that are past departureTime + 60 min to 'cancelled' so reactive queries
+// re-fire and they disappear from the rider feed.
+export const expireListings = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 60 * 60 * 1000;
+    const open = await ctx.db
+      .query("listings")
+      .withIndex("by_status", (q) => q.eq("status", "open"))
+      .collect();
+    const full = await ctx.db
+      .query("listings")
+      .withIndex("by_status", (q) => q.eq("status", "full"))
+      .collect();
+    const expired = [...open, ...full].filter((l) => l.departureTime < cutoff);
+    await Promise.all(expired.map((l) => ctx.db.patch(l._id, { status: "cancelled" })));
+  },
+});
 
 // TEMP: run once from Convex dashboard to clear old string-format listings, then delete this mutation
 export const clearAllListings = mutation({
