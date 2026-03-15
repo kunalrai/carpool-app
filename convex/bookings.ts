@@ -16,6 +16,13 @@ export const getMyBooking = query({
     const listing = await ctx.db.get(booking.listingId);
     if (!listing) return null;
 
+    // Hide banner if the listing was cancelled, expired, or completed
+    if (
+      listing.status === "cancelled" ||
+      listing.status === "expired" ||
+      listing.status === "completed"
+    ) return null;
+
     const driver = await ctx.db.get(listing.driverId);
     return { ...booking, listing: { ...listing, driver } };
   },
@@ -33,6 +40,7 @@ export const joinRide = mutation({
     const listing = await ctx.db.get(listingId);
     if (!listing) throw new Error("Listing not found");
     if (listing.status === "cancelled") throw new Error("Listing is cancelled");
+    if (listing.status === "expired") throw new Error("Listing has expired");
     if (listing.status === "started") throw new Error("Ride already started");
     if (listing.seatsLeft <= 0) throw new Error("No seats available");
 
