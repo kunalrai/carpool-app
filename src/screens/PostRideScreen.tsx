@@ -197,14 +197,6 @@ export default function PostRideScreen() {
           />
         </div>
 
-        {/* Fare — read only */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-          <span className="text-sm font-semibold text-gray-700">Fare</span>
-          <span className="text-sm font-bold text-brand-700">
-            ₹80 per seat — fixed
-          </span>
-        </div>
-
         {/* Error */}
         {error && (
           <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">

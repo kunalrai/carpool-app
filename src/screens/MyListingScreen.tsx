@@ -196,7 +196,6 @@ export default function MyListingScreen() {
               label="Seats"
               value={`${filledSeats} filled · ${listing.seatsLeft} left of ${listing.totalSeats}`}
             />
-            <DetailRow label="Fare" value={`₹${listing.fare} per seat`} />
             {listing.pickupPoint && (
               <DetailRow label="Pickup" value={listing.pickupPoint} />
             )}

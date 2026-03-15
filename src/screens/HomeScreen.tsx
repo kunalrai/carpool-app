@@ -430,7 +430,6 @@ export default function HomeScreen() {
                     </div>
                     <div className="ml-3 text-right shrink-0">
                       <p className="text-base font-bold text-gray-900">{formatDeparture(listing.departureTime)}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">₹{listing.fare}/seat</p>
                     </div>
                   </div>
 

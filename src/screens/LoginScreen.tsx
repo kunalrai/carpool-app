@@ -83,7 +83,7 @@ function DarkShell({ onBack, children }: { onBack: () => void; children: React.R
             <span className="text-brand-400">GC Carpool</span>
           </h1>
           <p className="text-sm text-white/60 mt-1">
-            Fixed ₹80 per seat · GaurCity ↔ HCL campus.
+            GaurCity ↔ HCL campus. Book or offer a ride in seconds.
           </p>
         </div>
 
@@ -258,7 +258,7 @@ export default function LoginScreen() {
             <span className="text-brand-700">Commute</span>
           </h1>
           <p className="text-sm text-gray-500 mb-5">
-            Fixed fare ₹80 per seat · GaurCity ↔ HCL campus. Book or offer a ride in seconds.
+            GaurCity ↔ HCL campus. Book or offer a ride in seconds.
           </p>
           <div className="flex gap-3 mb-6">
             <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
@@ -267,7 +267,7 @@ export default function LoginScreen() {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </span>
-              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Fixed ₹80</span>
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Verified</span>
             </div>
             <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
               <span className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
@@ -415,7 +415,7 @@ export default function LoginScreen() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="bg-brand-700 px-6 pt-14 pb-6 text-white">
         <h1 className="text-xl font-bold">GC Carpool</h1>
-        <p className="text-brand-200 text-xs mt-0.5">₹80 fixed fare · Gaur City ↔ HCL</p>
+        <p className="text-brand-200 text-xs mt-0.5">Gaur City ↔ HCL</p>
       </div>
 
       <div className="flex-1 px-6 py-8 overflow-y-auto">

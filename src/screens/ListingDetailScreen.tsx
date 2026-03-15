@@ -199,7 +199,6 @@ export default function ListingDetailScreen() {
             label="Seats"
             value={`${filledSeats} filled · ${listing.seatsLeft} left of ${listing.totalSeats}`}
           />
-          <DetailRow label="Fare" value={`₹${listing.fare} per seat`} />
           {listing.pickupPoint && (
             <DetailRow label="Pickup" value={listing.pickupPoint} />
           )}
@@ -259,11 +258,6 @@ export default function ListingDetailScreen() {
           {joining ? "Joining…" : joinLabel}
         </button>
 
-        {canJoin && !joined && (
-          <p className="text-center text-xs text-gray-400 mt-2">
-            ₹80 to be paid directly to the driver
-          </p>
-        )}
       </div>
     </div>
   );
