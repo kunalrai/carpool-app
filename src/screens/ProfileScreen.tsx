@@ -26,6 +26,7 @@ export default function ProfileScreen() {
   const updateProfile = useMutation(api.users.updateProfile);
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [offerRides, setOfferRides] = useState(false);
   const [carName, setCarName] = useState("");
   const [carColor, setCarColor] = useState("");
@@ -38,6 +39,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (profile) {
       setName(profile.name);
+      setEmail(profile.email ?? "");
       setOfferRides(profile.role === "giver" || profile.role === "both");
       setCarName(profile.carName ?? "");
       setCarColor(profile.carColor ?? "");
@@ -47,6 +49,9 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) { setError("Display name is required"); return; }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Enter a valid email address"); return;
+    }
     if (offerRides) {
       if (!carName.trim()) { setError("Car name is required"); return; }
       if (!carColor.trim()) { setError("Car color is required"); return; }
@@ -58,6 +63,7 @@ export default function ProfileScreen() {
       await updateProfile({
         userId: userId!,
         name: name.trim(),
+        email: email.trim() || undefined,
         role: offerRides ? "both" : "taker",
         carName: offerRides ? carName.trim() : undefined,
         carColor: offerRides ? carColor.trim() : undefined,
@@ -145,6 +151,18 @@ export default function ProfileScreen() {
               placeholder="e.g. Rahul Sharma"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(null); }}
+              className={fieldCls}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+            <input
+              type="email"
+              inputMode="email"
+              placeholder="e.g. rahul@example.com"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(null); }}
               className={fieldCls}
             />
           </div>

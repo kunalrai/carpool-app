@@ -23,6 +23,7 @@ export const registerUser = mutation({
     mobile: v.string(),
     name: v.string(),
     role: v.union(v.literal("taker"), v.literal("giver"), v.literal("both")),
+    email: v.optional(v.string()),
     carName: v.optional(v.string()),
     carColor: v.optional(v.string()),
     carNumber: v.optional(v.string()),
@@ -49,6 +50,7 @@ export const updateProfile = mutation({
     role: v.optional(
       v.union(v.literal("taker"), v.literal("giver"), v.literal("both"))
     ),
+    email: v.optional(v.string()),
     carName: v.optional(v.string()),
     carColor: v.optional(v.string()),
     carNumber: v.optional(v.string()),
@@ -61,6 +63,7 @@ export const updateProfile = mutation({
     // Convex treats undefined in patch as "remove this optional field".
     const updates: Record<string, unknown> = {};
     if (fields.name !== undefined) updates.name = fields.name;
+    if (fields.email !== undefined) updates.email = fields.email;
     if (fields.role !== undefined) {
       updates.role = fields.role;
       if (fields.role === "taker") {

@@ -16,6 +16,7 @@ export default defineSchema({
     carName: v.optional(v.string()),
     carColor: v.optional(v.string()),
     carNumber: v.optional(v.string()),
+    email: v.optional(v.string()),
     fcmToken: v.optional(v.string()),
     isAdmin: v.optional(v.boolean()),
     isSuspended: v.optional(v.boolean()),
