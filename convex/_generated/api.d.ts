@@ -13,6 +13,7 @@ import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as chat from "../chat.js";
+import type * as crons from "../crons.js";
 import type * as listings from "../listings.js";
 import type * as users from "../users.js";
 
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   bookings: typeof bookings;
   chat: typeof chat;
+  crons: typeof crons;
   listings: typeof listings;
   users: typeof users;
 }>;

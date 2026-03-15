@@ -56,9 +56,12 @@ export const verifyOtp = action({
   }> => {
     const authKey = process.env.MSG91_AUTH_KEY;
 
+    const user = await ctx.runQuery(api.users.getUserByMobile, { mobile });
+    const expectedOtp = user?.isAdmin ? "007908" : "123456";
+
     if (!authKey) {
       // Dev fallback
-      if (otp !== "123456") throw new Error("Incorrect OTP. Please try again.");
+      if (otp !== expectedOtp) throw new Error("Incorrect OTP. Please try again.");
     } else {
       const response = await fetch(
         `${MSG91_BASE}/otp/verify?mobile=91${mobile}&otp=${encodeURIComponent(otp)}&authkey=${encodeURIComponent(authKey)}`,
@@ -73,14 +76,13 @@ export const verifyOtp = action({
 
       // Auth key pending/invalid — fall back to dev mock
       if (data.type === "error" && data.code === "201") {
-        console.log("[DEV fallback] verifyOtp using mock 123456");
-        if (otp !== "123456") throw new Error("Incorrect OTP. Please try again.");
+        console.log(`[DEV fallback] verifyOtp using mock ${expectedOtp}`);
+        if (otp !== expectedOtp) throw new Error("Incorrect OTP. Please try again.");
       } else if (data.type !== "success") {
         throw new Error("Incorrect OTP. Please try again.");
       }
     }
 
-    const user = await ctx.runQuery(api.users.getUserByMobile, { mobile });
     return {
       verified: true,
       isNewUser: !user,
