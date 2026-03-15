@@ -19,7 +19,6 @@ export default function LoginScreen() {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(false);
 
   const [name, setName] = useState("");
   const [offerRides, setOfferRides] = useState(false);
@@ -78,7 +77,6 @@ export default function LoginScreen() {
     try {
       const result = await verifyOtp({ mobile, otp });
       if (result.isNewUser) {
-        setIsNewUser(true);
         setPhase("register");
       } else {
         login(result.userId! as Id<"users">);
