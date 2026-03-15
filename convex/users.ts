@@ -1,6 +1,20 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getProfilePhotoUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, { storageId }) => {
+    return await ctx.storage.getUrl(storageId);
+  },
+});
+
 export const getUserProfile = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
@@ -51,6 +65,7 @@ export const updateProfile = mutation({
       v.union(v.literal("taker"), v.literal("giver"), v.literal("both"))
     ),
     email: v.optional(v.string()),
+    photoStorageId: v.optional(v.id("_storage")),
     carName: v.optional(v.string()),
     carColor: v.optional(v.string()),
     carNumber: v.optional(v.string()),
@@ -64,6 +79,7 @@ export const updateProfile = mutation({
     const updates: Record<string, unknown> = {};
     if (fields.name !== undefined) updates.name = fields.name;
     if (fields.email !== undefined) updates.email = fields.email;
+    if (fields.photoStorageId !== undefined) updates.photoStorageId = fields.photoStorageId;
     if (fields.role !== undefined) {
       updates.role = fields.role;
       if (fields.role === "taker") {

@@ -1,22 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
-
-function InitialsAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-  return (
-    <div className="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-2xl font-bold select-none">
-      {initials}
-    </div>
-  );
-}
+import { Id } from "../../convex/_generated/dataModel";
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
@@ -24,6 +11,16 @@ export default function ProfileScreen() {
 
   const profile = useQuery(api.users.getUserProfile, { userId: userId! });
   const updateProfile = useMutation(api.users.updateProfile);
+  const generateUploadUrl = useMutation(api.users.generateUploadUrl);
+
+  const photoUrl = useQuery(
+    api.users.getProfilePhotoUrl,
+    profile?.photoStorageId ? { storageId: profile.photoStorageId } : "skip"
+  );
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -46,6 +43,36 @@ export default function ProfileScreen() {
       setCarNumber(profile.carNumber ?? "");
     }
   }, [profile]);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5 MB"); return; }
+
+    // Show local preview immediately
+    setLocalPhotoUrl(URL.createObjectURL(file));
+    setError(null);
+    setUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl({});
+      const res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const { storageId } = await res.json() as { storageId: Id<"_storage"> };
+      await updateProfile({ userId: userId!, photoStorageId: storageId });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Photo upload failed");
+      setLocalPhotoUrl(null);
+    } finally {
+      setUploading(false);
+      // Reset input so same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim()) { setError("Display name is required"); return; }
@@ -127,18 +154,52 @@ export default function ProfileScreen() {
 
         {/* ── Avatar ── */}
         <div className="flex flex-col items-center py-6">
-          <div className="relative">
-            <InitialsAvatar name={name || profile.name} />
+          <button
+            className="relative active:opacity-80"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+          >
+            {/* Photo or initials */}
+            {(localPhotoUrl ?? photoUrl) ? (
+              <img
+                src={localPhotoUrl ?? photoUrl!}
+                alt="Profile"
+                className="w-20 h-20 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-2xl font-bold select-none">
+                {(name || profile.name).split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()}
+              </div>
+            )}
+
+            {/* Edit badge */}
             <span className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-brand-700 flex items-center justify-center shadow">
-              <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
+              {uploading ? (
+                <svg className="w-3 h-3 text-white animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              )}
             </span>
-          </div>
+          </button>
+
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-2">
-            {profile.role === "both" ? "Driver & Rider" : profile.role === "giver" ? "Driver" : "Rider"}
+            {uploading ? "Uploading…" : "Upload Photo"}
           </p>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
         </div>
 
         <div className="px-5 space-y-4">
