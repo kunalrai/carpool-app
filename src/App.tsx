@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
 import { useQuery } from "convex/react";
@@ -14,6 +14,7 @@ import ChatScreen from "./screens/ChatScreen";
 import DirectChatScreen from "./screens/DirectChatScreen";
 import RideGroupChatScreen from "./screens/RideGroupChatScreen";
 import CallScreen from "./screens/CallScreen";
+import LandingPage from "./screens/LandingPage";
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -102,9 +103,31 @@ function AppRoutes() {
       <Route path="/call/:mode/:listingId" element={<PrivateRoute><CallScreen /></PrivateRoute>} />
       <Route path="/call/:mode/:listingId/:otherUserId" element={<PrivateRoute><CallScreen /></PrivateRoute>} />
 
+      {/* Landing page — full-width, no auth required */}
+      <Route
+        path="/"
+        element={userId ? <Navigate to="/home" replace /> : <LandingPage />}
+      />
+
       {/* Default */}
-      <Route path="*" element={<Navigate to={userId ? "/home" : "/login"} replace />} />
+      <Route path="*" element={<Navigate to={userId ? "/home" : "/"} replace />} />
     </Routes>
+  );
+}
+
+/** Applies the mobile-frame constraint for all app screens, but not the landing page. */
+function AppShell() {
+  const location = useLocation();
+  const isLanding = location.pathname === "/";
+
+  if (isLanding) {
+    return <AppRoutes />;
+  }
+
+  return (
+    <div className="min-h-screen max-w-md mx-auto bg-white relative">
+      <AppRoutes />
+    </div>
   );
 }
 
@@ -112,9 +135,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="min-h-screen max-w-md mx-auto bg-white relative">
-          <AppRoutes />
-        </div>
+        <AppShell />
       </AuthProvider>
     </BrowserRouter>
   );
