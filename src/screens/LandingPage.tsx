@@ -84,7 +84,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-[88vh] flex items-center px-6 md:px-16 overflow-hidden" style={{ background: C.surface }}>
+      <section className="relative flex items-center px-6 md:px-16 pt-20 pb-16 overflow-hidden" style={{ background: C.surface }}>
         {/* Background decoration */}
         <div className="absolute right-0 top-0 w-1/2 h-full opacity-[0.06] pointer-events-none select-none"
           style={{ background: `radial-gradient(ellipse at 80% 40%, ${C.primary}, transparent 70%)` }} />
@@ -140,7 +140,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Stats Bar ── */}
-      <section className="px-6 md:px-16 -mt-10 mb-24 relative z-20">
+      <section className="px-6 md:px-16 py-16 mb-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[
             { val: "2,000+", label: "Active Riders" },
