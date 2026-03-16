@@ -422,7 +422,7 @@ export default function LandingPage() {
           style={{ borderColor: C.outlineVariant + "22" }}
         >
           <span className="text-xs" style={{ color: C.outline }}>© 2025 GC Ridepool. Built for the Gaur City community.</span>
-          <span className="text-xs" style={{ color: C.outline }}>Gaur City 1 &amp; 2 · Sector 16B · HCL Tech Park, Noida</span>
+          <span className="text-xs" style={{ color: C.outline }}>Gaur City 1 &amp; 2 · Sector 126, Noida· HCL Tech Park, Noida</span>
         </div>
       </footer>
 
