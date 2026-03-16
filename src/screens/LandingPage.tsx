@@ -1,445 +1,428 @@
 import { useNavigate } from "react-router-dom";
 
-// ── Feature card data ──────────────────────────────────────────────────────
+// ── Design tokens (Material You palette from reference) ───────────────────
+const C = {
+  primary: "#003d9b",
+  primaryContainer: "#0052cc",
+  surface: "#faf8ff",
+  surfaceContainer: "#ededf8",
+  surfaceContainerLow: "#f3f3fd",
+  surfaceContainerHigh: "#e7e7f2",
+  surfaceContainerHighest: "#e1e2ec",
+  surfaceContainerLowest: "#ffffff",
+  onSurface: "#191b23",
+  onSurfaceVariant: "#434654",
+  outline: "#737685",
+  outlineVariant: "#c3c6d6",
+  secondaryContainer: "#c7dfff",
+  onSecondaryContainer: "#4b637e",
+  tertiaryFixed: "#ffdbcf",
+  onTertiaryFixed: "#380d00",
+  onPrimary: "#ffffff",
+};
 
-const features = [
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-    ),
-    title: "Real-Time Listings",
-    desc: "See available rides the moment drivers post them. No refreshing — live updates instantly.",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-      </svg>
-    ),
-    title: "Fixed ₹80 Fare",
-    desc: "Always ₹80 per seat, no surge pricing, no surprises. Pay your co-rider directly — no app fees.",
-    color: "bg-green-50 text-green-600",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-      </svg>
-    ),
-    title: "Ride Group Chat",
-    desc: "Every ride has its own group chat. Coordinate pickup, share updates — all in one place.",
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-      </svg>
-    ),
-    title: "Internet Voice Calls",
-    desc: "Call your driver or co-riders directly inside the app. No need to share phone numbers.",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-      </svg>
-    ),
-    title: "Installs Like an App",
-    desc: "Add to your home screen and it works just like a native app — fast, offline-ready, no app store needed.",
-    color: "bg-orange-50 text-orange-600",
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
-    title: "Private & Secure",
-    desc: "OTP login — no passwords ever. Phone numbers stay hidden from all other users.",
-    color: "bg-rose-50 text-rose-600",
-  },
-];
+function glassNav(): React.CSSProperties {
+  return { background: "rgba(250, 248, 255, 0.75)", backdropFilter: "blur(24px)" };
+}
 
-const steps = [
-  {
-    num: "01",
-    title: "Sign up with OTP",
-    desc: "Enter your mobile number, verify with a one-time code. Done in 30 seconds.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-      </svg>
-    ),
-  },
-  {
-    num: "02",
-    title: "Post or Join a Ride",
-    desc: "Drivers post their departure time. Riders browse and claim a seat instantly.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="9" width="22" height="9" rx="2" />
-        <path d="M3 9l2-5h14l2 5" />
-        <circle cx="7.5" cy="18.5" r="1.5" />
-        <circle cx="16.5" cy="18.5" r="1.5" />
-      </svg>
-    ),
-  },
-  {
-    num: "03",
-    title: "Ride & Chat Together",
-    desc: "Coordinate via group chat or voice call. Pay ₹80 cash to the driver. Simple.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="9" cy="7" r="3" />
-        <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-        <circle cx="17" cy="7" r="3" />
-        <path d="M21 21v-2a4 4 0 00-3-3.87" />
-      </svg>
-    ),
-  },
-];
+// ── Components ────────────────────────────────────────────────────────────
 
-// ── Route Animation ────────────────────────────────────────────────────────
-
-function RouteAnimation() {
+function CarIcon({ size = 20, color = "currentColor" }: { size?: number; color?: string }) {
   return (
-    <div className="relative w-full h-20 my-2">
-      <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-white/20 rounded-full -translate-y-1/2" />
-      <div
-        className="absolute top-1/2 left-8 right-8 h-0.5 -translate-y-1/2 rounded-full overflow-hidden"
-        style={{ background: "repeating-linear-gradient(90deg, rgba(255,255,255,0.5) 0px, rgba(255,255,255,0.5) 8px, transparent 8px, transparent 16px)" }}
-      />
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-        <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center animate-route-dot">
-          <div className="w-2.5 h-2.5 rounded-full bg-brand-700" />
-        </div>
-        <span className="text-[10px] font-bold text-white/80 whitespace-nowrap">Gaur City</span>
-      </div>
-      <div className="absolute top-1/2 -translate-y-[60%] animate-car" style={{ position: "absolute" }}>
-        <div className="animate-float" style={{ animationDuration: "2s" }}>
-          <svg viewBox="0 0 24 24" className="w-8 h-8 text-yellow-300 drop-shadow-lg" fill="currentColor">
-            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-          </svg>
-        </div>
-      </div>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
-        <div className="w-5 h-5 rounded-full bg-yellow-300 flex items-center justify-center animate-route-dot" style={{ animationDelay: "1s" }}>
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-600" />
-        </div>
-        <span className="text-[10px] font-bold text-white/80 whitespace-nowrap">HCL Campus</span>
-      </div>
-    </div>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+    </svg>
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface, color: C.onSurface }} className="min-h-screen antialiased overflow-x-hidden">
 
-      {/* ── Sticky Nav ── */}
+      {/* ── Nav ── */}
       <nav
-        className="fixed top-0 inset-x-0 z-50"
-        style={{ background: "rgba(15, 23, 42, 0.88)", backdropFilter: "blur(12px)" }}
+        className="sticky top-0 z-50 py-4 px-6 md:px-10 flex items-center justify-between border-b"
+        style={{ ...glassNav(), borderColor: C.outlineVariant + "33" }}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-5 py-3.5 md:px-10">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="currentColor">
-                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-              </svg>
-            </div>
-            <span className="text-white font-bold text-sm tracking-wide">GC Carpool</span>
+        <div className="flex items-center gap-8">
+          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }} className="text-2xl font-extrabold tracking-tight">
+            GC Ridepool
+          </span>
+          <div className="hidden md:flex items-center gap-6">
+            {["Find a Ride", "Offer a Ride", "How It Works"].map((label) => (
+              <button
+                key={label}
+                onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
+                style={{ color: C.onSurfaceVariant }}
+                className="hover:text-blue-800 font-medium text-sm transition-colors"
+              >
+                {label}
+              </button>
+            ))}
           </div>
-
-          <div className="hidden md:flex items-center gap-8 text-sm text-white/70">
-            <button onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-white transition-colors">How It Works</button>
-            <button onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })} className="hover:text-white transition-colors">Features</button>
-          </div>
-
+        </div>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/login")}
-            className="text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-1.5 rounded-full transition-colors active:scale-95"
+            style={{ color: C.primary }}
+            className="px-4 py-2 font-semibold text-sm hidden sm:block"
           >
-            Sign In
+            Log In
+          </button>
+          <button
+            onClick={() => navigate("/login")}
+            className="px-5 py-2.5 text-white font-semibold text-sm rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+            style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
+          >
+            Sign Up Free
           </button>
         </div>
       </nav>
 
       {/* ── Hero ── */}
-      <section
-        className="relative min-h-screen flex flex-col justify-center pt-20 pb-16 overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)" }}
-      >
-        {/* Background blobs */}
-        <div className="absolute top-20 -right-20 w-72 h-72 md:w-96 md:h-96 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #60a5fa, transparent)" }} />
-        <div className="absolute bottom-10 -left-10 w-56 h-56 md:w-80 md:h-80 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #818cf8, transparent)" }} />
+      <section className="relative min-h-[88vh] flex items-center px-6 md:px-16 overflow-hidden" style={{ background: C.surface }}>
+        {/* Background decoration */}
+        <div className="absolute right-0 top-0 w-1/2 h-full opacity-[0.06] pointer-events-none select-none"
+          style={{ background: `radial-gradient(ellipse at 80% 40%, ${C.primary}, transparent 70%)` }} />
+        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none"
+          style={{ background: C.primary + "0a" }} />
 
-        <div className="relative max-w-7xl mx-auto w-full px-6 md:px-10 lg:px-16">
-          {/* Two-column layout on desktop */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-16">
+        <div className="relative z-10 max-w-7xl mx-auto w-full">
+          {/* Badge */}
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-8 tracking-wider uppercase"
+            style={{ background: C.secondaryContainer, color: C.onSecondaryContainer }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            Optimised for Gaur City Commuters
+          </div>
 
-            {/* Left: copy + CTAs */}
-            <div className="flex-1 lg:max-w-xl">
-              {/* Badge */}
-              <div className="animate-fade-in-up mb-6">
-                <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  Exclusively for GaurCity ↔ HCL commuters
-                </span>
+          {/* Headline */}
+          <h1
+            className="text-[clamp(3rem,10vw,6.5rem)] font-extrabold leading-[0.92] tracking-tight mb-8"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
+          >
+            Gaur City to HCL.<br />
+            <span style={{ color: C.primary }}>Fixed ₹80.</span>
+          </h1>
+
+          <p className="text-lg md:text-xl mb-10 max-w-xl leading-relaxed" style={{ color: C.onSurfaceVariant }}>
+            The professional commute network built for Gaur City residents.
+            Post a ride, claim a seat, and split the daily trip — no surge, no hidden fees.
+          </p>
+
+          {/* Booking widget */}
+          <div className="flex flex-col sm:flex-row gap-3 p-1.5 rounded-2xl w-full md:w-auto" style={{ background: C.surfaceContainerLow }}>
+            <div className="flex items-center gap-4 bg-white px-5 py-4 rounded-xl shadow-sm flex-1">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Route</span>
+                <span className="font-semibold text-sm" style={{ color: C.onSurface }}>Gaur City → HCL Tech Park</span>
               </div>
-
-              <h1 className="animate-fade-in-up-1 text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight mb-4">
-                Your daily commute,{" "}
-                <span
-                  className="text-transparent bg-clip-text"
-                  style={{ backgroundImage: "linear-gradient(90deg, #60a5fa, #a78bfa)" }}
-                >
-                  shared.
-                </span>
-              </h1>
-
-              <p className="animate-fade-in-up-2 text-base md:text-lg text-blue-200 leading-relaxed mb-8 max-w-md">
-                The carpooling app built for the Gaur City community. Post a ride, join one,
-                and split the commute — always at a fixed ₹80 per seat.
-              </p>
-
-              {/* CTAs */}
-              <div className="animate-fade-in-up-3 flex flex-col sm:flex-row gap-3 mb-10 lg:mb-0">
-                <button
-                  onClick={() => navigate("/login")}
-                  className="sm:w-auto px-8 py-4 rounded-2xl font-bold text-base text-brand-900 transition-all active:scale-95 hover:brightness-105"
-                  style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
-                >
-                  Get Started — It's Free
-                </button>
-                <button
-                  onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
-                  className="sm:w-auto px-8 py-4 rounded-2xl font-semibold text-sm text-white border border-white/20 bg-white/5 hover:bg-white/10 transition-colors"
-                >
-                  See How It Works
-                </button>
+              <div className="w-px h-8 mx-2 hidden sm:block" style={{ background: C.outlineVariant + "55" }} />
+              <div className="flex flex-col hidden sm:flex">
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Price</span>
+                <span className="font-bold" style={{ color: C.primary }}>₹80.00</span>
               </div>
             </div>
+            <button
+              onClick={() => navigate("/login")}
+              className="px-8 py-4 rounded-xl font-bold text-white text-sm transition-transform hover:scale-[1.02] active:scale-95 whitespace-nowrap"
+              style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
+            >
+              Book Now
+            </button>
+          </div>
+        </div>
+      </section>
 
-            {/* Right: route animation card + stats */}
-            <div className="flex-1 lg:max-w-md mt-10 lg:mt-0">
-              {/* Route animation card */}
-              <div className="animate-fade-in-up-4 bg-white/10 border border-white/15 rounded-2xl px-4 pt-4 pb-2 backdrop-blur-sm mb-5">
-                <p className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-1">Live Route</p>
-                <RouteAnimation />
-                <div className="flex justify-between text-xs text-white/50 mt-1 pb-1">
-                  <span>GC1 / GC2</span>
-                  <span>HCL Tech Park</span>
-                </div>
+      {/* ── Stats Bar ── */}
+      <section className="px-6 md:px-16 -mt-10 mb-24 relative z-20">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {[
+            { val: "2,000+", label: "Active Riders" },
+            { val: "₹80", label: "Always Fixed Fare" },
+            { val: "₹0", label: "App Fees Ever" },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="p-8 flex flex-col items-center justify-center text-center shadow-xl border"
+              style={{ background: C.surfaceContainerLowest, borderColor: C.outlineVariant + "1a", borderRadius: "9999px" }}
+            >
+              <span
+                className="text-4xl font-extrabold mb-1"
+                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }}
+              >
+                {s.val}
+              </span>
+              <span className="text-sm font-medium" style={{ color: C.onSurfaceVariant }}>{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Bento Features ── */}
+      <section className="px-6 md:px-16 py-24" style={{ background: C.surface }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-14">
+            <h2
+              className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
+            >
+              Engineered for<br />your commute.
+            </h2>
+            <p className="max-w-md text-base" style={{ color: C.onSurfaceVariant }}>
+              Why Gaur City residents trust GC Ridepool every morning.
+            </p>
+          </div>
+
+          {/* Bento grid */}
+          <div className="grid grid-cols-12 gap-5" style={{ minHeight: "420px" }}>
+            {/* Large card — Real-Time Listings */}
+            <div
+              className="col-span-12 md:col-span-7 p-10 md:p-12 flex flex-col justify-end relative overflow-hidden group"
+              style={{ background: C.surfaceContainerLowest, borderRadius: "9999px" }}
+            >
+              <div className="absolute top-6 right-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                <svg width="120" height="120" viewBox="0 0 24 24" fill={C.primary}>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 14.5h-1v-7l-3 2.28-.72-.99 4-3.03 4 3.03-.72.99-2.56-1.94v6.66z" />
+                </svg>
               </div>
+              <span
+                className="px-3 py-1 rounded-full text-xs font-bold w-fit mb-4"
+                style={{ background: C.tertiaryFixed, color: C.onTertiaryFixed }}
+              >
+                LIVE UPDATES
+              </span>
+              <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
+                Real-Time Listings
+              </h3>
+              <p className="max-w-sm text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
+                See rides the moment drivers post them. No refreshing, no delays —
+                Convex powers instant live updates to every rider simultaneously.
+              </p>
+            </div>
 
-              {/* Stats row */}
-              <div className="animate-fade-in-up-5 grid grid-cols-3 gap-3">
-                {[
-                  { val: "₹80", label: "Fixed fare" },
-                  { val: "4", label: "Seats max" },
-                  { val: "0", label: "App fees" },
-                ].map((s) => (
-                  <div key={s.label} className="text-center bg-white/5 rounded-xl py-3 border border-white/10">
-                    <p className="text-xl font-black text-white">{s.val}</p>
-                    <p className="text-[11px] text-blue-300 mt-0.5">{s.label}</p>
+            {/* Blue card — Fixed Fare */}
+            <div
+              className="col-span-12 md:col-span-5 p-10 md:p-12 flex flex-col justify-center relative overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)`, borderRadius: "9999px" }}
+            >
+              <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full blur-2xl" style={{ background: "rgba(255,255,255,0.08)" }} />
+              <CarIcon size={36} color="rgba(255,255,255,0.8)" />
+              <h3 className="text-2xl md:text-3xl font-bold mt-5 mb-3 text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Always ₹80
+              </h3>
+              <p className="text-white/75 text-sm leading-relaxed">
+                One price. Always. No surge pricing, no booking commission.
+                Pay your driver directly in cash when you board.
+              </p>
+            </div>
+
+            {/* Small card — Private & Secure */}
+            <div
+              className="col-span-12 md:col-span-4 p-10 flex flex-col items-center text-center justify-center"
+              style={{ background: C.surfaceContainerHigh, borderRadius: "9999px" }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7b2600" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="mb-4">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <h3 className="text-xl font-bold mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
+                Private & Secure
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
+                OTP login only. Phone numbers are never shown to other users.
+              </p>
+            </div>
+
+            {/* Wide card — Group Chat + Voice */}
+            <div
+              className="col-span-12 md:col-span-8 p-8 md:px-14 flex items-center gap-8"
+              style={{ background: C.secondaryContainer, borderRadius: "9999px" }}
+            >
+              <div className="flex -space-x-3 shrink-0">
+                {["💬", "📞", "🔔"].map((emoji, i) => (
+                  <div
+                    key={i}
+                    className="w-14 h-14 rounded-full border-4 flex items-center justify-center text-xl font-bold"
+                    style={{ borderColor: C.secondaryContainer, background: C.surfaceContainerLowest }}
+                  >
+                    {emoji}
                   </div>
                 ))}
               </div>
+              <div>
+                <h3 className="text-xl font-bold mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
+                  Group Chat + Voice Calls
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: C.onSecondaryContainer }}>
+                  Every ride gets a private group chat. Call your driver or co-riders
+                  with internet voice — no numbers shared.
+                </p>
+              </div>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how" className="bg-gray-50 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
-          <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">Simple process</p>
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-10 md:mb-14">How it works</h2>
-
-          {/* Horizontal on md+, vertical on mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
-            {steps.map((step, i) => (
-              <div key={i} className="flex md:flex-col gap-4 md:gap-5 items-start">
-                <div className="shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-brand-700 flex items-center justify-center text-white shadow-lg shadow-brand-700/30">
-                  {step.icon}
-                </div>
-                <div className="pt-1 md:pt-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-brand-400">{step.num}</span>
-                    <h3 className="text-base font-bold text-gray-900">{step.title}</h3>
-                  </div>
-                  <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-                </div>
-              </div>
-            ))}
+      <section id="how" className="px-6 md:px-16 py-28 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-16 md:gap-20">
+          {/* Left */}
+          <div className="md:w-1/3">
+            <h2
+              className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-[0.92]"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
+            >
+              Three steps.<br />One commute.
+            </h2>
+            <p className="text-base mb-10 leading-relaxed" style={{ color: C.onSurfaceVariant }}>
+              From sign-up to seat booked in under a minute.
+            </p>
+            <button
+              onClick={() => navigate("/login")}
+              className="flex items-center gap-2 font-bold text-sm group"
+              style={{ color: C.primary }}
+            >
+              Get Started Now
+              <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+            </button>
           </div>
-        </div>
-      </section>
 
-      {/* ── Features ── */}
-      <section id="features" className="bg-white py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
-          <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2">Everything you need</p>
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-8 md:mb-12">Built for your commute</h2>
-
-          {/* 2-col on mobile, 3-col on md+ */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {features.map((f, i) => (
+          {/* Steps — staggered */}
+          <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { num: "01", title: "Sign Up", desc: "Enter your mobile, verify with an OTP. Your account is ready in 30 seconds — no password ever.", offset: "" },
+              { num: "02", title: "Post or Join", desc: "Drivers post departure time and seats. Riders browse the live feed and claim a seat instantly.", offset: "md:translate-y-4" },
+              { num: "03", title: "Ride & Chat", desc: "Coordinate via group chat or voice call inside the app. Pay ₹80 to your driver when you board.", offset: "md:translate-y-8" },
+            ].map((s) => (
               <div
-                key={i}
-                className="rounded-2xl border border-gray-100 p-4 md:p-6 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow"
+                key={s.num}
+                className={`p-8 rounded-3xl border border-transparent hover:border-blue-200 transition-all ${s.offset}`}
+                style={{ background: C.surfaceContainerLow }}
               >
-                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${f.color}`}>
-                  {f.icon}
-                </div>
-                <div>
-                  <h3 className="text-sm md:text-base font-bold text-gray-900 leading-tight mb-1">{f.title}</h3>
-                  <p className="text-xs md:text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-                </div>
+                <span
+                  className="text-6xl font-extrabold block mb-6"
+                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.outlineVariant + "88" }}
+                >
+                  {s.num}
+                </span>
+                <h3 className="text-xl font-bold mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
+                  {s.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Fare Highlight ── */}
-      <section className="py-8 md:py-16">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
-          <div
-            className="rounded-3xl px-6 py-8 md:px-12 md:py-12 text-white overflow-hidden relative"
-            style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)" }}
+      {/* ── CTA Banner ── */}
+      <section className="px-6 md:px-16 py-16 md:py-20" style={{ background: C.surface }}>
+        <div
+          className="max-w-7xl mx-auto rounded-[2rem] p-12 md:p-20 flex flex-col items-center text-center text-white relative overflow-hidden"
+          style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
+        >
+          {/* Blobs */}
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl" style={{ background: "rgba(255,255,255,0.07)" }} />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full blur-2xl" style={{ background: "rgba(255,255,255,0.05)" }} />
+
+          <h2
+            className="text-4xl md:text-6xl font-extrabold mb-6 max-w-3xl relative z-10 leading-tight"
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
-            <div className="absolute -right-6 -top-6 w-32 h-32 md:w-56 md:h-56 rounded-full bg-white/5" />
-            <div className="absolute -right-2 top-12 w-20 h-20 md:w-36 md:h-36 rounded-full bg-white/5" />
-
-            {/* Two-column on desktop */}
-            <div className="relative flex flex-col md:flex-row md:items-center md:gap-16">
-              <div className="md:flex-1 mb-8 md:mb-0">
-                <p className="text-xs font-bold text-blue-300 uppercase tracking-widest mb-2">Transparent pricing</p>
-                <div className="flex items-end gap-1 mb-3">
-                  <span className="text-5xl md:text-6xl font-black">₹80</span>
-                  <span className="text-blue-300 text-sm mb-2">/ seat</span>
-                </div>
-                <p className="text-sm md:text-base text-blue-200 leading-relaxed">
-                  One price. Always. No surge, no booking fee, no commission.
-                  Pay your driver directly when you board.
-                </p>
-              </div>
-
-              <div className="md:flex-1 flex flex-col gap-3">
-                {["No hidden charges", "Pay cash to driver", "No payment gateway needed", "No surge pricing ever"].map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-green-400 flex items-center justify-center shrink-0">
-                      <svg viewBox="0 0 24 24" className="w-3 h-3 text-green-900" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                    <span className="text-sm md:text-base text-white/90">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Callouts ── */}
-      <section className="bg-gray-50 py-16 md:py-20">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 flex items-start gap-4">
-              <div className="w-14 h-14 shrink-0 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600">
-                <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">Community + Ride Chats</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  A shared community chat for all GC ↔ HCL commuters, plus a private group chat
-                  for every ride — so you can always coordinate easily.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 flex items-start gap-4">
-              <div className="w-14 h-14 shrink-0 rounded-2xl bg-green-100 flex items-center justify-center text-green-600">
-                <svg viewBox="0 0 24 24" className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">Internet Voice Calls</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Call your driver or co-riders directly inside the app.
-                  Your phone number stays completely private.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section
-        className="py-16 md:py-24 text-center"
-        style={{ background: "linear-gradient(160deg, #0f172a 0%, #1e3a8a 100%)" }}
-      >
-        <div className="max-w-2xl mx-auto px-6 md:px-10">
-          <div className="w-16 h-16 rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto mb-5">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 text-yellow-300" fill="currentColor">
-              <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-            </svg>
-          </div>
-          <h2 className="text-2xl md:text-4xl font-black text-white mb-3">
-            Ready to ride smarter?
+            Join the commute revolution at Gaur City.
           </h2>
-          <p className="text-sm md:text-base text-blue-300 mb-8 leading-relaxed">
-            Join your neighbours already sharing the GC ↔ HCL commute.
-            Sign up in under a minute — just your phone number.
+          <p className="text-white/75 text-base md:text-lg mb-10 max-w-xl relative z-10 leading-relaxed">
+            Your neighbours are already sharing the GC ↔ HCL commute every day.
+            Free to join — just your phone number.
           </p>
-          <button
-            onClick={() => navigate("/login")}
-            className="w-full sm:w-auto sm:px-12 py-4 rounded-2xl font-bold text-base text-brand-900 transition-all active:scale-95 hover:brightness-105 mb-3"
-            style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
-          >
-            Start Carpooling Now
-          </button>
-          <p className="text-xs text-blue-400 mt-3">Free to use · No credit card · No passwords</p>
+
+          <div className="flex flex-wrap gap-4 justify-center relative z-10">
+            <button
+              onClick={() => navigate("/login")}
+              className="bg-white px-10 py-4 rounded-full font-extrabold text-base shadow-2xl hover:bg-gray-50 transition-colors active:scale-95"
+              style={{ color: C.primary }}
+            >
+              Start Riding
+            </button>
+            <button
+              onClick={() => navigate("/login")}
+              className="border-2 border-white/30 text-white px-10 py-4 rounded-full font-extrabold text-base hover:bg-white/10 transition-colors active:scale-95"
+            >
+              Offer a Ride
+            </button>
+          </div>
+
+          {/* PWA install nudge */}
+          <div className="mt-14 relative z-10 flex flex-col items-center gap-3">
+            <p className="text-xs font-bold tracking-widest uppercase opacity-60">Works on any device</p>
+            <div className="flex gap-6 text-white/80">
+              {["Install as App", "No App Store", "Offline Ready"].map((label) => (
+                <div key={label} className="flex flex-col items-center gap-1">
+                  <span className="text-[11px] font-semibold">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Footer ── */}
-      <footer className="bg-gray-900 py-8">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-5 h-5 rounded-md bg-brand-600 flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="currentColor">
-                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z" />
-              </svg>
-            </div>
-            <span className="text-white font-bold text-sm">GC Carpool</span>
+      <footer
+        className="py-20 px-6 md:px-16 border-t"
+        style={{ background: C.surfaceContainerLowest, borderColor: C.outlineVariant + "33" }}
+      >
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+          {/* Brand */}
+          <div className="max-w-xs">
+            <span
+              className="text-2xl font-extrabold tracking-tight mb-4 block"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }}
+            >
+              GC Ridepool
+            </span>
+            <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
+              The fixed-fare carpooling app built for Gaur City ↔ HCL commuters.
+              Fast, secure, and community-run.
+            </p>
           </div>
-          <p className="text-xs text-gray-500">GaurCity ↔ HCL Tech Park · Built for the community</p>
+
+          {/* Links */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-20">
+            {[
+              { heading: "Product", links: ["Find a Ride", "Offer a Ride", "How It Works", "Community Chat"] },
+              { heading: "Privacy", links: ["Privacy Policy", "Terms of Service", "Data Safety"] },
+              { heading: "App", links: ["Install as PWA", "Add to Home Screen", "Works Offline"] },
+            ].map((col) => (
+              <div key={col.heading} className="flex flex-col gap-3">
+                <span className="font-bold text-xs tracking-widest uppercase" style={{ color: C.outline }}>
+                  {col.heading}
+                </span>
+                {col.links.map((link) => (
+                  <span
+                    key={link}
+                    className="text-sm cursor-default hover:text-blue-800 transition-colors"
+                    style={{ color: C.onSurfaceVariant }}
+                  >
+                    {link}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          className="max-w-7xl mx-auto mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-3"
+          style={{ borderColor: C.outlineVariant + "22" }}
+        >
+          <span className="text-xs" style={{ color: C.outline }}>© 2025 GC Ridepool. Built for the Gaur City community.</span>
+          <span className="text-xs" style={{ color: C.outline }}>Gaur City 1 &amp; 2 · Sector 16B · HCL Tech Park, Noida</span>
         </div>
       </footer>
 
