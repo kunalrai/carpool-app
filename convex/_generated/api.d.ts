@@ -16,6 +16,7 @@ import type * as chat from "../chat.js";
 import type * as crons from "../crons.js";
 import type * as directMessages from "../directMessages.js";
 import type * as listings from "../listings.js";
+import type * as rideMessages from "../rideMessages.js";
 import type * as users from "../users.js";
 
 import type {
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   directMessages: typeof directMessages;
   listings: typeof listings;
+  rideMessages: typeof rideMessages;
   users: typeof users;
 }>;
 
