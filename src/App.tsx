@@ -15,6 +15,9 @@ import DirectChatScreen from "./screens/DirectChatScreen";
 import RideGroupChatScreen from "./screens/RideGroupChatScreen";
 import CallScreen from "./screens/CallScreen";
 import LandingPage from "./screens/LandingPage";
+import PrivacyPolicy from "./screens/PrivacyPolicy";
+import TermsOfService from "./screens/TermsOfService";
+import DataSafety from "./screens/DataSafety";
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -109,6 +112,11 @@ function AppRoutes() {
         element={userId ? <Navigate to="/home" replace /> : <LandingPage />}
       />
 
+      {/* Legal pages — full-width, public */}
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/data-safety" element={<DataSafety />} />
+
       {/* Default */}
       <Route path="*" element={<Navigate to={userId ? "/home" : "/"} replace />} />
     </Routes>
@@ -118,7 +126,8 @@ function AppRoutes() {
 /** Applies the mobile-frame constraint for all app screens, but not the landing page. */
 function AppShell() {
   const location = useLocation();
-  const isLanding = location.pathname === "/";
+  const fullWidthRoutes = ["/", "/privacy", "/terms", "/data-safety"];
+  const isLanding = fullWidthRoutes.includes(location.pathname);
 
   if (isLanding) {
     return <AppRoutes />;

@@ -395,23 +395,51 @@ export default function LandingPage() {
           {/* Links */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-20">
             {[
-              { heading: "Product", links: ["Find a Ride", "Offer a Ride", "How It Works", "Community Chat"] },
-              { heading: "Privacy", links: ["Privacy Policy", "Terms of Service", "Data Safety"] },
-              { heading: "App", links: ["Install as PWA", "Add to Home Screen", "Works Offline"] },
+              {
+                heading: "Product",
+                items: [
+                  { label: "Find a Ride", to: null },
+                  { label: "Offer a Ride", to: null },
+                  { label: "How It Works", to: null },
+                ],
+              },
+              {
+                heading: "Privacy",
+                items: [
+                  { label: "Privacy Policy", to: "/privacy" },
+                  { label: "Terms of Service", to: "/terms" },
+                  { label: "Data Safety", to: "/data-safety" },
+                ],
+              },
+              {
+                heading: "App",
+                items: [
+                  { label: "Install as PWA", to: null },
+                  { label: "Add to Home Screen", to: null },
+                  { label: "Works Offline", to: null },
+                ],
+              },
             ].map((col) => (
               <div key={col.heading} className="flex flex-col gap-3">
                 <span className="font-bold text-xs tracking-widest uppercase" style={{ color: C.outline }}>
                   {col.heading}
                 </span>
-                {col.links.map((link) => (
-                  <span
-                    key={link}
-                    className="text-sm cursor-default hover:text-blue-800 transition-colors"
-                    style={{ color: C.onSurfaceVariant }}
-                  >
-                    {link}
-                  </span>
-                ))}
+                {col.items.map(({ label, to }) =>
+                  to ? (
+                    <button
+                      key={label}
+                      onClick={() => navigate(to)}
+                      className="text-sm text-left hover:text-blue-800 transition-colors"
+                      style={{ color: C.onSurfaceVariant }}
+                    >
+                      {label}
+                    </button>
+                  ) : (
+                    <span key={label} className="text-sm" style={{ color: C.onSurfaceVariant }}>
+                      {label}
+                    </span>
+                  )
+                )}
               </div>
             ))}
           </div>
