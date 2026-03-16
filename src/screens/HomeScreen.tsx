@@ -90,16 +90,30 @@ function DriverBanner({
       </div>
 
       {/* Seats row */}
-      <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 mb-4">
-        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="9" cy="7" r="3" />
-          <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-          <circle cx="17" cy="7" r="3" />
-          <path d="M21 21v-2a4 4 0 00-3-3.87" />
-        </svg>
-        <span className="text-sm font-medium text-white">
-          {started ? "Ride in progress" : `${filled} of ${listing.totalSeats} seats filled`}
-        </span>
+      <div className="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2 mb-4">
+        <div className="flex items-center gap-2">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="9" cy="7" r="3" />
+            <path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+            <circle cx="17" cy="7" r="3" />
+            <path d="M21 21v-2a4 4 0 00-3-3.87" />
+          </svg>
+          <span className="text-sm font-medium text-white">
+            {started ? "Ride in progress" : `${filled} of ${listing.totalSeats} seats filled`}
+          </span>
+        </div>
+        {filled > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/ride-chat/${listing._id}`); }}
+            className="flex items-center gap-1.5 text-white text-xs font-semibold active:opacity-70 bg-white/20 px-2.5 py-1.5 rounded-xl"
+          >
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+              <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
+            </svg>
+            Group Chat
+          </button>
+        )}
       </div>
 
       {/* Action buttons */}
@@ -178,7 +192,7 @@ function RiderBanner({
       </div>
 
       {/* Driver info */}
-      <div className="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2 mb-4">
+      <div className="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2 mb-3">
         <div>
           <p className="text-sm font-semibold text-white">{driver?.name ?? "Driver"}</p>
           {driver?.carName && (
@@ -191,15 +205,27 @@ function RiderBanner({
               e.stopPropagation();
               navigate(`/dm/${booking.listingId}/${listing.driverId}`);
             }}
-            className="flex items-center gap-1.5 text-white text-sm font-semibold active:opacity-70 bg-white/20 px-3 py-1.5 rounded-xl"
+            className="flex items-center gap-1.5 text-white text-xs font-semibold active:opacity-70 bg-white/20 px-2.5 py-1.5 rounded-xl"
           >
-            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
             </svg>
-            Chat
+            Driver
           </button>
         )}
       </div>
+
+      {/* Group chat */}
+      <button
+        onClick={(e) => { e.stopPropagation(); navigate(`/ride-chat/${booking.listingId}`); }}
+        className="w-full flex items-center justify-center gap-2 text-white text-sm font-semibold bg-white/10 py-2 rounded-xl mb-3 active:bg-white/20"
+      >
+        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+          <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
+        </svg>
+        Group Chat
+      </button>
 
       {/* Action */}
       <div>

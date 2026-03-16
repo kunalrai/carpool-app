@@ -12,6 +12,7 @@ import ListingDetailScreen from "./screens/ListingDetailScreen";
 import MyListingScreen from "./screens/MyListingScreen";
 import ChatScreen from "./screens/ChatScreen";
 import DirectChatScreen from "./screens/DirectChatScreen";
+import RideGroupChatScreen from "./screens/RideGroupChatScreen";
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -96,6 +97,7 @@ function AppRoutes() {
       <Route path="/listing/:id" element={<PrivateRoute><ListingDetailScreen /></PrivateRoute>} />
       <Route path="/my-listing" element={<PrivateRoute><MyListingScreen /></PrivateRoute>} />
       <Route path="/dm/:listingId/:otherUserId" element={<PrivateRoute><DirectChatScreen /></PrivateRoute>} />
+      <Route path="/ride-chat/:listingId" element={<PrivateRoute><RideGroupChatScreen /></PrivateRoute>} />
 
       {/* Default */}
       <Route path="*" element={<Navigate to={userId ? "/home" : "/login"} replace />} />

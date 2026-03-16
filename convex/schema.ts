@@ -81,6 +81,18 @@ export default defineSchema({
     .index("by_rider_status", ["riderId", "status"]),
 
   /**
+   * rideMessages — group chat for all participants of a specific ride.
+   * Only the driver and confirmed riders can read and send.
+   */
+  rideMessages: defineTable({
+    listingId: v.id("listings"),
+    senderId: v.id("users"),
+    text: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_listing_time", ["listingId", "createdAt"]),
+
+  /**
    * directMessages — private 1-on-1 messages between a driver and a rider
    * scoped to a specific listing (ride context).
    */

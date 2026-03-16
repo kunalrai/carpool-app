@@ -228,14 +228,28 @@ export default function MyListingScreen() {
 
           {/* Riders list */}
           <div className="card">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Confirmed Riders
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Confirmed Riders
+                {riders && riders.length > 0 && (
+                  <span className="ml-2 bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded-full text-xs">
+                    {riders.length}
+                  </span>
+                )}
+              </p>
               {riders && riders.length > 0 && (
-                <span className="ml-2 bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded-full text-xs">
-                  {riders.length}
-                </span>
+                <button
+                  onClick={() => navigate(`/ride-chat/${listing._id}`)}
+                  className="flex items-center gap-1.5 text-brand-700 text-xs font-semibold bg-brand-50 px-3 py-1.5 rounded-xl active:bg-brand-100"
+                >
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+                    <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
+                  </svg>
+                  Group Chat
+                </button>
               )}
-            </p>
+            </div>
 
             {riders === undefined ? (
               <div className="space-y-2 animate-pulse">
