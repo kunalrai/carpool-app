@@ -79,4 +79,19 @@ export default defineSchema({
     .index("by_rider", ["riderId"])
     .index("by_listing_rider", ["listingId", "riderId"])
     .index("by_rider_status", ["riderId", "status"]),
+
+  /**
+   * directMessages — private 1-on-1 messages between a driver and a rider
+   * scoped to a specific listing (ride context).
+   */
+  directMessages: defineTable({
+    listingId: v.id("listings"),
+    senderId: v.id("users"),
+    receiverId: v.id("users"),
+    text: v.string(),
+    createdAt: v.number(),
+    read: v.boolean(),
+  })
+    .index("by_listing", ["listingId"])
+    .index("by_receiver_read", ["receiverId", "read"]),
 });

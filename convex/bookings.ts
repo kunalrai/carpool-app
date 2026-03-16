@@ -1,5 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Doc } from "./_generated/dataModel";
+
+function sanitizeUser(user: Doc<"users"> | null) {
+  if (!user) return null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { mobile: _m, fcmToken: _f, ...safe } = user;
+  return safe;
+}
 
 export const getMyBooking = query({
   args: { userId: v.id("users") },
@@ -24,7 +32,7 @@ export const getMyBooking = query({
     ) return null;
 
     const driver = await ctx.db.get(listing.driverId);
-    return { ...booking, listing: { ...listing, driver } };
+    return { ...booking, listing: { ...listing, driver: sanitizeUser(driver) } };
   },
 });
 

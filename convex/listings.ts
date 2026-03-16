@@ -1,5 +1,14 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { Doc } from "./_generated/dataModel";
+
+/** Strip sensitive fields before returning a user object to other users. */
+function sanitizeUser(user: Doc<"users"> | null) {
+  if (!user) return null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { mobile: _m, fcmToken: _f, ...safe } = user;
+  return safe;
+}
 
 // Internal mutation called by cron every 5 min — patches open/full listings
 // that are past departureTime + 60 min to 'expired' so reactive queries
@@ -78,7 +87,7 @@ export const getActiveListings = query({
     const withDriver = await Promise.all(
       active.map(async (listing) => {
         const driver = await ctx.db.get(listing.driverId);
-        return { ...listing, driver };
+        return { ...listing, driver: sanitizeUser(driver) };
       })
     );
 
@@ -112,7 +121,7 @@ export const getListingById = query({
     const listing = await ctx.db.get(listingId);
     if (!listing) return null;
     const driver = await ctx.db.get(listing.driverId);
-    return { ...listing, driver };
+    return { ...listing, driver: sanitizeUser(driver) };
   },
 });
 
@@ -129,7 +138,7 @@ export const getListingRiders = query({
     return await Promise.all(
       confirmed.map(async (booking) => {
         const rider = await ctx.db.get(booking.riderId);
-        return { ...booking, rider };
+        return { ...booking, rider: sanitizeUser(rider) };
       })
     );
   },
