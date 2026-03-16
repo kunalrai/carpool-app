@@ -27,14 +27,6 @@ function glassNav(): React.CSSProperties {
 
 // ── Components ────────────────────────────────────────────────────────────
 
-function CarIcon({ size = 20, color = "currentColor" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
-      <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
-    </svg>
-  );
-}
-
 // ── Main ──────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
@@ -172,7 +164,7 @@ export default function LandingPage() {
               className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
             >
-              Engineered for<br />your commute.
+              Engineered for<br />Professionalism.
             </h2>
             <p className="max-w-md text-base" style={{ color: C.onSurfaceVariant }}>
               Why Gaur City residents trust GC Ridepool every morning.
@@ -180,41 +172,44 @@ export default function LandingPage() {
           </div>
 
           {/* Bento grid */}
-          <div className="grid grid-cols-12 gap-5" style={{ minHeight: "420px" }}>
+          <div className="grid grid-cols-12 gap-5">
             {/* Large card — Real-Time Listings */}
             <div
-              className="col-span-12 md:col-span-7 p-10 md:p-12 flex flex-col justify-end relative overflow-hidden group"
-              style={{ background: C.surfaceContainerLowest, borderRadius: "9999px" }}
+              className="col-span-12 md:col-span-7 p-10 md:p-12 flex flex-col justify-end relative overflow-hidden group min-h-[260px]"
+              style={{ background: C.surfaceContainerLowest, borderRadius: "2rem" }}
             >
-              <div className="absolute top-6 right-8 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-                <svg width="120" height="120" viewBox="0 0 24 24" fill={C.primary}>
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 14.5h-1v-7l-3 2.28-.72-.99 4-3.03 4 3.03-.72.99-2.56-1.94v6.66z" />
+              {/* Large decorative shield icon, right side */}
+              <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-[0.12] group-hover:opacity-[0.2] transition-opacity pointer-events-none">
+                <svg width="160" height="160" viewBox="0 0 24 24" fill={C.primary}>
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
                 </svg>
               </div>
               <span
                 className="px-3 py-1 rounded-full text-xs font-bold w-fit mb-4"
                 style={{ background: C.tertiaryFixed, color: C.onTertiaryFixed }}
               >
-                LIVE UPDATES
+                PRIVACY FIRST
               </span>
               <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
                 Real-Time Listings
               </h3>
               <p className="max-w-sm text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
                 See rides the moment drivers post them. No refreshing, no delays —
-                Convex powers instant live updates to every rider simultaneously.
+                instant live updates to every rider simultaneously.
               </p>
             </div>
 
             {/* Blue card — Fixed Fare */}
             <div
-              className="col-span-12 md:col-span-5 p-10 md:p-12 flex flex-col justify-center relative overflow-hidden"
-              style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)`, borderRadius: "9999px" }}
+              className="col-span-12 md:col-span-5 p-10 md:p-12 flex flex-col justify-center relative overflow-hidden min-h-[260px]"
+              style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)`, borderRadius: "2rem" }}
             >
               <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full blur-2xl" style={{ background: "rgba(255,255,255,0.08)" }} />
-              <CarIcon size={36} color="rgba(255,255,255,0.8)" />
-              <h3 className="text-2xl md:text-3xl font-bold mt-5 mb-3 text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              {/* Clock icon at top */}
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)" className="mb-6">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 11h-5v-2h3V7h2v6z" />
+              </svg>
+              <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 Always ₹80
               </h3>
               <p className="text-white/75 text-sm leading-relaxed">
@@ -223,45 +218,55 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Small card — Private & Secure */}
+            {/* Small card — Eco-friendly / PWA */}
             <div
-              className="col-span-12 md:col-span-4 p-10 flex flex-col items-center text-center justify-center"
-              style={{ background: C.surfaceContainerHigh, borderRadius: "9999px" }}
+              className="col-span-12 md:col-span-4 p-10 flex flex-col items-center text-center justify-center min-h-[220px]"
+              style={{ background: C.surfaceContainerHigh, borderRadius: "2rem" }}
             >
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7b2600" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="mb-4">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              {/* Leaf icon */}
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="#7b2600" className="mb-4">
+                <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 2-8 2-.93 0-1.83.09-2.7.26C13.67 4.08 16 2 16 2s-6 1-9 7c-.75 1.46-1.26 3.14-1.63 4.84C4.78 10.4 3 7.83 3 4.9V3L1 5c0 5.52 3.47 10.26 8.38 12.09A8.5 8.5 0 0117 8z" />
               </svg>
               <h3 className="text-xl font-bold mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
-                Private & Secure
+                Eco-Friendly
               </h3>
               <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-                OTP login only. Phone numbers are never shown to other users.
+                Fewer cars on the road, shared by neighbours going the same way.
               </p>
             </div>
 
-            {/* Wide card — Group Chat + Voice */}
+            {/* Wide card — Trusted Community */}
             <div
-              className="col-span-12 md:col-span-8 p-8 md:px-14 flex items-center gap-8"
-              style={{ background: C.secondaryContainer, borderRadius: "9999px" }}
+              className="col-span-12 md:col-span-8 p-8 md:px-14 flex items-center gap-8 min-h-[220px]"
+              style={{ background: C.secondaryContainer, borderRadius: "2rem" }}
             >
-              <div className="flex -space-x-3 shrink-0">
-                {["💬", "📞", "🔔"].map((emoji, i) => (
+              {/* Stacked avatar circles with counter */}
+              <div className="flex -space-x-4 shrink-0">
+                {["AK", "SR", "PM"].map((initials, i) => (
                   <div
                     key={i}
-                    className="w-14 h-14 rounded-full border-4 flex items-center justify-center text-xl font-bold"
-                    style={{ borderColor: C.secondaryContainer, background: C.surfaceContainerLowest }}
+                    className="w-14 h-14 rounded-full border-4 flex items-center justify-center text-xs font-bold text-white"
+                    style={{
+                      borderColor: C.secondaryContainer,
+                      background: [C.primary, "#1d4ed8", "#1e40af"][i],
+                    }}
                   >
-                    {emoji}
+                    {initials}
                   </div>
                 ))}
+                <div
+                  className="w-14 h-14 rounded-full border-4 flex items-center justify-center text-xs font-bold text-white"
+                  style={{ borderColor: C.secondaryContainer, background: C.primary }}
+                >
+                  500+
+                </div>
               </div>
               <div>
                 <h3 className="text-xl font-bold mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
-                  Group Chat + Voice Calls
+                  Trusted Community
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: C.onSecondaryContainer }}>
-                  Every ride gets a private group chat. Call your driver or co-riders
-                  with internet voice — no numbers shared.
+                  Join the network of Gaur City residents sharing the daily HCL commute. Verified by OTP.
                 </p>
               </div>
             </div>
