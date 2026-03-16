@@ -66,13 +66,13 @@ export default defineSchema({
 
   /**
    * bookings — a rider's seat reservation on a listing
-   * status: confirmed → cancelled
+   * status: confirmed → cancelled | completed (set when ride ends or expires)
    * One active (confirmed) booking per rider at a time is enforced in mutations.
    */
   bookings: defineTable({
     listingId: v.id("listings"),
     riderId: v.id("users"),
-    status: v.union(v.literal("confirmed"), v.literal("cancelled")),
+    status: v.union(v.literal("confirmed"), v.literal("cancelled"), v.literal("completed")),
     joinedAt: v.number(),
   })
     .index("by_listing", ["listingId"])

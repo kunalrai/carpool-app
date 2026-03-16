@@ -27,6 +27,21 @@ export const expireListings = internalMutation({
       .collect();
     const expired = [...open, ...full].filter((l) => l.departureTime < cutoff);
     await Promise.all(expired.map((l) => ctx.db.patch(l._id, { status: "expired" })));
+
+    // Mark all confirmed bookings on expired listings as completed
+    await Promise.all(
+      expired.map(async (l) => {
+        const bookings = await ctx.db
+          .query("bookings")
+          .withIndex("by_listing", (q) => q.eq("listingId", l._id))
+          .collect();
+        await Promise.all(
+          bookings
+            .filter((b) => b.status === "confirmed")
+            .map((b) => ctx.db.patch(b._id, { status: "completed" }))
+        );
+      })
+    );
   },
 });
 
@@ -265,5 +280,16 @@ export const endRide = mutation({
     if (listing.status !== "started") throw new Error("Ride is not in progress");
 
     await ctx.db.patch(listingId, { status: "completed" });
+
+    // Mark all confirmed bookings as completed
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_listing", (q) => q.eq("listingId", listingId))
+      .collect();
+    await Promise.all(
+      bookings
+        .filter((b) => b.status === "confirmed")
+        .map((b) => ctx.db.patch(b._id, { status: "completed" }))
+    );
   },
 });
