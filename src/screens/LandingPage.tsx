@@ -99,12 +99,12 @@ export default function LandingPage() {
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
           >
             Gaur City to HCL.<br />
-            <span style={{ color: C.primary }}>Fixed ₹80.</span>
+            <span style={{ color: C.primary }}>Share the ride.</span>
           </h1>
 
           <p className="text-lg md:text-xl mb-10 max-w-xl leading-relaxed" style={{ color: C.onSurfaceVariant }}>
             The professional commute network built for Gaur City residents.
-            Post a ride, claim a seat, and split the daily trip — no surge, no hidden fees.
+            Post a ride, claim a seat, and split the daily trip with your neighbours.
           </p>
 
           {/* Booking widget */}
@@ -113,11 +113,6 @@ export default function LandingPage() {
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Route</span>
                 <span className="font-semibold text-sm" style={{ color: C.onSurface }}>Gaur City → HCL Tech Park</span>
-              </div>
-              <div className="w-px h-8 mx-2 hidden sm:block" style={{ background: C.outlineVariant + "55" }} />
-              <div className="flex flex-col hidden sm:flex">
-                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Price</span>
-                <span className="font-bold" style={{ color: C.primary }}>₹80.00</span>
               </div>
             </div>
             <button
@@ -136,7 +131,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[
             { val: "2,000+", label: "Active Riders" },
-            { val: "₹80", label: "Always Fixed Fare" },
+            { val: "4", label: "Seats Per Ride" },
             { val: "₹0", label: "App Fees Ever" },
           ].map((s) => (
             <div
@@ -199,7 +194,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Blue card — Fixed Fare */}
+            {/* Blue card — Always Punctual */}
             <div
               className="col-span-12 md:col-span-5 p-10 md:p-12 flex flex-col justify-center relative overflow-hidden min-h-[260px]"
               style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)`, borderRadius: "2rem" }}
@@ -210,11 +205,11 @@ export default function LandingPage() {
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 11h-5v-2h3V7h2v6z" />
               </svg>
               <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Always ₹80
+                Always Punctual
               </h3>
               <p className="text-white/75 text-sm leading-relaxed">
-                One price. Always. No surge pricing, no booking commission.
-                Pay your driver directly in cash when you board.
+                Drivers post their departure time and riders join instantly.
+                Coordinate via group chat so everyone is ready on time.
               </p>
             </div>
 
@@ -303,7 +298,7 @@ export default function LandingPage() {
             {[
               { num: "01", title: "Sign Up", desc: "Enter your mobile, verify with an OTP. Your account is ready in 30 seconds — no password ever.", offset: "" },
               { num: "02", title: "Post or Join", desc: "Drivers post departure time and seats. Riders browse the live feed and claim a seat instantly.", offset: "md:translate-y-4" },
-              { num: "03", title: "Ride & Chat", desc: "Coordinate via group chat or voice call inside the app. Pay ₹80 to your driver when you board.", offset: "md:translate-y-8" },
+              { num: "03", title: "Ride & Chat", desc: "Coordinate via group chat or voice call inside the app. Pay your driver directly when you board.", offset: "md:translate-y-8" },
             ].map((s) => (
               <div
                 key={s.num}
@@ -392,7 +387,7 @@ export default function LandingPage() {
               GC Ridepool
             </span>
             <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-              The fixed-fare carpooling app built for Gaur City ↔ HCL commuters.
+              The carpooling app built for Gaur City ↔ HCL commuters.
               Fast, secure, and community-run.
             </p>
           </div>
