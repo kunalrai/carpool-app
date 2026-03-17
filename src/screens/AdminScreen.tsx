@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "../contexts/AuthContext";
@@ -315,6 +316,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 // ── Main Screen ───────────────────────────────────────────────────────────
 export default function AdminScreen() {
   const { userId } = useAuth();
+  const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -334,6 +336,22 @@ export default function AdminScreen() {
         <p className="text-brand-200 text-xs">
           {users === undefined ? "Loading…" : `${users.length} user${users.length !== 1 ? "s" : ""} registered`}
         </p>
+      </div>
+
+      {/* Quick links */}
+      <div className="px-4 pt-3">
+        <button
+          onClick={() => navigate("/admin/blog")}
+          className="w-full flex items-center justify-between bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 mb-1"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✍️</span>
+            <span className="text-sm font-semibold text-brand-700">Blog Management</span>
+          </div>
+          <svg viewBox="0 0 24 24" className="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
       </div>
 
       {/* Search */}

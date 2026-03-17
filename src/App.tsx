@@ -18,6 +18,9 @@ import LandingPage from "./screens/LandingPage";
 import PrivacyPolicy from "./screens/PrivacyPolicy";
 import TermsOfService from "./screens/TermsOfService";
 import DataSafety from "./screens/DataSafety";
+import BlogsPage from "./screens/BlogsPage";
+import BlogPostPage from "./screens/BlogPostPage";
+import AdminBlogScreen from "./screens/AdminBlogScreen";
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -117,6 +120,13 @@ function AppRoutes() {
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/data-safety" element={<DataSafety />} />
 
+      {/* Blog — full-width, public */}
+      <Route path="/blog" element={<BlogsPage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
+
+      {/* Admin blog management */}
+      <Route path="/admin/blog" element={<AdminRoute><AdminBlogScreen /></AdminRoute>} />
+
       {/* Default */}
       <Route path="*" element={<Navigate to={userId ? "/home" : "/"} replace />} />
     </Routes>
@@ -126,8 +136,8 @@ function AppRoutes() {
 /** Applies the mobile-frame constraint for all app screens, but not the landing page. */
 function AppShell() {
   const location = useLocation();
-  const fullWidthRoutes = ["/", "/privacy", "/terms", "/data-safety"];
-  const isLanding = fullWidthRoutes.includes(location.pathname);
+  const fullWidthPrefixes = ["/privacy", "/terms", "/data-safety", "/blog", "/admin/blog"];
+  const isLanding = location.pathname === "/" || fullWidthPrefixes.some((p) => location.pathname.startsWith(p));
 
   if (isLanding) {
     return <AppRoutes />;

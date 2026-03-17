@@ -96,6 +96,26 @@ export default defineSchema({
    * directMessages — private 1-on-1 messages between a driver and a rider
    * scoped to a specific listing (ride context).
    */
+  /**
+   * blogs — admin-authored articles visible on the public /blog page.
+   * status: 'draft' (admin only) | 'published' (public)
+   */
+  blogs: defineTable({
+    title: v.string(),
+    slug: v.string(),            // URL-friendly, unique
+    excerpt: v.string(),         // short summary shown in list view
+    content: v.string(),         // full body (plain text, paragraph-separated by \n\n)
+    authorId: v.id("users"),
+    coverEmoji: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    status: v.union(v.literal("draft"), v.literal("published")),
+    publishedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_slug", ["slug"]),
+
   directMessages: defineTable({
     listingId: v.id("listings"),
     senderId: v.id("users"),

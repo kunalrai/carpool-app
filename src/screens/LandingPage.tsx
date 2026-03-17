@@ -45,10 +45,14 @@ export default function LandingPage() {
             GC Ridepool
           </span>
           <div className="hidden md:flex items-center gap-6">
-            {["Find a Ride", "Offer a Ride", "How It Works"].map((label) => (
+            {[
+              { label: "Find a Ride", action: () => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" }) },
+              { label: "How It Works", action: () => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" }) },
+              { label: "Blog", action: () => navigate("/blog") },
+            ].map(({ label, action }) => (
               <button
                 key={label}
-                onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
+                onClick={action}
                 style={{ color: C.onSurfaceVariant }}
                 className="hover:text-blue-800 font-medium text-sm transition-colors"
               >
@@ -401,6 +405,7 @@ export default function LandingPage() {
                   { label: "Find a Ride", to: null },
                   { label: "Offer a Ride", to: null },
                   { label: "How It Works", to: null },
+                  { label: "Blog", to: "/blog" },
                 ],
               },
               {

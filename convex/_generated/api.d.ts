@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
+import type * as blogs from "../blogs.js";
 import type * as bookings from "../bookings.js";
 import type * as calls from "../calls.js";
 import type * as chat from "../chat.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   ai: typeof ai;
   auth: typeof auth;
+  blogs: typeof blogs;
   bookings: typeof bookings;
   calls: typeof calls;
   chat: typeof chat;
