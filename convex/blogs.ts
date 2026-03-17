@@ -45,15 +45,15 @@ That's ₹48,000 a year. On commuting alone. It was nearly 15% of my take-home s
 
 ## A Colleague Mentioned GC Ridepool
 
-In October, a colleague Saurabh — who lives in GC1 — mentioned he'd been using an app called GC Ridepool. He said he just paid the driver directly, no commission, no platform cut.
+In October, a colleague Saurabh — who lives in GC1 — mentioned he'd been using an app called GC Ridepool. He said he just paid the car owner directly, no commission, no platform cut.
 
-I signed up that evening. OTP login, done in 30 seconds. The next morning I opened the app at 8:10 and saw three rides already listed for 8:30. I joined one. The driver — Ramesh bhai, a GC2 resident who works at the same HCL campus — picked me up right outside my building gate.
+I signed up that evening. OTP login, done in 30 seconds. The next morning I opened the app at 8:10 and saw three rides already listed for 8:30. I joined one. The car owner — Ramesh bhai, a GC2 resident who works at the same HCL campus — picked me up right outside my building gate.
 
 We had four people in the car. Everyone split the cost. I paid ₹200 for the week. The entire week.
 
 ## What Changed
 
-The group chat feature was the real surprise. Our ride group has five of us now — we coordinate every morning in the app without sharing phone numbers. If someone is running late, they drop a message. If the driver has a day off, we rearrange. It works like a well-oiled machine.
+The group chat feature was the real surprise. Our ride group has five of us now — we coordinate every morning in the app without sharing phone numbers. If someone is running late, they drop a message. If the car owner has a day off, we rearrange. It works like a well-oiled machine.
 
 Voice calls inside the app meant I never had to share my personal number with strangers, which I was uncomfortable with before.
 
@@ -71,7 +71,7 @@ That's ₹38,400 saved per year. I used that money to finally buy myself a decen
 
 If you live in Gaur City and work anywhere near the HCL or sector 62 belt, you are almost certainly overpaying for your commute. The infrastructure exists — your neighbours are already driving the same route every single day. You just need a way to connect.
 
-GC Ridepool is that way. It took me one OTP and three taps to book my first ride. The community is professional, the drivers are punctual (our group chat keeps everyone honest), and there are zero platform fees.
+GC Ridepool is that way. It took me one OTP and three taps to book my first ride. The community is professional, the car owners are punctual (our group chat keeps everyone honest), and there are zero platform fees.
 
 The only thing I regret is not joining sooner.`,
       coverEmoji: "🚗",
@@ -104,7 +104,7 @@ export const seedFourArticles = mutation({
         slug: "5-tips-for-a-perfect-carpool-experience",
         title: "5 Tips for a Perfect Carpool Experience",
         excerpt:
-          "Carpooling works best when everyone plays their part. Whether you're a driver or a rider, these five habits will make every commute smoother for the whole group.",
+          "Carpooling works best when everyone plays their part. Whether you're a car owner or a rider, these five habits will make every commute smoother for the whole group.",
         coverEmoji: "💡",
         tags: ["tips", "carpool", "commute", "etiquette"],
         content: `## Why Etiquette Matters in a Carpool
@@ -113,9 +113,9 @@ A carpool is more than a shared cab — it is a small community that meets every
 
 Here are five habits that the best carpoolers in our GC Ridepool community follow consistently.
 
-## Tip 1: Be Ready Before the Driver Arrives
+## Tip 1: Be Ready Before the Car Owner Arrives
 
-The golden rule. If the listing says 8:30 AM, be at your pickup point by 8:25. The driver is not a cab — they cannot circle the block waiting. Every minute you cost the driver is a minute taken from four other people's mornings.
+The golden rule. If the listing says 8:30 AM, be at your pickup point by 8:25. The car owner is not a cab — they cannot circle the block waiting. Every minute you cost the car owner is a minute taken from four other people's mornings.
 
 Use the in-app group chat to let the group know if you are running late. A 60-second message saves everyone ten minutes of uncertainty.
 
@@ -127,19 +127,19 @@ Never ask co-riders for their personal number. If someone is not responding, use
 
 ## Tip 3: Keep the Car Clean
 
-Treat the driver's car like you'd want a guest to treat your home. No food with strong smells, no leaving wrappers behind, no muddy shoes on the seats. If you are unwell, book a different ride for the day.
+Treat the car owner's car like you'd want a guest to treat your home. No food with strong smells, no leaving wrappers behind, no muddy shoes on the seats. If you are unwell, book a different ride for the day.
 
-A quick "thank you" to the driver goes a long way too.
+A quick "thank you" to the car owner goes a long way too.
 
 ## Tip 4: Cancel Early If You Cannot Make It
 
-Life happens — late nights, sick days, work-from-home. If you know the evening before that you won't need the ride, cancel your booking so the driver can adjust. Last-minute cancellations leave empty seats and frustrated drivers.
+Life happens — late nights, sick days, work-from-home. If you know the evening before that you won't need the ride, cancel your booking so the car owner can adjust. Last-minute cancellations leave empty seats and frustrated car owners.
 
 The app makes cancellation a single tap. Use it.
 
 ## Tip 5: Pay Promptly and Accurately
 
-Agree on the split before the ride or follow whatever the group has settled on. Pay in cash at the end of the ride without the driver having to ask. If you owe money from a previous day, clear it the next morning.
+Agree on the split before the ride or follow whatever the group has settled on. Pay in cash at the end of the ride without the car owner having to ask. If you owe money from a previous day, clear it the next morning.
 
 Awkward payment conversations are the fastest way to sour a good carpool group.
 
@@ -176,11 +176,11 @@ The carpool wins on cost by a wide margin. Even on the worst month, it is a frac
 
 ## Reliability
 
-Cabs score well here — you can always book one, even at midnight. But for a fixed daily commute at a predictable time, reliability means something different. It means your driver is already coming your way and has committed to picking you up.
+Cabs score well here — you can always book one, even at midnight. But for a fixed daily commute at a predictable time, reliability means something different. It means your car owner is already coming your way and has committed to picking you up.
 
-In a well-organised carpool group, reliability is actually higher than cabs because the driver is going to the same destination anyway. They have skin in the game.
+In a well-organised carpool group, reliability is actually higher than cabs because the car owner is going to the same destination anyway. They have skin in the game.
 
-Auto-rickshaws are the least reliable — availability is weather-dependent, and drivers frequently refuse short routes.
+Auto-rickshaws are the least reliable — availability is weather-dependent, and auto drivers frequently refuse short routes.
 
 ## Comfort
 
@@ -243,17 +243,17 @@ Individual actions feel small against a city-scale problem. But carpooling is on
 You save money and the city breathes a little easier. That is a trade worth making every morning.`,
       },
       {
-        slug: "how-to-be-a-great-carpool-driver-gc-ridepool",
-        title: "How to Be a Great Carpool Driver on GC Ridepool",
+        slug: "how-to-be-a-great-car-owner-gc-ridepool",
+        title: "How to Be a Great Car Owner on GC Ridepool",
         excerpt:
-          "Drivers are the backbone of the GC Ridepool community. Here is everything you need to know to build a loyal group of riders and make your commute pay for itself.",
+          "Car owners are the backbone of the GC Ridepool community. Here is everything you need to know to build a loyal group of riders and make your commute pay for itself.",
         coverEmoji: "🤝",
-        tags: ["drivers", "guide", "tips", "community"],
+        tags: ["car owners", "guide", "tips", "community"],
         content: `## Why Driving Is Worth It
 
 When you post a ride on GC Ridepool, you are already making this commute. The car is going to HCL regardless. Every rider who joins shares the fuel cost, the toll, and the wear on your vehicle — without you having to go a single metre out of your way.
 
-With a full car of four riders, many drivers find that their daily commute costs them nothing at all.
+With a full car of four riders, many car owners find that their daily commute costs them nothing at all.
 
 ## Setting Up a Great Listing
 
@@ -295,7 +295,7 @@ Keep a simple weekly or monthly tally if the group prefers it that way. Some gro
 
 ## The Reward Beyond Money
 
-The most experienced drivers on GC Ridepool say the same thing: after a few weeks, the carpool becomes the best part of the commute. You arrive at work having already spoken to colleagues, shared the news, and had a laugh. Compare that to 40 minutes alone in traffic.
+The most experienced car owners on GC Ridepool say the same thing: after a few weeks, the carpool becomes the best part of the commute. You arrive at work having already spoken to colleagues, shared the news, and had a laugh. Compare that to 40 minutes alone in traffic.
 
 Post your first ride. The community is waiting.`,
       },
