@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
-
-type Direction = "GC_TO_HCL" | "HCL_TO_GC";
+import LocationInput from "../components/LocationInput";
+import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -28,16 +28,17 @@ export default function PostRideScreen() {
   const { userId } = useAuth();
   const { state } = useLocation() as {
     state?: {
-      direction?: "GC_TO_HCL" | "HCL_TO_GC";
       departureTime?: string; // "HH:MM" 24h
       seats?: number;
       pickupPoint?: string;
     } | null;
   };
 
-  const [direction, setDirection] = useState<Direction>(state?.direction ?? "GC_TO_HCL");
-  const [timeValue, setTimeValue] = useState(state?.departureTime ?? ""); // "HH:MM" 24h
+  const [fromPlace, setFromPlace] = useState<PlaceResult | null>(null);
+  const [toPlace, setToPlace] = useState<PlaceResult | null>(null);
+  const [timeValue, setTimeValue] = useState(state?.departureTime ?? "");
   const [seats, setSeats] = useState(state?.seats ?? 2);
+  const [fare, setFare] = useState(80);
   const [pickupPoint, setPickupPoint] = useState(state?.pickupPoint ?? "");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -57,31 +58,36 @@ export default function PostRideScreen() {
   };
 
   const handlePost = async () => {
-    if (!timeValue) {
-      setError("Please select a departure time");
-      return;
-    }
+    if (!fromPlace) { setError("Please select a From location"); return; }
+    if (!toPlace)   { setError("Please select a To location");   return; }
+    if (!timeValue) { setError("Please select a departure time"); return; }
+    if (fare < 1 || fare > 2000) { setError("Fare must be between ₹1 and ₹2000"); return; }
 
     if (isRecurring) {
-      if (selectedDays.length === 0) {
-        setError("Select at least one day");
-        return;
-      }
+      if (selectedDays.length === 0) { setError("Select at least one day"); return; }
       setError(null);
       setLoading(true);
       try {
         await createTemplate({
           userId: userId!,
-          direction,
+          fromLabel: fromPlace.label,
+          toLabel: toPlace.label,
+          fromLat: fromPlace.lat,
+          fromLng: fromPlace.lng,
+          toLat: toPlace.lat,
+          toLng: toPlace.lng,
+          fromPlaceId: fromPlace.placeId,
+          toPlaceId: toPlace.placeId,
           departureTimeHHMM: timeValue,
           totalSeats: seats,
+          fare,
           daysOfWeek: selectedDays,
           pickupPoint: pickupPoint.trim() || undefined,
           note: note.trim() || undefined,
         });
         navigate("/home", { replace: true });
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to create schedule");
+        setError(e instanceof Error ? e.message : "Failed to save schedule");
       } finally {
         setLoading(false);
       }
@@ -89,18 +95,24 @@ export default function PostRideScreen() {
     }
 
     const departureMs = toTimestamp(timeValue);
-    if (departureMs <= Date.now()) {
-      setError("Departure time must be in the future");
-      return;
-    }
+    if (departureMs <= Date.now()) { setError("Departure time must be in the future"); return; }
+
     setError(null);
     setLoading(true);
     try {
       await postListing({
         userId: userId!,
-        direction,
+        fromLabel: fromPlace.label,
+        toLabel: toPlace.label,
+        fromLat: fromPlace.lat,
+        fromLng: fromPlace.lng,
+        toLat: toPlace.lat,
+        toLng: toPlace.lng,
+        fromPlaceId: fromPlace.placeId,
+        toPlaceId: toPlace.placeId,
         departureTime: departureMs,
         totalSeats: seats,
+        fare,
         pickupPoint: pickupPoint.trim() || undefined,
         note: note.trim() || undefined,
       });
@@ -131,35 +143,21 @@ export default function PostRideScreen() {
       {/* Form */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
 
-        {/* Direction */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Direction
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            {(["GC_TO_HCL", "HCL_TO_GC"] as Direction[]).map((d) => {
-              const selected = direction === d;
-              return (
-                <button
-                  key={d}
-                  onClick={() => setDirection(d)}
-                  className={`py-4 rounded-2xl border-2 font-semibold text-sm transition-all ${
-                    selected
-                      ? "border-brand-600 bg-brand-50 text-brand-700"
-                      : "border-gray-200 bg-white text-gray-500 active:bg-gray-50"
-                  }`}
-                >
-                  <span className="block text-base font-bold mb-0.5">
-                    {d === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC"}
-                  </span>
-                  <span className="text-xs font-normal">
-                    {d === "GC_TO_HCL" ? "Gaur City to HCL" : "HCL to Gaur City"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* From */}
+        <LocationInput
+          label="From"
+          placeholder="Pickup location…"
+          value={fromPlace}
+          onChange={(v) => { setFromPlace(v); setError(null); }}
+        />
+
+        {/* To */}
+        <LocationInput
+          label="To"
+          placeholder="Drop location…"
+          value={toPlace}
+          onChange={(v) => { setToPlace(v); setError(null); }}
+        />
 
         {/* Departure Time */}
         <div>
@@ -170,15 +168,12 @@ export default function PostRideScreen() {
             type="time"
             value={timeValue}
             min={isRecurring ? undefined : minTimeValue()}
-            onChange={(e) => {
-              setTimeValue(e.target.value);
-              setError(null);
-            }}
+            onChange={(e) => { setTimeValue(e.target.value); setError(null); }}
             className="input-field"
           />
         </div>
 
-        {/* Seats Available */}
+        {/* Seats */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Seats Available
@@ -187,31 +182,47 @@ export default function PostRideScreen() {
             <button
               onClick={() => setSeats((s) => Math.max(1, s - 1))}
               disabled={seats <= 1}
-              className="w-11 h-11 rounded-full border-2 border-gray-200 text-gray-700 text-xl font-light flex items-center justify-center active:bg-gray-100 disabled:opacity-30 transition-colors"
+              className="w-11 h-11 rounded-full border-2 border-gray-200 text-gray-700 text-xl font-light flex items-center justify-center active:bg-gray-100 disabled:opacity-30"
             >
               −
             </button>
             <div className="text-center">
               <span className="text-3xl font-bold text-brand-700">{seats}</span>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {seats === 1 ? "seat" : "seats"}
-              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{seats === 1 ? "seat" : "seats"}</p>
             </div>
             <button
               onClick={() => setSeats((s) => Math.min(4, s + 1))}
               disabled={seats >= 4}
-              className="w-11 h-11 rounded-full border-2 border-gray-200 text-gray-700 text-xl font-light flex items-center justify-center active:bg-gray-100 disabled:opacity-30 transition-colors"
+              className="w-11 h-11 rounded-full border-2 border-gray-200 text-gray-700 text-xl font-light flex items-center justify-center active:bg-gray-100 disabled:opacity-30"
             >
               +
             </button>
           </div>
         </div>
 
+        {/* Fare */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Fare per seat
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₹</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={2000}
+              value={fare}
+              onChange={(e) => setFare(Number(e.target.value))}
+              className="input-field pl-8"
+            />
+          </div>
+        </div>
+
         {/* Pickup Point */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Pickup Point{" "}
-            <span className="text-gray-400 font-normal">(optional)</span>
+            Pickup Point <span className="text-gray-400 font-normal">(optional)</span>
           </label>
           <input
             type="text"
@@ -225,8 +236,7 @@ export default function PostRideScreen() {
         {/* Note */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Note{" "}
-            <span className="text-gray-400 font-normal">(optional)</span>
+            Note <span className="text-gray-400 font-normal">(optional)</span>
           </label>
           <textarea
             placeholder="e.g. Will leave sharp at the time posted"
@@ -251,7 +261,6 @@ export default function PostRideScreen() {
                   : "Post once for today only"}
               </p>
             </div>
-            {/* Toggle pill */}
             <div
               className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
                 isRecurring ? "bg-brand-600" : "bg-gray-200"
@@ -289,7 +298,7 @@ export default function PostRideScreen() {
                 })}
               </div>
               <p className="text-xs text-gray-400 mt-3">
-                A listing will be posted automatically each selected day. You can pause or delete the schedule from My Ride.
+                A listing will be posted automatically each selected day. Manage schedules from My Ride.
               </p>
             </div>
           )}
@@ -303,12 +312,14 @@ export default function PostRideScreen() {
         )}
       </div>
 
-      {/* Post button — sticky at bottom */}
-      <div className="px-4 py-4 border-t border-gray-100 bg-white"
-           style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
+      {/* Post button */}
+      <div
+        className="px-4 py-4 border-t border-gray-100 bg-white"
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+      >
         <button
           onClick={handlePost}
-          disabled={loading || !timeValue}
+          disabled={loading || !timeValue || !fromPlace || !toPlace}
           className="btn-primary"
         >
           {loading

@@ -13,12 +13,14 @@
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.89.0",
+    "@googlemaps/js-api-loader": "^2.0.2",
     "convex": "^1.19.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^25.5.0",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",

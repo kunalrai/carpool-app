@@ -38,9 +38,17 @@ function isListingActive(l: { status: string; departureTime: number }): boolean 
 export const createTemplate = mutation({
   args: {
     userId: v.id("users"),
-    direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
+    fromLabel: v.string(),
+    toLabel: v.string(),
+    fromLat: v.number(),
+    fromLng: v.number(),
+    toLat: v.number(),
+    toLng: v.number(),
+    fromPlaceId: v.optional(v.string()),
+    toPlaceId: v.optional(v.string()),
     departureTimeHHMM: v.string(),
     totalSeats: v.number(),
+    fare: v.number(),
     daysOfWeek: v.array(v.number()),
     pickupPoint: v.optional(v.string()),
     note: v.optional(v.string()),
@@ -51,12 +59,22 @@ export const createTemplate = mutation({
     if (daysOfWeek.length === 0) throw new Error("Select at least one day");
     if (args.totalSeats < 1 || args.totalSeats > 4)
       throw new Error("Seats must be between 1 and 4");
+    if (args.fare < 1 || args.fare > 2000)
+      throw new Error("Fare must be between ₹1 and ₹2000");
 
     const templateId = await ctx.db.insert("recurringTemplates", {
       driverId: userId,
-      direction: args.direction,
+      fromLabel: args.fromLabel,
+      toLabel: args.toLabel,
+      fromLat: args.fromLat,
+      fromLng: args.fromLng,
+      toLat: args.toLat,
+      toLng: args.toLng,
+      fromPlaceId: args.fromPlaceId,
+      toPlaceId: args.toPlaceId,
       departureTimeHHMM: args.departureTimeHHMM,
       totalSeats: args.totalSeats,
+      fare: args.fare,
       daysOfWeek,
       pickupPoint: args.pickupPoint,
       note: args.note,
@@ -85,14 +103,21 @@ export const createTemplate = mutation({
         if (!hasActive && !alreadyCreated) {
           await ctx.db.insert("listings", {
             driverId: userId,
-            direction: args.direction,
+            fromLabel: args.fromLabel,
+            toLabel: args.toLabel,
+            fromLat: args.fromLat,
+            fromLng: args.fromLng,
+            toLat: args.toLat,
+            toLng: args.toLng,
+            fromPlaceId: args.fromPlaceId,
+            toPlaceId: args.toPlaceId,
             departureTime,
             totalSeats: args.totalSeats,
             seatsLeft: args.totalSeats,
             pickupPoint: args.pickupPoint,
             note: args.note,
             status: "open",
-            fare: 80,
+            fare: args.fare,
             templateId,
             createdAt: Date.now(),
           });
@@ -176,14 +201,21 @@ export const spawnDailyListings = internalMutation({
 
       await ctx.db.insert("listings", {
         driverId: template.driverId,
-        direction: template.direction,
+        fromLabel: template.fromLabel,
+        toLabel: template.toLabel,
+        fromLat: template.fromLat,
+        fromLng: template.fromLng,
+        toLat: template.toLat,
+        toLng: template.toLng,
+        fromPlaceId: template.fromPlaceId,
+        toPlaceId: template.toPlaceId,
         departureTime,
         totalSeats: template.totalSeats,
         seatsLeft: template.totalSeats,
         pickupPoint: template.pickupPoint,
         note: template.note,
         status: "open",
-        fare: 80,
+        fare: template.fare,
         templateId: template._id,
         createdAt: Date.now(),
       });

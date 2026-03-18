@@ -208,10 +208,9 @@ export default function ListingDetailScreen() {
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
             Ride Info
           </p>
-          <DetailRow
-            label="Direction"
-            value={listing.direction === "GC_TO_HCL" ? "Gaur City → HCL" : "HCL → Gaur City"}
-          />
+          <DetailRow label="From" value={listing.fromLabel} />
+          <DetailRow label="To" value={listing.toLabel} />
+          <DetailRow label="Fare" value={`₹${listing.fare} per seat`} />
           <DetailRow label="Departure" value={new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })} />
           <DetailRow
             label="Seats"

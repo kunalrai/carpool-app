@@ -52,10 +52,20 @@ export default defineConfig({
       workbox: {
         // Cache the app shell and static assets
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        // Network-first for Convex API calls (real-time data must stay fresh)
+        // Network-only for real-time and external API calls
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.convex\.cloud\/.*/i,
+            handler: "NetworkOnly",
+          },
+          {
+            // Google Maps JS API — must not be cached by SW
+            urlPattern: /^https:\/\/maps\.googleapis\.com\/.*/i,
+            handler: "NetworkOnly",
+          },
+          {
+            // Google Maps static assets
+            urlPattern: /^https:\/\/maps\.gstatic\.com\/.*/i,
             handler: "NetworkOnly",
           },
         ],

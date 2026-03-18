@@ -161,7 +161,7 @@ export default function MyListingScreen() {
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div>
                           <p className="text-sm font-semibold text-gray-800">
-                            {t.direction === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC"} · {t.departureTimeHHMM}
+                            {t.fromLabel} → {t.toLabel} · {t.departureTimeHHMM}
                           </p>
                           <p className="text-xs text-gray-500 mt-0.5">
                             {t.totalSeats} seat{t.totalSeats > 1 ? "s" : ""}
@@ -305,10 +305,9 @@ export default function MyListingScreen() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Ride Info
             </p>
-            <DetailRow
-              label="Direction"
-              value={listing.direction === "GC_TO_HCL" ? "Gaur City → HCL" : "HCL → Gaur City"}
-            />
+            <DetailRow label="From" value={listing.fromLabel} />
+            <DetailRow label="To" value={listing.toLabel} />
+            <DetailRow label="Fare" value={`₹${listing.fare} per seat`} />
             <DetailRow label="Departure" value={new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })} />
             <DetailRow
               label="Seats"
@@ -356,7 +355,7 @@ export default function MyListingScreen() {
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
                         <p className="text-sm font-semibold text-gray-800">
-                          {t.direction === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC"} · {t.departureTimeHHMM}
+                          {t.fromLabel} → {t.toLabel} · {t.departureTimeHHMM}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">
                           {t.totalSeats} seat{t.totalSeats > 1 ? "s" : ""}

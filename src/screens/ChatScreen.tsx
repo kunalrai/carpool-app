@@ -66,15 +66,28 @@ export default function ChatScreen() {
             return;
           }
 
+          // Map AI-detected direction to hardcoded GC↔HCL coordinates
+          const GC = { label: "Gaur City, Greater Noida", lat: 28.6123, lng: 77.4312 };
+          const HCL = { label: "HCL Campus, Sector 136, Noida", lat: 28.5245, lng: 77.3799 };
+          const isGcToHcl = result.direction === "GC_TO_HCL";
+          const from = isGcToHcl ? GC : HCL;
+          const to = isGcToHcl ? HCL : GC;
+
           await postListing({
             userId: userId!,
-            direction: result.direction,
+            fromLabel: from.label,
+            toLabel: to.label,
+            fromLat: from.lat,
+            fromLng: from.lng,
+            toLat: to.lat,
+            toLng: to.lng,
             departureTime: departureMs,
             totalSeats: result.seats ?? 1,
+            fare: 80,
             pickupPoint: result.pickupPoint ?? undefined,
           });
 
-          const dir = result.direction === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC";
+          const dir = isGcToHcl ? "GC → HCL" : "HCL → GC";
           const time = new Date(departureMs).toLocaleTimeString("en-IN", {
             hour: "2-digit", minute: "2-digit", hour12: true,
           });

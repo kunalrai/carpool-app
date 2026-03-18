@@ -25,12 +25,6 @@ export default defineSchema({
   }).index("by_mobile", ["mobile"]),
 
   /**
-   * listings — a driver's posted ride offer
-   * status lifecycle: open → full (auto) → started → completed | cancelled | expired
-   * fare is always 80; stored for display consistency.
-   * Listings auto-expire 60 min after departureTime if not started (cron patches to 'expired').
-   */
-  /**
    * recurringTemplates — a driver's standing weekly schedule.
    * daysOfWeek: array of JS day numbers (0=Sun, 1=Mon … 6=Sat).
    * A cron runs hourly and auto-creates a listing for each active template
@@ -38,9 +32,17 @@ export default defineSchema({
    */
   recurringTemplates: defineTable({
     driverId: v.id("users"),
-    direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
+    fromLabel: v.string(),
+    toLabel: v.string(),
+    fromLat: v.number(),
+    fromLng: v.number(),
+    toLat: v.number(),
+    toLng: v.number(),
+    fromPlaceId: v.optional(v.string()),
+    toPlaceId: v.optional(v.string()),
     departureTimeHHMM: v.string(), // "08:30" 24-h
     totalSeats: v.number(),
+    fare: v.number(),
     daysOfWeek: v.array(v.number()),
     pickupPoint: v.optional(v.string()),
     note: v.optional(v.string()),
@@ -50,13 +52,25 @@ export default defineSchema({
     .index("by_driver", ["driverId"])
     .index("by_active", ["isActive"]),
 
+  /**
+   * listings — a driver's posted ride offer
+   * status lifecycle: open → full (auto) → started → completed | cancelled | expired
+   * Listings auto-expire 60 min after departureTime if not started (cron patches to 'expired').
+   */
   listings: defineTable({
     driverId: v.id("users"),
-    direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
-    departureTime: v.number(), // Unix ms timestamp
+    fromLabel: v.string(),         // e.g. "Gaur City 1, Greater Noida"
+    toLabel: v.string(),           // e.g. "HCL Campus, Sector 136, Noida"
+    fromLat: v.number(),
+    fromLng: v.number(),
+    toLat: v.number(),
+    toLng: v.number(),
+    fromPlaceId: v.optional(v.string()),
+    toPlaceId: v.optional(v.string()),
+    departureTime: v.number(),     // Unix ms timestamp
     pickupPoint: v.optional(v.string()),
     note: v.optional(v.string()),
-    totalSeats: v.number(), // 1–4
+    totalSeats: v.number(),        // 1–4
     seatsLeft: v.number(),
     status: v.union(
       v.literal("open"),
@@ -66,12 +80,12 @@ export default defineSchema({
       v.literal("cancelled"),
       v.literal("expired")
     ),
-    fare: v.number(), // always 80
+    fare: v.number(),              // ₹ per seat, set by driver
     templateId: v.optional(v.id("recurringTemplates")), // set when auto-created by cron
     createdAt: v.number(),
   })
     .index("by_driver", ["driverId"])
-    .index("by_direction_status", ["direction", "status"])
+    .index("by_status_departure", ["status", "departureTime"])
     .index("by_status", ["status"])
     .index("by_created", ["createdAt"]),
 
@@ -113,10 +127,6 @@ export default defineSchema({
   })
     .index("by_listing_time", ["listingId", "createdAt"]),
 
-  /**
-   * directMessages — private 1-on-1 messages between a driver and a rider
-   * scoped to a specific listing (ride context).
-   */
   /**
    * blogs — admin-authored articles visible on the public /blog page.
    * status: 'draft' (admin only) | 'published' (public)
