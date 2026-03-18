@@ -319,8 +319,21 @@ export default function AdminScreen() {
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const [search, setSearch] = useState("");
+  const [callsToggling, setCallsToggling] = useState(false);
 
   const users = useQuery(api.admin.getAllUsers, { adminId: userId! });
+  const appSettings = useQuery(api.admin.getAppSettings, {});
+  const setCallsEnabled = useMutation(api.admin.setCallsEnabled);
+
+  const handleToggleCalls = async () => {
+    if (callsToggling || appSettings === undefined) return;
+    setCallsToggling(true);
+    try {
+      await setCallsEnabled({ adminId: userId!, enabled: !appSettings.callsEnabled });
+    } finally {
+      setCallsToggling(false);
+    }
+  };
 
   const filtered = (users ?? []).filter(
     (u) =>
@@ -338,11 +351,11 @@ export default function AdminScreen() {
         </p>
       </div>
 
-      {/* Quick links */}
-      <div className="px-4 pt-3">
+      {/* Quick links + feature toggles */}
+      <div className="px-4 pt-3 space-y-2">
         <button
           onClick={() => navigate("/admin/blog")}
-          className="w-full flex items-center justify-between bg-brand-50 border border-brand-200 rounded-xl px-4 py-3 mb-1"
+          className="w-full flex items-center justify-between bg-brand-50 border border-brand-200 rounded-xl px-4 py-3"
         >
           <div className="flex items-center gap-2">
             <span className="text-lg">✍️</span>
@@ -352,6 +365,33 @@ export default function AdminScreen() {
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </button>
+
+        {/* Calls toggle */}
+        <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Voice Calls</p>
+              <p className="text-xs text-gray-500">
+                {appSettings === undefined ? "Loading…" : appSettings.callsEnabled ? "Enabled" : "Disabled"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleToggleCalls}
+            disabled={callsToggling || appSettings === undefined}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${
+              appSettings?.callsEnabled ? "bg-green-500" : "bg-gray-300"
+            }`}
+            aria-label="Toggle calls"
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+              appSettings?.callsEnabled ? "translate-x-5" : "translate-x-0"
+            }`} />
+          </button>
+        </div>
       </div>
 
       {/* Search */}

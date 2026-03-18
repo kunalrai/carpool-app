@@ -173,6 +173,14 @@ export default defineSchema({
     .index("by_receiver_read", ["receiverId", "read"]),
 
   /**
+   * appSettings — single-row table for global feature flags.
+   * Always has at most one document; query returns defaults if absent.
+   */
+  appSettings: defineTable({
+    callsEnabled: v.boolean(),
+  }),
+
+  /**
    * callSignals — tracks an active call so other participants can see it.
    * Written when the caller joins the Daily room; cleared when they leave.
    * mode 'group' = ride group call, 'dm' = 1-on-1 call.

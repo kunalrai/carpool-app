@@ -102,3 +102,30 @@ export const makeAdmin = mutation({
     return { success: true, name: user.name };
   },
 });
+
+// ── App Settings ──────────────────────────────────────────────────────────
+
+/** Returns current feature flags. Defaults: callsEnabled = true. */
+export const getAppSettings = query({
+  args: {},
+  handler: async (ctx) => {
+    const settings = await ctx.db.query("appSettings").first();
+    return { callsEnabled: settings?.callsEnabled ?? true };
+  },
+});
+
+/** Admin-only: enable or disable the calling feature. */
+export const setCallsEnabled = mutation({
+  args: { adminId: v.id("users"), enabled: v.boolean() },
+  handler: async (ctx, { adminId, enabled }) => {
+    const admin = await ctx.db.get(adminId);
+    if (!admin?.isAdmin) throw new Error("Unauthorized");
+
+    const existing = await ctx.db.query("appSettings").first();
+    if (existing) {
+      await ctx.db.patch(existing._id, { callsEnabled: enabled });
+    } else {
+      await ctx.db.insert("appSettings", { callsEnabled: enabled });
+    }
+  },
+});

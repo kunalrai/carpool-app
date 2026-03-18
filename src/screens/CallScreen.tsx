@@ -31,6 +31,7 @@ export default function CallScreen() {
   const signalCall = useMutation(api.calls.signalCall);
   const endCall = useMutation(api.calls.endCall);
   const myProfile = useQuery(api.users.getUserProfile, userId ? { userId: userId as Id<"users"> } : "skip");
+  const appSettings = useQuery(api.admin.getAppSettings, {});
 
   const roomName =
     mode === "group"
@@ -128,8 +129,22 @@ export default function CallScreen() {
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center px-6">
 
+      {/* Calls disabled by admin */}
+      {appSettings?.callsEnabled === false && (
+        <div className="text-center text-white px-6">
+          <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-4">
+            <PhoneOffIcon />
+          </div>
+          <p className="text-base font-semibold mb-2">Calls are currently disabled</p>
+          <p className="text-sm text-gray-400 mb-6">The admin has turned off voice calls.</p>
+          <button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-white/10 text-white rounded-xl text-sm font-semibold active:bg-white/20">
+            Go back
+          </button>
+        </div>
+      )}
+
       {/* Connecting */}
-      {status === "connecting" && (
+      {appSettings?.callsEnabled !== false && status === "connecting" && (
         <div className="text-center text-white">
           <div className="w-20 h-20 rounded-full bg-brand-700 flex items-center justify-center mx-auto mb-5 animate-pulse">
             <PhoneIcon />
@@ -148,7 +163,7 @@ export default function CallScreen() {
       )}
 
       {/* Error */}
-      {status === "error" && (
+      {appSettings?.callsEnabled !== false && status === "error" && (
         <div className="text-center text-white">
           <div className="w-16 h-16 rounded-full bg-red-800 flex items-center justify-center mx-auto mb-4">
             <PhoneOffIcon />
@@ -165,7 +180,7 @@ export default function CallScreen() {
       )}
 
       {/* In-call UI */}
-      {status === "joined" && (
+      {appSettings?.callsEnabled !== false && status === "joined" && (
         <div className="w-full max-w-sm flex flex-col items-center gap-8">
           {/* Title */}
           <div className="text-center">
