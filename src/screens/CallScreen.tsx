@@ -48,13 +48,18 @@ export default function CallScreen() {
     setParticipants(list);
   }, []);
 
-  const handleLeave = useCallback(() => {
+  const handleLeave = useCallback(async () => {
     endCall({
       listingId: listingId as Id<"listings">,
       mode: (mode === "group" ? "group" : "dm") as "group" | "dm",
     }).catch(console.error);
-    callRef.current?.leave();
-  }, [endCall, listingId, mode]);
+    try {
+      await callRef.current?.leave();
+    } catch {
+      // leave() failed — navigate away regardless
+      navigate(-1);
+    }
+  }, [endCall, listingId, mode, navigate]);
 
   useEffect(() => {
     if (!userId) return;
