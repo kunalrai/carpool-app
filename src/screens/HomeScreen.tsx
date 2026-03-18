@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 import LocationInput from "../components/LocationInput";
+import DrawerNav from "../components/DrawerNav";
 import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
 
 function formatDeparture(ts: number): string {
@@ -205,6 +206,8 @@ export default function HomeScreen() {
   const navigate = useNavigate();
   const { userId } = useAuth();
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   // Route search state
   const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
   const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
@@ -280,13 +283,17 @@ export default function HomeScreen() {
 
   return (
     <>
+      <DrawerNav open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
       <div className="pb-24 bg-white min-h-screen">
 
         {/* ── Top bar ── */}
         <div className="flex items-center justify-between px-4 pt-12 pb-2">
-          <svg viewBox="0 0 24 24" className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
+          <button onClick={() => setDrawerOpen(true)} className="p-1 -ml-1 rounded-xl active:bg-gray-100">
+            <svg viewBox="0 0 24 24" className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
           <span className="text-base font-bold text-gray-900">GC Carpool</span>
           <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center active:opacity-70">
             <svg viewBox="0 0 24 24" className="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
