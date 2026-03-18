@@ -1,11 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 import LocationInput from "../components/LocationInput";
 import DrawerNav from "../components/DrawerNav";
 import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
+
+// ── AQI Chip ─────────────────────────────────────────────────────────────────
+
+const AQI_LEVELS = [
+  { max: 25,  bg: "bg-green-100",  text: "text-green-800",  dot: "bg-green-500"  },
+  { max: 50,  bg: "bg-lime-100",   text: "text-lime-800",   dot: "bg-lime-500"   },
+  { max: 75,  bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
+  { max: 100, bg: "bg-orange-100", text: "text-orange-800", dot: "bg-orange-500" },
+  { max: Infinity, bg: "bg-red-100", text: "text-red-800",  dot: "bg-red-500"   },
+];
+
+function aqiStyle(aqi: number) {
+  return AQI_LEVELS.find((l) => aqi <= l.max) ?? AQI_LEVELS[AQI_LEVELS.length - 1];
+}
+
+function AqiChip({ aqi, category, pollutant }: { aqi: number; category: string; pollutant: string }) {
+  const s = aqiStyle(aqi);
+  return (
+    <div className={`mx-4 mb-3 flex items-center gap-2 px-3 py-2 rounded-xl ${s.bg}`}>
+      <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
+      <span className={`text-xs font-semibold ${s.text}`}>
+        AQI {aqi} · {category}
+      </span>
+      <span className={`ml-auto text-xs ${s.text} opacity-70`}>
+        {pollutant.toUpperCase()} · Gaur City
+      </span>
+    </div>
+  );
+}
 
 function formatDeparture(ts: number): string {
   return new Date(ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
@@ -233,6 +262,10 @@ export default function HomeScreen() {
   const endRideMut = useMutation(api.listings.endRide);
   const cancelBookingMut = useMutation(api.bookings.cancelBooking);
 
+  const aqiData = useQuery(api.airQuality.getCachedAqi);
+  const refreshAqi = useAction(api.airQuality.refreshAqiIfStale);
+  useEffect(() => { refreshAqi({}); }, [refreshAqi]);
+
   const hasCarDetails =
     userProfile &&
     (userProfile.role === "giver" || userProfile.role === "both") &&
@@ -307,6 +340,9 @@ export default function HomeScreen() {
           <h1 className="text-2xl font-bold text-gray-900">Where to, {firstName}?</h1>
           <p className="text-sm text-gray-500 mt-0.5">Search a route or browse all available rides.</p>
         </div>
+
+        {/* ── AQI chip ── */}
+        {aqiData && <AqiChip aqi={aqiData.aqi} category={aqiData.category} pollutant={aqiData.dominantPollutant} />}
 
         {/* ── Route search card ── */}
         <div className="mx-4 mb-4 bg-gray-50 rounded-2xl p-4 space-y-3 border border-gray-100">

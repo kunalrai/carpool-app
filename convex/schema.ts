@@ -149,6 +149,18 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_slug", ["slug"]),
 
+  /**
+   * airQualityCache — single-row cache for the Gaur City AQI.
+   * Refreshed at most every 30 minutes by the fetchAndCacheAqi action.
+   * All users share this one record, keeping API calls ≤ 48/day.
+   */
+  airQualityCache: defineTable({
+    aqi: v.number(),
+    category: v.string(),          // e.g. "Moderate air quality"
+    dominantPollutant: v.string(), // e.g. "pm25"
+    fetchedAt: v.number(),         // Unix ms — used to enforce TTL
+  }),
+
   directMessages: defineTable({
     listingId: v.id("listings"),
     senderId: v.id("users"),
