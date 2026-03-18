@@ -84,10 +84,9 @@ export default function DrawerNav({ open, onClose }: Props) {
 
       {/* Drawer panel */}
       <div
-        className={`fixed top-0 left-1/2 -translate-x-1/2 h-full w-72 max-w-[80vw] bg-white z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
-          open ? "translate-x-[-50%]" : "translate-x-[-200%]"
+        className={`fixed top-0 left-0 h-full w-72 max-w-[80vw] bg-white z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-out ${
+          open ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{ maxWidth: "min(18rem, calc(var(--max-w, 448px) * 0.8))" }}
       >
         {/* Header */}
         <div className="bg-brand-700 px-5 pt-14 pb-5">
