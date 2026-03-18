@@ -10,76 +10,27 @@ type Phase = "splash" | "mobile" | "otp" | "register";
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=900&q=80";
 
-// ── Custom numeric keypad ─────────────────────────────────────────────────
-
-const KEYS = [
-  { digit: "1", sub: "" },
-  { digit: "2", sub: "ABC" },
-  { digit: "3", sub: "DEF" },
-  { digit: "4", sub: "GHI" },
-  { digit: "5", sub: "JKL" },
-  { digit: "6", sub: "MNO" },
-  { digit: "7", sub: "PQRS" },
-  { digit: "8", sub: "TUV" },
-  { digit: "9", sub: "WXYZ" },
-  { digit: "", sub: "" },       // empty cell
-  { digit: "0", sub: "" },
-  { digit: "⌫", sub: "" },     // backspace
-];
-
-function Keypad({ onPress }: { onPress: (key: string) => void }) {
-  return (
-    <div className="grid grid-cols-3 gap-2 px-4">
-      {KEYS.map((k, i) =>
-        k.digit === "" ? (
-          <div key={i} />
-        ) : (
-          <button
-            key={i}
-            onPointerDown={(e) => { e.preventDefault(); onPress(k.digit); }}
-            className="flex flex-col items-center justify-center bg-white/10 active:bg-white/20 rounded-2xl py-3 select-none transition-colors"
-          >
-            <span className="text-white text-2xl font-light leading-none">
-              {k.digit === "⌫" ? (
-                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z" />
-                  <line x1="18" y1="9" x2="12" y2="15" />
-                  <line x1="12" y1="9" x2="18" y2="15" />
-                </svg>
-              ) : k.digit}
-            </span>
-            {k.sub && <span className="text-white/50 text-xs mt-0.5 tracking-widest">{k.sub}</span>}
-          </button>
-        )
-      )}
-    </div>
-  );
-}
-
 // ── Dark screen shell ─────────────────────────────────────────────────────
 
 function DarkShell({
   onBack,
   children,
-  keypad,
 }: {
   onBack: () => void;
   children: React.ReactNode;
-  keypad: React.ReactNode;
 }) {
   return (
     <div className="fixed inset-0 bg-gray-950 flex flex-col overflow-hidden">
       <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-2/5 object-cover object-center" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-gray-950/75 to-gray-950" />
 
-      {/* ── Scrollable top area (nav + heading + card) ── */}
       <div
         className="relative z-10 flex-1 overflow-y-auto"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         {/* Nav bar */}
         <div className="flex items-center px-4 pt-6 pb-1">
-          <button onPointerDown={onBack} className="p-2 -ml-2 active:opacity-60">
+          <button onClick={onBack} className="p-2 -ml-2 active:opacity-60">
             <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
@@ -98,16 +49,7 @@ function DarkShell({
           </p>
         </div>
 
-        {/* White card */}
         {children}
-      </div>
-
-      {/* ── Keypad pinned to bottom — never cut off ── */}
-      <div
-        className="relative z-10 flex-none bg-gray-950 pt-2"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {keypad}
       </div>
     </div>
   );
@@ -138,19 +80,31 @@ export default function LoginScreen() {
   const verifyOtp = useAction(api.auth.verifyOtp);
   const registerUser = useMutation(api.users.registerUser);
 
+  const mobileInputRef = useRef<HTMLInputElement>(null);
   const digitRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
+  // Auto-focus mobile input when entering mobile phase
   useEffect(() => {
-    if (phase !== "otp") return;
-    setCountdown(60);
-    setCanResend(false);
-    const timer = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) { clearInterval(timer); setCanResend(true); return 0; }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    if (phase === "mobile") {
+      setTimeout(() => mobileInputRef.current?.focus(), 100);
+    }
+  }, [phase]);
+
+  // Auto-focus first OTP box when entering OTP phase
+  useEffect(() => {
+    if (phase === "otp") {
+      setCountdown(60);
+      setCanResend(false);
+      setTimeout(() => digitRefs.current[0]?.focus(), 100);
+
+      const timer = setInterval(() => {
+        setCountdown((c) => {
+          if (c <= 1) { clearInterval(timer); setCanResend(true); return 0; }
+          return c - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
   }, [phase]);
 
   const handleSendOtp = async () => {
@@ -232,36 +186,36 @@ export default function LoginScreen() {
     }
   };
 
-  // Keypad press handler for mobile phase
-  const handleMobileKey = (key: string) => {
-    setError(null);
-    if (key === "⌫") {
-      setMobile((m) => m.slice(0, -1));
-    } else if (mobile.length < 10) {
-      setMobile((m) => m + key);
-    }
-  };
-
-  // Keypad press handler for OTP phase
-  const handleOtpKey = (key: string) => {
+  // OTP digit input handler — auto-advance and auto-backtrack
+  const handleDigitChange = (index: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
     setError(null);
     setDigits((prev) => {
       const next = [...prev];
-      if (key === "⌫") {
-        const lastFilled = [...next].reverse().findIndex((d) => d !== "");
-        if (lastFilled !== -1) next[5 - lastFilled] = "";
-      } else {
-        const emptyIdx = next.findIndex((d) => d === "");
-        if (emptyIdx !== -1) next[emptyIdx] = key;
-      }
+      next[index] = digit;
       return next;
     });
+    if (digit && index < 5) {
+      digitRefs.current[index + 1]?.focus();
+    }
   };
 
-  // Format mobile display: "XXXXX XXXXX"
-  const mobileDisplay = mobile
-    ? mobile.slice(0, 5) + (mobile.length > 5 ? " " + mobile.slice(5) : "")
-    : "";
+  const handleDigitKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) {
+      digitRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleDigitPaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    e.preventDefault();
+    const next = Array(6).fill("");
+    pasted.split("").forEach((ch, i) => { next[i] = ch; });
+    setDigits(next);
+    const focusIdx = Math.min(pasted.length, 5);
+    digitRefs.current[focusIdx]?.focus();
+  };
 
   const maskedMobile = `+91 ${mobile.slice(0, 2)}${"•".repeat(6)}${mobile.slice(8)}`;
 
@@ -292,8 +246,7 @@ export default function LoginScreen() {
             <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
               <span className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
                 <svg viewBox="0 0 24 24" className="w-4 h-4 text-brand-700" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
               </span>
               <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Instant</span>
@@ -313,53 +266,56 @@ export default function LoginScreen() {
     );
   }
 
-  // ── Mobile phase — dark + custom keypad ───────────────────────────────────
+  // ── Mobile phase ──────────────────────────────────────────────────────────
   if (phase === "mobile") {
     return (
-      <DarkShell
-        onBack={() => { setMobile(""); setError(null); setPhase("splash"); }}
-        keypad={<Keypad onPress={handleMobileKey} />}
-      >
+      <DarkShell onBack={() => { setMobile(""); setError(null); setPhase("splash"); }}>
         <div className="mx-4 bg-white rounded-2xl p-5 mb-3">
           <h2 className="text-lg font-bold text-gray-900 mb-1">Get Started</h2>
-          <p className="text-sm text-gray-500 mb-4">Enter your phone number to continue your journey.</p>
+          <p className="text-sm text-gray-500 mb-4">Enter your phone number to continue.</p>
 
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Phone Number</p>
-          <div className="flex items-center bg-gray-100 rounded-xl px-3 py-3 gap-2">
+          <div className="flex items-center bg-gray-100 rounded-xl px-3 py-1 gap-2">
             <span className="text-lg leading-none">🇮🇳</span>
             <span className="text-sm font-semibold text-gray-700">+91</span>
             <div className="w-px h-5 bg-gray-300 mx-1" />
-            <span className={`flex-1 text-base font-medium tracking-widest ${mobileDisplay ? "text-gray-900" : "text-gray-400"}`}>
-              {mobileDisplay || "00000 00000"}
-            </span>
+            <input
+              ref={mobileInputRef}
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="00000 00000"
+              value={mobile}
+              onChange={(e) => {
+                setMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
+                setError(null);
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter" && mobile.length === 10) handleSendOtp(); }}
+              className="flex-1 bg-transparent text-base font-medium text-gray-900 placeholder-gray-400 tracking-widest outline-none py-2"
+            />
             {mobile.length > 0 && (
-              <span className="text-xs text-gray-400">{mobile.length}/10</span>
+              <span className="text-xs text-gray-400 shrink-0">{mobile.length}/10</span>
             )}
           </div>
 
           {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
 
-          {mobile.length === 10 && (
-            <button
-              onClick={handleSendOtp}
-              disabled={loading}
-              className="mt-4 w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
-            >
-              {loading ? "Sending OTP…" : "Continue"}
-            </button>
-          )}
+          <button
+            onClick={handleSendOtp}
+            disabled={loading || mobile.length !== 10}
+            className="mt-4 w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
+          >
+            {loading ? "Sending OTP…" : "Continue"}
+          </button>
         </div>
       </DarkShell>
     );
   }
 
-  // ── OTP phase — dark + custom keypad ─────────────────────────────────────
+  // ── OTP phase ─────────────────────────────────────────────────────────────
   if (phase === "otp") {
     return (
-      <DarkShell
-        onBack={() => { setDigits(Array(6).fill("")); setError(null); setPhase("mobile"); }}
-        keypad={<Keypad onPress={handleOtpKey} />}
-      >
+      <DarkShell onBack={() => { setDigits(Array(6).fill("")); setError(null); setPhase("mobile"); }}>
         <div className="mx-4 bg-white rounded-2xl p-5 mb-3">
           <h2 className="text-lg font-bold text-gray-900 mb-1">Verify OTP</h2>
           <p className="text-sm text-gray-500 mb-4">
@@ -372,37 +328,39 @@ export default function LoginScreen() {
             <p className="text-blue-700 text-xs">Dev OTP: <span className="font-bold tracking-widest">123456</span></p>
           </div>
 
-          {/* 6 digit boxes */}
-          <div className="flex gap-2 justify-between mb-3">
+          {/* 6 digit inputs */}
+          <div className="flex gap-2 justify-between mb-3" onPaste={handleDigitPaste}>
             {digits.map((d, i) => (
-              <div
+              <input
                 key={i}
-                ref={(el) => { digitRefs.current[i] = el as unknown as HTMLInputElement; }}
-                className={`flex-1 h-12 flex items-center justify-center rounded-xl border-2 text-xl font-bold transition-colors ${
-                  d ? "border-brand-600 bg-brand-50 text-brand-700" : "border-gray-200 bg-gray-50 text-gray-300"
+                ref={(el) => { digitRefs.current[i] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={d}
+                onChange={(e) => handleDigitChange(i, e.target.value)}
+                onKeyDown={(e) => handleDigitKeyDown(i, e)}
+                className={`flex-1 h-12 text-center rounded-xl border-2 text-xl font-bold outline-none transition-colors ${
+                  d ? "border-brand-600 bg-brand-50 text-brand-700" : "border-gray-200 bg-gray-50 text-gray-900 focus:border-brand-400"
                 }`}
-              >
-                {d || "·"}
-              </div>
+              />
             ))}
           </div>
 
           {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
 
-          {digits.join("").length === 6 && (
-            <button
-              onClick={handleVerifyOtp}
-              disabled={loading}
-              className="w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
-            >
-              {loading ? "Verifying…" : "Verify OTP"}
-            </button>
-          )}
+          <button
+            onClick={handleVerifyOtp}
+            disabled={loading || digits.join("").length < 6}
+            className="w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
+          >
+            {loading ? "Verifying…" : "Verify OTP"}
+          </button>
 
           <div className="flex items-center justify-between mt-3">
             <button
               onClick={() => { setPhase("mobile"); setDigits(Array(6).fill("")); setError(null); }}
-              className="text-xs text-gray-500 underline-offset-2 underline"
+              className="text-xs text-gray-500 underline underline-offset-2"
             >
               Change number
             </button>
@@ -417,12 +375,11 @@ export default function LoginScreen() {
             )}
           </div>
         </div>
-
       </DarkShell>
     );
   }
 
-  // ── Register phase — white screen ─────────────────────────────────────────
+  // ── Register phase ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <div className="bg-brand-700 px-6 pt-14 pb-6 text-white">
