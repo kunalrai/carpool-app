@@ -329,7 +329,7 @@ export default function LoginScreen() {
           </div>
 
           {/* 6 digit inputs */}
-          <div className="flex gap-2 justify-between mb-3" onPaste={handleDigitPaste}>
+          <div className="grid grid-cols-6 gap-2 mb-3" onPaste={handleDigitPaste}>
             {digits.map((d, i) => (
               <input
                 key={i}
@@ -340,7 +340,7 @@ export default function LoginScreen() {
                 value={d}
                 onChange={(e) => handleDigitChange(i, e.target.value)}
                 onKeyDown={(e) => handleDigitKeyDown(i, e)}
-                className={`flex-1 h-12 text-center rounded-xl border-2 text-xl font-bold outline-none transition-colors ${
+                className={`w-full h-12 text-center rounded-xl border-2 text-xl font-bold outline-none transition-colors ${
                   d ? "border-brand-600 bg-brand-50 text-brand-700" : "border-gray-200 bg-gray-50 text-gray-900 focus:border-brand-400"
                 }`}
               />
