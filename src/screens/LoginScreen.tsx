@@ -45,7 +45,7 @@ function DarkShell({
             Welcome to <span className="text-brand-400">GC Carpool</span>
           </h1>
           <p className="text-sm text-white/60 mt-1">
-            GaurCity ↔ HCL campus. Book or offer a ride in seconds.
+            Find or offer rides on any route, in seconds.
           </p>
         </div>
 
@@ -232,7 +232,7 @@ export default function LoginScreen() {
             <span className="text-brand-700">Commute</span>
           </h1>
           <p className="text-sm text-gray-500 mb-5">
-            GaurCity ↔ HCL campus. Book or offer a ride in seconds.
+            Find or offer rides on any route, in seconds.
           </p>
           <div className="flex gap-3 mb-6">
             <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
@@ -384,7 +384,7 @@ export default function LoginScreen() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="bg-brand-700 px-6 pt-14 pb-6 text-white">
         <h1 className="text-xl font-bold">GC Carpool</h1>
-        <p className="text-brand-200 text-xs mt-0.5">Gaur City ↔ HCL</p>
+        <p className="text-brand-200 text-xs mt-0.5">Share rides · Save money</p>
       </div>
 
       <div className="flex-1 px-6 py-8 overflow-y-auto">

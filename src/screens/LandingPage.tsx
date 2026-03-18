@@ -42,7 +42,7 @@ export default function LandingPage() {
       >
         <div className="flex items-center gap-8">
           <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }} className="text-2xl font-extrabold tracking-tight">
-            GC Ridepool
+            GC Carpool
           </span>
           <div className="hidden md:flex items-center gap-6">
             {[
@@ -94,7 +94,7 @@ export default function LandingPage() {
             style={{ background: C.secondaryContainer, color: C.onSecondaryContainer }}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Optimised for Gaur City Commuters
+            Carpool any route, any time
           </div>
 
           {/* Headline */}
@@ -102,21 +102,21 @@ export default function LandingPage() {
             className="text-[clamp(3rem,10vw,6.5rem)] font-extrabold leading-[0.92] tracking-tight mb-8"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
           >
-            Gaur City to HCL.<br />
+            Your Route.<br />
             <span style={{ color: C.primary }}>Share the ride.</span>
           </h1>
 
           <p className="text-lg md:text-xl mb-10 max-w-xl leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-            The professional commute network built for Gaur City residents.
-            Post a ride, claim a seat, and split the daily trip with your neighbours.
+            The community carpooling app for daily commuters.
+            Post a ride, claim a seat, and split the trip with neighbours going your way.
           </p>
 
-          {/* Booking widget */}
+          {/* CTA widget */}
           <div className="flex flex-col sm:flex-row gap-3 p-1.5 rounded-2xl w-full md:w-auto" style={{ background: C.surfaceContainerLow }}>
             <div className="flex items-center gap-4 bg-white px-5 py-4 rounded-xl shadow-sm flex-1">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Route</span>
-                <span className="font-semibold text-sm" style={{ color: C.onSurface }}>Gaur City → HCL Tech Park</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Any route</span>
+                <span className="font-semibold text-sm" style={{ color: C.onSurface }}>Search rides near you</span>
               </div>
             </div>
             <button
@@ -124,7 +124,7 @@ export default function LandingPage() {
               className="px-8 py-4 rounded-xl font-bold text-white text-sm transition-transform hover:scale-[1.02] active:scale-95 whitespace-nowrap"
               style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
             >
-              Book Now
+              Find a Ride
             </button>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function LandingPage() {
               Engineered for<br />Professionalism.
             </h2>
             <p className="max-w-md text-base" style={{ color: C.onSurfaceVariant }}>
-              Why Gaur City residents trust GC Ridepool every morning.
+              Why commuters trust GC Carpool every day.
             </p>
           </div>
 
@@ -265,7 +265,7 @@ export default function LandingPage() {
                   Trusted Community
                 </h3>
                 <p className="text-sm leading-relaxed" style={{ color: C.onSecondaryContainer }}>
-                  Join the network of Gaur City residents sharing the daily HCL commute. Verified by OTP.
+                  Join the growing network of commuters sharing daily rides. Verified by OTP.
                 </p>
               </div>
             </div>
@@ -339,10 +339,10 @@ export default function LandingPage() {
             className="text-4xl md:text-6xl font-extrabold mb-6 max-w-3xl relative z-10 leading-tight"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
-            Join the commute revolution at Gaur City.
+            Join the smarter commute revolution.
           </h2>
           <p className="text-white/75 text-base md:text-lg mb-10 max-w-xl relative z-10 leading-relaxed">
-            Your neighbours are already sharing the GC ↔ HCL commute every day.
+            Your neighbours are already sharing daily rides.
             Free to join — just your phone number.
           </p>
 
@@ -388,10 +388,10 @@ export default function LandingPage() {
               className="text-2xl font-extrabold tracking-tight mb-4 block"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }}
             >
-              GC Ridepool
+              GC Carpool
             </span>
             <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-              The carpooling app built for Gaur City ↔ HCL commuters.
+              The community carpooling app for daily commuters.
               Fast, secure, and community-run.
             </p>
           </div>
@@ -454,8 +454,8 @@ export default function LandingPage() {
           className="max-w-7xl mx-auto mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-3"
           style={{ borderColor: C.outlineVariant + "22" }}
         >
-          <span className="text-xs" style={{ color: C.outline }}>© 2025 GC Ridepool. Built for the Gaur City community.</span>
-          <span className="text-xs" style={{ color: C.outline }}>Gaur City 1 &amp; 2 · Sector 126, Noida· HCL Tech Park, Noida</span>
+          <span className="text-xs" style={{ color: C.outline }}>© 2025 GC Carpool. Built for the community.</span>
+          <span className="text-xs" style={{ color: C.outline }}>Share rides · Save money · Reduce traffic</span>
         </div>
       </footer>
 
