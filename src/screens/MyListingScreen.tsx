@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
+import { Id } from "../../convex/_generated/dataModel";
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function ChevronLeft() {
   return (
@@ -68,6 +71,13 @@ export default function MyListingScreen() {
     listing ? { listingId: listing._id } : "skip"
   );
 
+  // ── Recurring templates ───────────────────────────────────────────────────
+  const templates = useQuery(api.recurring.listMyTemplates, { userId: userId! });
+  const toggleTemplate = useMutation(api.recurring.toggleTemplate);
+  const deleteTemplate = useMutation(api.recurring.deleteTemplate);
+  const [templateActionId, setTemplateActionId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   // ── Mutations ─────────────────────────────────────────────────────────────
   const startRideMut = useMutation(api.listings.startRide);
   const cancelListingMut = useMutation(api.listings.cancelListing);
@@ -123,12 +133,120 @@ export default function MyListingScreen() {
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 text-gray-500">
-        <p className="font-medium">No active ride found</p>
-        <button onClick={() => navigate("/home")} className="text-brand-700 text-sm font-semibold">
-          Back to Home
-        </button>
-      </div>
+      <>
+        <div className="min-h-screen bg-white flex flex-col">
+          <div className="flex items-center gap-3 px-4 pt-12 pb-4 border-b border-gray-100">
+            <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl active:bg-gray-100">
+              <ChevronLeft />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">My Ride</h1>
+          </div>
+          <div className="flex-1 px-4 py-6 space-y-4">
+            <div className="text-center py-8 text-gray-500">
+              <p className="font-medium">No active ride</p>
+              <button onClick={() => navigate("/home")} className="text-brand-700 text-sm font-semibold mt-2">
+                Back to Home
+              </button>
+            </div>
+
+            {/* Still show templates even with no active listing */}
+            {templates !== undefined && templates.length > 0 && (
+              <div className="card">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Recurring Schedules
+                </p>
+                <div className="space-y-3">
+                  {templates.map((t) => (
+                    <div key={t._id} className="border border-gray-100 rounded-xl p-3">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {t.direction === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC"} · {t.departureTimeHHMM}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {t.totalSeats} seat{t.totalSeats > 1 ? "s" : ""}
+                            {t.pickupPoint ? ` · ${t.pickupPoint}` : ""}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${t.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                          {t.isActive ? "Active" : "Paused"}
+                        </span>
+                      </div>
+                      <div className="flex gap-1 mb-3">
+                        {DAY_LABELS.map((label, idx) => (
+                          <span
+                            key={idx}
+                            className={`w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center ${
+                              t.daysOfWeek.includes(idx)
+                                ? "bg-brand-600 text-white"
+                                : "bg-gray-100 text-gray-300"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={templateActionId === t._id}
+                          onClick={async () => {
+                            setTemplateActionId(t._id);
+                            try {
+                              await toggleTemplate({ templateId: t._id as Id<"recurringTemplates">, userId: userId!, isActive: !t.isActive });
+                            } finally {
+                              setTemplateActionId(null);
+                            }
+                          }}
+                          className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border border-gray-200 text-gray-700 active:bg-gray-50 disabled:opacity-50"
+                        >
+                          {templateActionId === t._id ? "…" : t.isActive ? "Pause" : "Resume"}
+                        </button>
+                        <button
+                          disabled={templateActionId === t._id}
+                          onClick={() => setConfirmDeleteId(t._id)}
+                          className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border border-red-200 text-red-600 active:bg-red-50 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {confirmDeleteId && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-8 bg-black/40">
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 animate-slide-up shadow-xl">
+              <p className="text-gray-800 font-medium text-center mb-6">
+                Delete this recurring schedule? Future auto-posts will stop.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmDeleteId(null)} disabled={templateActionId === confirmDeleteId} className="btn-secondary">
+                  Keep it
+                </button>
+                <button
+                  disabled={templateActionId === confirmDeleteId}
+                  onClick={async () => {
+                    setTemplateActionId(confirmDeleteId);
+                    try {
+                      await deleteTemplate({ templateId: confirmDeleteId as Id<"recurringTemplates">, userId: userId! });
+                      setConfirmDeleteId(null);
+                    } finally {
+                      setTemplateActionId(null);
+                    }
+                  }}
+                  className="flex-1 bg-red-600 text-white font-semibold py-3 px-4 rounded-xl active:bg-red-700 disabled:opacity-50"
+                >
+                  {templateActionId === confirmDeleteId ? "Deleting…" : "Yes, delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -225,6 +343,72 @@ export default function MyListingScreen() {
               })}
             </div>
           </div>
+
+          {/* Recurring schedules */}
+          {templates !== undefined && templates.length > 0 && (
+            <div className="card">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Recurring Schedules
+              </p>
+              <div className="space-y-3">
+                {templates.map((t) => (
+                  <div key={t._id} className="border border-gray-100 rounded-xl p-3">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {t.direction === "GC_TO_HCL" ? "GC → HCL" : "HCL → GC"} · {t.departureTimeHHMM}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {t.totalSeats} seat{t.totalSeats > 1 ? "s" : ""}
+                          {t.pickupPoint ? ` · ${t.pickupPoint}` : ""}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${t.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                        {t.isActive ? "Active" : "Paused"}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 mb-3">
+                      {DAY_LABELS.map((label, idx) => (
+                        <span
+                          key={idx}
+                          className={`w-8 h-8 rounded-full text-xs font-semibold flex items-center justify-center ${
+                            t.daysOfWeek.includes(idx)
+                              ? "bg-brand-600 text-white"
+                              : "bg-gray-100 text-gray-300"
+                          }`}
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={templateActionId === t._id}
+                        onClick={async () => {
+                          setTemplateActionId(t._id);
+                          try {
+                            await toggleTemplate({ templateId: t._id as Id<"recurringTemplates">, userId: userId!, isActive: !t.isActive });
+                          } finally {
+                            setTemplateActionId(null);
+                          }
+                        }}
+                        className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border border-gray-200 text-gray-700 active:bg-gray-50 disabled:opacity-50"
+                      >
+                        {templateActionId === t._id ? "…" : t.isActive ? "Pause" : "Resume"}
+                      </button>
+                      <button
+                        disabled={templateActionId === t._id}
+                        onClick={() => setConfirmDeleteId(t._id)}
+                        className="flex-1 text-xs font-semibold py-2 px-3 rounded-lg border border-red-200 text-red-600 active:bg-red-50 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Riders list */}
           <div className="card">
@@ -349,6 +533,41 @@ export default function MyListingScreen() {
           onCancel={() => setConfirmCancel(false)}
           loading={actionLoading}
         />
+      )}
+
+      {/* Delete template confirmation */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-8 bg-black/40">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 animate-slide-up shadow-xl">
+            <p className="text-gray-800 font-medium text-center mb-6">
+              Delete this recurring schedule? Future auto-posts will stop.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={templateActionId === confirmDeleteId}
+                className="btn-secondary"
+              >
+                Keep it
+              </button>
+              <button
+                disabled={templateActionId === confirmDeleteId}
+                onClick={async () => {
+                  setTemplateActionId(confirmDeleteId);
+                  try {
+                    await deleteTemplate({ templateId: confirmDeleteId as Id<"recurringTemplates">, userId: userId! });
+                    setConfirmDeleteId(null);
+                  } finally {
+                    setTemplateActionId(null);
+                  }
+                }}
+                className="flex-1 bg-red-600 text-white font-semibold py-3 px-4 rounded-xl active:bg-red-700 disabled:opacity-50"
+              >
+                {templateActionId === confirmDeleteId ? "Deleting…" : "Yes, delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

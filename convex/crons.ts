@@ -11,4 +11,12 @@ crons.interval(
   internal.listings.expireListings
 );
 
+// Auto-create listings for recurring templates once per hour.
+// Checks active templates whose day-of-week (IST) matches today.
+crons.interval(
+  "spawn-recurring-listings",
+  { hours: 1 },
+  internal.recurring.spawnDailyListings
+);
+
 export default crons;

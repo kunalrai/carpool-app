@@ -6,6 +6,8 @@ import { useAuth } from "../contexts/AuthContext";
 
 type Direction = "GC_TO_HCL" | "HCL_TO_GC";
 
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 // Convert "HH:MM" (24h) to a Unix ms timestamp for today
 function toTimestamp(value: string): number {
   const [h, m] = value.split(":").map(Number);
@@ -41,13 +43,51 @@ export default function PostRideScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Recurring state
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [selectedDays, setSelectedDays] = useState<number[]>([1, 2, 3, 4, 5]); // Mon–Fri
+
   const postListing = useMutation(api.listings.postListing);
+  const createTemplate = useMutation(api.recurring.createTemplate);
+
+  const toggleDay = (day: number) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  };
 
   const handlePost = async () => {
     if (!timeValue) {
       setError("Please select a departure time");
       return;
     }
+
+    if (isRecurring) {
+      if (selectedDays.length === 0) {
+        setError("Select at least one day");
+        return;
+      }
+      setError(null);
+      setLoading(true);
+      try {
+        await createTemplate({
+          userId: userId!,
+          direction,
+          departureTimeHHMM: timeValue,
+          totalSeats: seats,
+          daysOfWeek: selectedDays,
+          pickupPoint: pickupPoint.trim() || undefined,
+          note: note.trim() || undefined,
+        });
+        navigate("/home", { replace: true });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to create schedule");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const departureMs = toTimestamp(timeValue);
     if (departureMs <= Date.now()) {
       setError("Departure time must be in the future");
@@ -129,7 +169,7 @@ export default function PostRideScreen() {
           <input
             type="time"
             value={timeValue}
-            min={minTimeValue()}
+            min={isRecurring ? undefined : minTimeValue()}
             onChange={(e) => {
               setTimeValue(e.target.value);
               setError(null);
@@ -197,6 +237,64 @@ export default function PostRideScreen() {
           />
         </div>
 
+        {/* Recurring toggle */}
+        <div className="border border-gray-200 rounded-2xl p-4 space-y-4">
+          <button
+            onClick={() => setIsRecurring((v) => !v)}
+            className="w-full flex items-center justify-between"
+          >
+            <div className="text-left">
+              <p className="text-sm font-semibold text-gray-800">Repeat weekly</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isRecurring
+                  ? "Auto-posts this ride on selected days each week"
+                  : "Post once for today only"}
+              </p>
+            </div>
+            {/* Toggle pill */}
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+                isRecurring ? "bg-brand-600" : "bg-gray-200"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                  isRecurring ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </div>
+          </button>
+
+          {isRecurring && (
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                Repeat on
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {DAY_LABELS.map((label, idx) => {
+                  const active = selectedDays.includes(idx);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => toggleDay(idx)}
+                      className={`w-10 h-10 rounded-full text-xs font-semibold transition-all ${
+                        active
+                          ? "bg-brand-600 text-white"
+                          : "bg-gray-100 text-gray-500 active:bg-gray-200"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                A listing will be posted automatically each selected day. You can pause or delete the schedule from My Ride.
+              </p>
+            </div>
+          )}
+        </div>
+
         {/* Error */}
         {error && (
           <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3">
@@ -213,7 +311,9 @@ export default function PostRideScreen() {
           disabled={loading || !timeValue}
           className="btn-primary"
         >
-          {loading ? "Posting…" : "Post Ride"}
+          {loading
+            ? isRecurring ? "Saving…" : "Posting…"
+            : isRecurring ? "Save Recurring Schedule" : "Post Ride"}
         </button>
       </div>
     </div>

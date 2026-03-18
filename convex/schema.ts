@@ -30,6 +30,26 @@ export default defineSchema({
    * fare is always 80; stored for display consistency.
    * Listings auto-expire 60 min after departureTime if not started (cron patches to 'expired').
    */
+  /**
+   * recurringTemplates — a driver's standing weekly schedule.
+   * daysOfWeek: array of JS day numbers (0=Sun, 1=Mon … 6=Sat).
+   * A cron runs hourly and auto-creates a listing for each active template
+   * whose day matches today (IST) and whose departure is still in the future.
+   */
+  recurringTemplates: defineTable({
+    driverId: v.id("users"),
+    direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
+    departureTimeHHMM: v.string(), // "08:30" 24-h
+    totalSeats: v.number(),
+    daysOfWeek: v.array(v.number()),
+    pickupPoint: v.optional(v.string()),
+    note: v.optional(v.string()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_driver", ["driverId"])
+    .index("by_active", ["isActive"]),
+
   listings: defineTable({
     driverId: v.id("users"),
     direction: v.union(v.literal("GC_TO_HCL"), v.literal("HCL_TO_GC")),
@@ -47,6 +67,7 @@ export default defineSchema({
       v.literal("expired")
     ),
     fare: v.number(), // always 80
+    templateId: v.optional(v.id("recurringTemplates")), // set when auto-created by cron
     createdAt: v.number(),
   })
     .index("by_driver", ["driverId"])

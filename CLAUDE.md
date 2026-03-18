@@ -48,26 +48,47 @@ Convex URL is injected at runtime via `VITE_CONVEX_URL` env var (set in `.env.lo
 - `App.tsx` — route definitions (6 screens)
 - Global CSS utilities defined in `src/index.css`: `.btn-primary`, `.btn-secondary`, `.input-field`, `.card`
 
-### Route Map
-| Path | Screen |
-|---|---|
-| `/login` | S1 — Login & Registration (OTP flow + new user form) |
-| `/home` | S3 — Home (listings feed, My Ride banner, direction filter) |
-| `/post-ride` | S4 — Post a Ride |
-| `/listing/:id` | S5 — Listing Detail + join |
-| `/my-listing` | S6 — My Listing Management (driver view) |
-| `/profile` | S2 — Profile |
+### Auth
+`AuthContext` stores a Convex `Id<"users">` in `localStorage` (no JWT). `useAuth()` exposes `userId`, `login(id)`, `logout()`.
 
-### Database Schema (3 tables)
-- **`users`** — indexed by `mobile`. Car fields only required when role is `giver`/`both`.
-- **`listings`** — status lifecycle: `open → full → started | cancelled`. Fare always 80. Auto-expire 60 min after `departureTime` if not started (enforced in queries, not a cron).
+`AppShell` constrains all app screens to `max-w-md mx-auto` (mobile frame). Landing, legal, and blog pages render full-width.
+
+### Route Map
+| Path | Screen | Layout |
+|---|---|---|
+| `/` | Landing page | Full-width, public |
+| `/login` | Login & Registration (OTP + new user form) | Full-width, public |
+| `/home` | Home — listings feed, My Ride banner, direction filter | Tab (bottom nav) |
+| `/profile` | Profile | Tab |
+| `/chat` | Community group chat (all users) | Tab |
+| `/admin` | Admin panel | Tab (admin only) |
+| `/post-ride` | Post a Ride | Full-screen |
+| `/listing/:id` | Listing Detail + join | Full-screen |
+| `/my-listing` | My Listing Management (car owner view) | Full-screen |
+| `/dm/:listingId/:otherUserId` | Direct chat between driver and rider | Full-screen |
+| `/ride-chat/:listingId` | Ride group chat (driver + confirmed riders) | Full-screen |
+| `/call/:mode/:listingId` | Group voice call (Daily.co) | Full-screen |
+| `/call/:mode/:listingId/:otherUserId` | 1-on-1 voice call | Full-screen |
+| `/blog` | Public blog list | Full-width |
+| `/blog/:slug` | Blog post | Full-width |
+| `/admin/blog` | Admin blog management | Full-width, admin only |
+| `/privacy` `/terms` `/data-safety` | Legal pages | Full-width, public |
+
+### Database Schema (7 tables)
+- **`users`** — indexed `by_mobile`. Car fields only required when role is `giver`/`both`. `isAdmin` and `isSuspended` are optional booleans.
+- **`listings`** — status lifecycle: `open → full → started → completed | cancelled | expired`. Fare always 80. A cron (`crons.ts`) runs every 5 min to patch listings to `expired` status.
 - **`bookings`** — one confirmed booking per rider at a time (enforced in mutations).
+- **`messages`** — community group chat messages, indexed `by_time`.
+- **`rideMessages`** — ride-specific group chat, indexed `by_listing_time`.
+- **`directMessages`** — 1-on-1 driver↔rider chat scoped to a listing, indexed `by_listing` and `by_receiver_read`.
+- **`blogs`** — admin-authored articles, `status: draft | published`, indexed `by_status` and `by_slug`.
 
 Key indexes to use in queries:
 - `listings.by_direction_status` — for the feed filter
 - `listings.by_driver` — for the driver's active listing
 - `bookings.by_rider_status` — for a rider's current booking
 - `bookings.by_listing` — for listing's confirmed riders
+- `directMessages.by_receiver_read` — for unread DM badge count
 
 ## Business Rules (enforce in mutations)
 - One active listing per driver at a time
@@ -89,11 +110,19 @@ Admin users have an `isAdmin: true` field in the `users` table. To bootstrap the
 
 After the first admin exists, additional admins can be granted from within the Admin panel (tap a user → Make Admin).
 
+## Additional Features
+
+### Messaging & Calls
+Three chat scopes: community (`messages` table / `convex/chat.ts`), ride group (`rideMessages` / `convex/rideMessages.ts`), and direct DM (`directMessages` / `convex/directMessages.ts`). Voice/video calls use **Daily.co** — `convex/calls.ts` exposes `getCallToken` action that creates/reuses a private room and returns a short-lived meeting token. Requires `DAILY_API_KEY` env var in Convex.
+
+### AI Ride Parser
+`convex/ai.ts` exposes `parseRideOffer` action — detects ride offers in community chat messages and returns structured JSON (direction, time, seats, pickup). Uses **OpenRouter** (`OPENROUTER_API_KEY` env var, model `z-ai/glm-4.5-air:free`). If the key is absent, it silently returns `null`.
+
+### Blog
+Admins author posts in `/admin/blog`. Public reads at `/blog` and `/blog/:slug`. Content is plain text, paragraphs separated by `\n\n`. Drafts are only visible to admins.
+
 ## Dev Shortcuts (temporary)
 - OTP: hardcoded `123456` instead of real MSG91 calls
 - FCM: `console.log` the notification payload, do not call FCM API
-
-## Build Order
-Steps completed: **1** (scaffold) **2** (schema) **3** (Convex queries + mutations) **4** (S1 Login/Registration) **5** (S3 Home) **6** (S4 Post a Ride) **9** (S2 Profile)
-
-Next: **7** → S5 Listing Detail + join flow
+- AI parser degrades gracefully if `OPENROUTER_API_KEY` is unset
+- Calls require `DAILY_API_KEY` set in Convex environment variables
