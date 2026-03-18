@@ -50,6 +50,7 @@ export const getCallToken = action({
             enable_screenshare: false,
             enable_chat: false,
             enable_prejoin_ui: false,
+            enable_video: false,
           },
         }),
       });
