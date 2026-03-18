@@ -7,38 +7,65 @@ import LocationInput from "../components/LocationInput";
 import DrawerNav from "../components/DrawerNav";
 import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
 
-// ── AQI Chip ─────────────────────────────────────────────────────────────────
+// ── AQI Card ──────────────────────────────────────────────────────────────────
 
 const AQI_LEVELS = [
-  { max: 25,  bg: "bg-green-100",  text: "text-green-800",  dot: "bg-green-500"  },
-  { max: 50,  bg: "bg-lime-100",   text: "text-lime-800",   dot: "bg-lime-500"   },
-  { max: 75,  bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
-  { max: 100, bg: "bg-orange-100", text: "text-orange-800", dot: "bg-orange-500" },
-  { max: Infinity, bg: "bg-red-100", text: "text-red-800",  dot: "bg-red-500"   },
+  { max: 25,  label: "GOOD",      cardBg: "bg-green-50",   badge: "bg-green-500",   text: "text-green-700"  },
+  { max: 50,  label: "FAIR",      cardBg: "bg-lime-50",    badge: "bg-lime-500",    text: "text-lime-700"   },
+  { max: 75,  label: "MODERATE",  cardBg: "bg-yellow-50",  badge: "bg-yellow-500",  text: "text-yellow-700" },
+  { max: 100, label: "POOR",      cardBg: "bg-orange-50",  badge: "bg-orange-500",  text: "text-orange-700" },
+  { max: Infinity, label: "HAZARDOUS", cardBg: "bg-red-50", badge: "bg-red-500",    text: "text-red-700"    },
 ];
 
-function aqiStyle(aqi: number) {
+function aqiLevel(aqi: number) {
   return AQI_LEVELS.find((l) => aqi <= l.max) ?? AQI_LEVELS[AQI_LEVELS.length - 1];
 }
 
-function AqiChip({ aqi, category, pollutant }: { aqi: number; category: string; pollutant: string }) {
-  const s = aqiStyle(aqi);
+function AqiCard({ aqi, pollutant }: { aqi: number; pollutant: string }) {
+  const lv = aqiLevel(aqi);
   return (
-    <div className={`mx-4 mb-3 flex items-center gap-2 px-3 py-2 rounded-xl ${s.bg}`}>
-      <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
-      <span className={`text-xs font-semibold ${s.text}`}>
-        AQI {aqi} · {category}
-      </span>
-      <span className={`ml-auto text-xs ${s.text} opacity-70`}>
-        {pollutant.toUpperCase()} · Gaur City
+    <div className={`mx-4 mb-4 rounded-2xl px-4 py-3 flex items-center gap-3 ${lv.cardBg}`}>
+      <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+        <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="currentColor">
+          <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 5-8 5z" />
+        </svg>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-0.5">
+          AIR QUALITY · GAUR CITY
+        </p>
+        <p className={`text-lg font-bold leading-tight ${lv.text}`}>
+          {aqi}{" "}
+          <span className="text-sm font-semibold">{pollutant.toUpperCase()}</span>
+        </p>
+      </div>
+      <span className={`text-[10px] font-bold text-white px-2.5 py-1 rounded-full tracking-wide ${lv.badge}`}>
+        {lv.label}
       </span>
     </div>
   );
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function formatDeparture(ts: number): string {
   return new Date(ts).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
 }
+
+const AVATAR_COLORS = [
+  "bg-purple-500", "bg-blue-500", "bg-teal-500",
+  "bg-orange-500", "bg-pink-500", "bg-indigo-500",
+];
+function avatarColor(name: string) {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function avatarInitials(name: string) {
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+// ── Confirm Dialog ────────────────────────────────────────────────────────────
 
 function ConfirmDialog({
   message, onConfirm, onCancel, loading,
@@ -64,7 +91,7 @@ function ConfirmDialog({
   );
 }
 
-// ── Driver Banner ────────────────────────────────────────────────────────────
+// ── Driver Banner ─────────────────────────────────────────────────────────────
 
 type MyListing = NonNullable<
   ReturnType<typeof useQuery<typeof api.listings.getMyActiveListing>>
@@ -145,7 +172,7 @@ function DriverBanner({
   );
 }
 
-// ── Rider Banner ─────────────────────────────────────────────────────────────
+// ── Rider Banner ──────────────────────────────────────────────────────────────
 
 type MyBooking = NonNullable<
   ReturnType<typeof useQuery<typeof api.bookings.getMyBooking>>
@@ -227,6 +254,107 @@ function RiderBanner({
   );
 }
 
+// ── Ride Card ─────────────────────────────────────────────────────────────────
+
+function RideCard({
+  listing,
+  disableJoin,
+  joinLabel,
+  onClick,
+  onJoin,
+}: {
+  listing: {
+    _id: string;
+    fromLabel: string;
+    toLabel: string;
+    departureTime: number;
+    fare: number;
+    seatsLeft: number;
+    totalSeats: number;
+    driver?: { name?: string; carName?: string; carColor?: string } | null;
+  };
+  disableJoin: boolean;
+  joinLabel: string;
+  onClick: () => void;
+  onJoin: (e: React.MouseEvent) => void;
+}) {
+  const driverName = listing.driver?.name ?? "Driver";
+  const initials = avatarInitials(driverName);
+  const color = avatarColor(driverName);
+
+  return (
+    <div
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:bg-gray-50"
+      onClick={onClick}
+    >
+      <div className="p-4">
+        {/* Header row: avatar + name + price */}
+        <div className="flex items-start gap-3 mb-4">
+          <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}>
+            <span className="text-white text-sm font-bold">{initials}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900 leading-tight">{driverName}</p>
+            {listing.driver?.carName && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {listing.driver.carColor ? `${listing.driver.carColor} ` : ""}
+                {listing.driver.carName}
+              </p>
+            )}
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-base font-bold text-gray-900">₹{listing.fare}</p>
+            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md tracking-wide">
+              FIXED PRICE
+            </span>
+          </div>
+        </div>
+
+        {/* Route timeline */}
+        <div className="flex gap-3 mb-4">
+          <div className="flex flex-col items-center pt-1.5 shrink-0">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+            <div className="w-px bg-gray-200 my-1" style={{ height: 28 }} />
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-gray-700 font-medium truncate pr-2">{listing.fromLabel}</p>
+              <p className="text-xs text-gray-400 shrink-0">{formatDeparture(listing.departureTime)}</p>
+            </div>
+            <p className="text-sm text-gray-500 truncate">{listing.toLabel}</p>
+          </div>
+        </div>
+
+        {/* Footer: seats + join */}
+        <div className="flex items-center justify-between">
+          <span className={`text-xs font-semibold flex items-center gap-1.5 ${
+            listing.seatsLeft === 0 ? "text-red-500" : "text-green-600"
+          }`}>
+            {listing.seatsLeft > 0 && (
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            )}
+            {listing.seatsLeft === 0 ? "Full" : `${listing.seatsLeft} Seats Left`}
+          </span>
+          <button
+            onClick={onJoin}
+            disabled={disableJoin}
+            className={`text-sm font-semibold px-5 py-1.5 rounded-xl transition-colors ${
+              disableJoin
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-brand-700 text-white active:bg-brand-800"
+            }`}
+          >
+            {joinLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 type ActiveSearch = { fromLat: number; fromLng: number; toLat: number; toLng: number };
@@ -237,7 +365,6 @@ export default function HomeScreen() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Route search state
   const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
   const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
   const [activeSearch, setActiveSearch] = useState<ActiveSearch | null>(null);
@@ -318,63 +445,113 @@ export default function HomeScreen() {
     <>
       <DrawerNav open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
-      <div className="pb-24 bg-white min-h-screen">
+      <div className="pb-28 bg-gray-50 min-h-screen">
 
         {/* ── Top bar ── */}
-        <div className="flex items-center justify-between px-4 pt-12 pb-2">
-          <button onClick={() => setDrawerOpen(true)} className="p-1 -ml-1 rounded-xl active:bg-gray-100">
+        <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between">
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 -ml-2 rounded-xl active:bg-gray-100"
+          >
             <svg viewBox="0 0 24 24" className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
           <span className="text-base font-bold text-gray-900">GC Carpool</span>
-          <button onClick={() => navigate("/profile")} className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center active:opacity-70">
-            <svg viewBox="0 0 24 24" className="w-5 h-5 text-brand-700" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+          <button
+            onClick={() => navigate("/profile")}
+            className="w-9 h-9 rounded-full bg-brand-700 flex items-center justify-center active:opacity-70"
+          >
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
             </svg>
           </button>
         </div>
 
         {/* ── Greeting ── */}
-        <div className="px-4 pt-3 pb-4">
+        <div className="bg-white px-4 pt-1 pb-5">
           <h1 className="text-2xl font-bold text-gray-900">Where to, {firstName}?</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Search a route or browse all available rides.</p>
+          <p className="text-sm text-gray-400 mt-1">Ready for your fluid commute today.</p>
         </div>
 
-        {/* ── AQI chip ── */}
-        {aqiData && <AqiChip aqi={aqiData.aqi} category={aqiData.category} pollutant={aqiData.dominantPollutant} />}
+        <div className="h-3" />
 
-        {/* ── Route search card ── */}
-        <div className="mx-4 mb-4 bg-gray-50 rounded-2xl p-4 space-y-3 border border-gray-100">
-          <LocationInput
-            placeholder="From — pickup area…"
-            value={searchFrom}
-            onChange={setSearchFrom}
-          />
-          <LocationInput
-            placeholder="To — drop area…"
-            value={searchTo}
-            onChange={setSearchTo}
-          />
-          <div className="flex gap-2 pt-1">
+        {/* ── AQI Card ── */}
+        {aqiData && (
+          <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
+        )}
+
+        {/* ── Search Card ── */}
+        <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* From */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
+            <div className="flex-1">
+              <LocationInput
+                placeholder="From — pickup area…"
+                value={searchFrom}
+                onChange={setSearchFrom}
+              />
+            </div>
+          </div>
+          {/* Divider */}
+          <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
+          {/* To */}
+          <div className="flex items-center gap-3 px-4 pt-2 pb-4">
+            <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+            <div className="flex-1">
+              <LocationInput
+                placeholder="To — drop area…"
+                value={searchTo}
+                onChange={setSearchTo}
+              />
+            </div>
+          </div>
+
+          {/* Date + Seats row */}
+          <div className="flex gap-3 px-4 pb-4">
+            <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+              <span className="text-sm text-gray-600 font-medium">Today</span>
+            </div>
+            <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+                <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
+              </svg>
+              <span className="text-sm text-gray-600 font-medium">1 Seat</span>
+            </div>
+          </div>
+
+          {/* Search button */}
+          <div className="px-4 pb-4 flex gap-2">
             <button
               onClick={handleSearch}
               disabled={!searchFrom || !searchTo}
-              className="flex-1 bg-brand-700 text-white font-semibold py-2.5 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
+              className="flex-1 flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
             >
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
+              </svg>
               Search Rides
             </button>
             {activeSearch && (
               <button
                 onClick={handleClearSearch}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100"
+                className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100"
               >
                 Clear
               </button>
             )}
           </div>
+
           {activeSearch && (
-            <p className="text-xs text-brand-600 font-medium">
+            <p className="text-xs text-brand-600 font-medium px-4 pb-3">
               Showing rides within 3 km of your route
             </p>
           )}
@@ -415,19 +592,24 @@ export default function HomeScreen() {
         {/* ── Available Rides header ── */}
         <div className="flex items-center justify-between px-4 mb-3">
           <h2 className="text-base font-bold text-gray-900">Available Rides</h2>
-          {!activeSearch && (
-            <span className="text-xs text-gray-400 font-medium">All routes</span>
-          )}
+          <span className="text-xs text-brand-600 font-semibold">
+            {activeSearch ? "Filtered" : "See All"}
+          </span>
         </div>
 
         {/* ── Feed ── */}
         {listings === undefined ? (
           <div className="px-4 space-y-3">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="card animate-pulse space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-2/5" />
-                <div className="h-3 bg-gray-100 rounded w-1/3" />
-                <div className="h-8 bg-gray-100 rounded" />
+              <div key={i} className="bg-white rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-200" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-2/5" />
+                    <div className="h-3 bg-gray-100 rounded w-1/3" />
+                  </div>
+                </div>
+                <div className="h-12 bg-gray-100 rounded-xl" />
               </div>
             ))}
           </div>
@@ -437,7 +619,8 @@ export default function HomeScreen() {
               <svg viewBox="0 0 24 24" className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                 <rect x="1" y="9" width="22" height="9" rx="2" />
                 <path d="M3 9l2-5h14l2 5" />
-                <circle cx="7.5" cy="18.5" r="1.5" /><circle cx="16.5" cy="18.5" r="1.5" />
+                <circle cx="7.5" cy="18.5" r="1.5" />
+                <circle cx="16.5" cy="18.5" r="1.5" />
               </svg>
             </div>
             <p className="text-sm font-semibold text-gray-500">
@@ -456,55 +639,14 @@ export default function HomeScreen() {
               const joinLabel = alreadyJoined ? "Joined" : isFull ? "Full" : isActiveRider ? "In a ride" : "Join";
 
               return (
-                <div
+                <RideCard
                   key={listing._id}
-                  className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm cursor-pointer active:bg-gray-50"
+                  listing={listing}
+                  disableJoin={disableJoin}
+                  joinLabel={joinLabel}
                   onClick={() => navigate(`/listing/${listing._id}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0 pr-3">
-                      <p className="font-semibold text-gray-900">{listing.driver?.name ?? "—"}</p>
-                      {listing.driver?.carName && (
-                        <p className="text-sm text-gray-400 mt-0.5">
-                          {listing.driver.carName}{listing.driver.carColor ? ` · ${listing.driver.carColor}` : ""}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1 truncate">
-                        {listing.fromLabel} → {listing.toLabel}
-                      </p>
-                      {listing.pickupPoint && (
-                        <p className="text-xs text-gray-400 mt-0.5">Pickup: {listing.pickupPoint}</p>
-                      )}
-                    </div>
-                    <div className="ml-3 text-right shrink-0">
-                      <p className="text-base font-bold text-gray-900">{formatDeparture(listing.departureTime)}</p>
-                      <p className="text-sm font-semibold text-brand-600">₹{listing.fare}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-3">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      listing.seatsLeft === 0
-                        ? "bg-red-100 text-red-600"
-                        : listing.seatsLeft === 1
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-green-100 text-green-700"
-                    }`}>
-                      {listing.seatsLeft === 0 ? "Full" : `${listing.seatsLeft} of ${listing.totalSeats} seats left`}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); if (!disableJoin) navigate(`/listing/${listing._id}`); }}
-                      disabled={disableJoin}
-                      className={`text-sm font-semibold px-5 py-1.5 rounded-xl transition-colors ${
-                        disableJoin
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-brand-700 text-white active:bg-brand-800"
-                      }`}
-                    >
-                      {joinLabel}
-                    </button>
-                  </div>
-                </div>
+                  onJoin={(e) => { e.stopPropagation(); if (!disableJoin) navigate(`/listing/${listing._id}`); }}
+                />
               );
             })}
           </div>
