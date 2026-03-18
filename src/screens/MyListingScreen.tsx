@@ -464,6 +464,13 @@ export default function MyListingScreen() {
                       <p className="text-sm font-medium text-gray-900">
                         {booking.rider?.name ?? "Rider"}
                       </p>
+                      {isStarted && (
+                        <p className={`text-xs font-semibold mt-0.5 ${
+                          booking.checkedOut ? "text-green-600" : booking.checkedIn ? "text-blue-600" : "text-gray-400"
+                        }`}>
+                          {booking.checkedOut ? "✓ Checked out" : booking.checkedIn ? "✓ Checked in" : "Awaiting check-in"}
+                        </p>
+                      )}
                     </div>
                     <button
                       onClick={() => navigate(`/dm/${listing._id}/${booking.riderId}`)}

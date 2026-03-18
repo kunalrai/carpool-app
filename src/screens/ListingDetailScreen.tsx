@@ -21,6 +21,8 @@ export default function ListingDetailScreen() {
 
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // ── Live queries (real-time via Convex subscription) ──────────────────
@@ -28,19 +30,31 @@ export default function ListingDetailScreen() {
     listingId: id as Id<"listings">,
   });
   const myBooking = useQuery(api.bookings.getMyBooking, { userId: userId! });
+  const myBookingForListing = useQuery(api.bookings.getMyBookingForListing, {
+    userId: userId!,
+    listingId: id as Id<"listings">,
+  });
 
   const joinRide = useMutation(api.bookings.joinRide);
+  const checkInMut = useMutation(api.bookings.checkIn);
+  const checkOutMut = useMutation(api.bookings.checkOut);
 
   // ── Derived state ──────────────────────────────────────────────────────
   const isFull = listing?.seatsLeft === 0 || listing?.status === "full";
   const isOwn = listing?.driverId === userId;
+  const isStarted = listing?.status === "started";
   const alreadyJoined = !!myBooking && myBooking.listingId === id;
   const isActiveRider = !!myBooking;
   const isCancelledOrEnded =
     listing?.status === "cancelled" ||
     listing?.status === "completed";
 
-  const canJoin = !isFull && !isOwn && !isActiveRider && !alreadyJoined && !isCancelledOrEnded;
+  // Check-in/out state for this specific booking (survives after booking is completed)
+  const hasBookingHere = !!myBookingForListing && myBookingForListing.status !== "cancelled";
+  const checkedIn = myBookingForListing?.checkedIn === true;
+  const checkedOut = myBookingForListing?.checkedOut === true;
+
+  const canJoin = !isFull && !isOwn && !isActiveRider && !alreadyJoined && !isCancelledOrEnded && !isStarted;
 
   const joinLabel = joined
     ? "Joined!"
@@ -56,7 +70,33 @@ export default function ListingDetailScreen() {
     ? "Already in a ride"
     : "Join Ride";
 
-  // ── Handler ────────────────────────────────────────────────────────────
+  // ── Handlers ────────────────────────────────────────────────────────────
+  const handleCheckIn = async () => {
+    if (!myBookingForListing) return;
+    setCheckingIn(true);
+    setError(null);
+    try {
+      await checkInMut({ bookingId: myBookingForListing._id, riderId: userId! });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Check-in failed");
+    } finally {
+      setCheckingIn(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    if (!myBookingForListing) return;
+    setCheckingOut(true);
+    setError(null);
+    try {
+      await checkOutMut({ bookingId: myBookingForListing._id, riderId: userId! });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Check-out failed");
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
   const handleJoin = async () => {
     setError(null);
     setJoining(true);
@@ -256,25 +296,58 @@ export default function ListingDetailScreen() {
         )}
       </div>
 
-      {/* Join button — sticky at bottom */}
+      {/* Bottom action area — sticky */}
       <div
         className="px-4 py-4 border-t border-gray-100 bg-white"
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
-        <button
-          onClick={handleJoin}
-          disabled={!canJoin || joining || joined}
-          className={`w-full font-semibold py-3 px-4 rounded-xl transition-all ${
-            joined
-              ? "bg-green-600 text-white"
-              : canJoin
-              ? "bg-brand-700 text-white active:bg-brand-800"
-              : "bg-gray-100 text-gray-400 cursor-not-allowed"
-          }`}
-        >
-          {joining ? "Joining…" : joinLabel}
-        </button>
-
+        {/* Check-in / Check-out — shown when ride is started and rider has a booking */}
+        {isStarted && hasBookingHere && !isOwn ? (
+          <div className="space-y-3">
+            {checkedOut ? (
+              <div className="w-full bg-green-50 border border-green-200 rounded-xl py-3 px-4 flex items-center justify-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span className="text-green-700 font-semibold text-sm">Ride Complete — Checked Out</span>
+              </div>
+            ) : checkedIn ? (
+              <button
+                onClick={handleCheckOut}
+                disabled={checkingOut}
+                className="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl active:bg-gray-900 disabled:opacity-50"
+              >
+                {checkingOut ? "Checking Out…" : "Check Out"}
+              </button>
+            ) : (
+              <button
+                onClick={handleCheckIn}
+                disabled={checkingIn}
+                className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-xl active:bg-green-700 disabled:opacity-50"
+              >
+                {checkingIn ? "Checking In…" : "Check In"}
+              </button>
+            )}
+            <p className="text-center text-xs text-gray-400">
+              {checkedOut ? "Thank you for riding!" : checkedIn ? "Tap when you've reached your destination" : "Tap when you board the vehicle"}
+            </p>
+          </div>
+        ) : (
+          /* Normal join button */
+          <button
+            onClick={handleJoin}
+            disabled={!canJoin || joining || joined}
+            className={`w-full font-semibold py-3 px-4 rounded-xl transition-all ${
+              joined
+                ? "bg-green-600 text-white"
+                : canJoin
+                ? "bg-brand-700 text-white active:bg-brand-800"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {joining ? "Joining…" : joinLabel}
+          </button>
+        )}
       </div>
     </div>
   );

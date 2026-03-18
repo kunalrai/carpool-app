@@ -109,6 +109,8 @@ export default defineSchema({
     riderId: v.id("users"),
     status: v.union(v.literal("confirmed"), v.literal("cancelled"), v.literal("completed")),
     joinedAt: v.number(),
+    checkedIn: v.optional(v.boolean()),
+    checkedOut: v.optional(v.boolean()),
   })
     .index("by_listing", ["listingId"])
     .index("by_rider", ["riderId"])
