@@ -171,4 +171,20 @@ export default defineSchema({
   })
     .index("by_listing", ["listingId"])
     .index("by_receiver_read", ["receiverId", "read"]),
+
+  /**
+   * callSignals — tracks an active call so other participants can see it.
+   * Written when the caller joins the Daily room; cleared when they leave.
+   * mode 'group' = ride group call, 'dm' = 1-on-1 call.
+   */
+  callSignals: defineTable({
+    listingId: v.id("listings"),
+    callerId: v.id("users"),
+    callerName: v.string(),
+    mode: v.union(v.literal("group"), v.literal("dm")),
+    targetUserId: v.optional(v.id("users")), // dm mode only
+    roomName: v.string(),
+    active: v.boolean(),
+    startedAt: v.number(),
+  }).index("by_listing_active", ["listingId", "active"]),
 });

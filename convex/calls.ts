@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 
 const DAILY_BASE = "https://api.daily.co/v1";
@@ -87,5 +87,94 @@ export const getCallToken = action({
 
     const tokenData = await tokenRes.json() as { token: string };
     return { roomUrl, token: tokenData.token };
+  },
+});
+
+/**
+ * Write an active call signal so other participants can see the call is live.
+ * Upserts — if a signal already exists for this listing+mode, reactivates it.
+ */
+export const signalCall = mutation({
+  args: {
+    listingId: v.id("listings"),
+    callerId: v.id("users"),
+    callerName: v.string(),
+    mode: v.union(v.literal("group"), v.literal("dm")),
+    targetUserId: v.optional(v.id("users")),
+    roomName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find an existing signal for this listing + mode to avoid duplicates
+    const existing = await ctx.db
+      .query("callSignals")
+      .withIndex("by_listing_active", (q) => q.eq("listingId", args.listingId))
+      .filter((q) => q.eq(q.field("mode"), args.mode))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        callerId: args.callerId,
+        callerName: args.callerName,
+        targetUserId: args.targetUserId,
+        roomName: args.roomName,
+        active: true,
+        startedAt: Date.now(),
+      });
+      return existing._id;
+    }
+
+    return await ctx.db.insert("callSignals", {
+      listingId: args.listingId,
+      callerId: args.callerId,
+      callerName: args.callerName,
+      mode: args.mode,
+      targetUserId: args.targetUserId,
+      roomName: args.roomName,
+      active: true,
+      startedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Mark the call signal as inactive when the caller leaves.
+ */
+export const endCall = mutation({
+  args: {
+    listingId: v.id("listings"),
+    mode: v.union(v.literal("group"), v.literal("dm")),
+  },
+  handler: async (ctx, { listingId, mode }) => {
+    const signal = await ctx.db
+      .query("callSignals")
+      .withIndex("by_listing_active", (q) =>
+        q.eq("listingId", listingId).eq("active", true)
+      )
+      .filter((q) => q.eq(q.field("mode"), mode))
+      .first();
+
+    if (signal) {
+      await ctx.db.patch(signal._id, { active: false });
+    }
+  },
+});
+
+/**
+ * Real-time query — returns the active call signal for a listing, if any.
+ * Used by chat screens to show an incoming call banner.
+ */
+export const getActiveCallSignal = query({
+  args: {
+    listingId: v.id("listings"),
+    mode: v.union(v.literal("group"), v.literal("dm")),
+  },
+  handler: async (ctx, { listingId, mode }) => {
+    return await ctx.db
+      .query("callSignals")
+      .withIndex("by_listing_active", (q) =>
+        q.eq("listingId", listingId).eq("active", true)
+      )
+      .filter((q) => q.eq(q.field("mode"), mode))
+      .first();
   },
 });

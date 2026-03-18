@@ -37,6 +37,11 @@ export default function DirectChatScreen() {
   const sendDM = useMutation(api.directMessages.sendDM);
   const markRead = useMutation(api.directMessages.markRead);
 
+  const activeCall = useQuery(api.calls.getActiveCallSignal, {
+    listingId: listingId as Id<"listings">,
+    mode: "dm",
+  });
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -115,6 +120,26 @@ export default function DirectChatScreen() {
             : "?"}
         </div>
       </div>
+
+      {/* Incoming call banner — show only to the person being called */}
+      {activeCall && activeCall.callerId !== userId && (
+        <div className="bg-green-600 px-4 py-3 flex items-center gap-3 shrink-0">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0 animate-pulse">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-semibold">Incoming call from {activeCall.callerName}</p>
+          </div>
+          <button
+            onClick={() => navigate(`/call/dm/${listingId}/${otherUserId}`)}
+            className="px-3 py-1.5 bg-white text-green-700 rounded-lg text-xs font-bold active:bg-green-50 shrink-0"
+          >
+            Answer
+          </button>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-28">

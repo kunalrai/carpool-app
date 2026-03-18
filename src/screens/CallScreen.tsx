@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAction } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "../contexts/AuthContext";
@@ -29,6 +29,10 @@ export default function CallScreen() {
   const callRef = useRef<DailyCall | null>(null);
 
   const getCallToken = useAction(api.calls.getCallToken);
+  const signalCall = useMutation(api.calls.signalCall);
+  const endCall = useMutation(api.calls.endCall);
+
+  const myProfile = useQuery(api.users.getUserProfile, userId ? { userId: userId as Id<"users"> } : "skip");
 
   // Build a deterministic, unique room name
   const roomName =
@@ -67,8 +71,24 @@ export default function CallScreen() {
 
         callRef.current = callFrame;
 
-        callFrame.on("joined-meeting", () => setStatus("joined"));
+        callFrame.on("joined-meeting", () => {
+          setStatus("joined");
+          // Signal other participants that a call is active
+          signalCall({
+            listingId: listingId as Id<"listings">,
+            callerId: userId as Id<"users">,
+            callerName: myProfile?.name ?? "Someone",
+            mode: (mode === "group" ? "group" : "dm") as "group" | "dm",
+            targetUserId: otherUserId ? (otherUserId as Id<"users">) : undefined,
+            roomName,
+          }).catch(console.error);
+        });
         callFrame.on("left-meeting", () => {
+          // Clear the signal when leaving
+          endCall({
+            listingId: listingId as Id<"listings">,
+            mode: (mode === "group" ? "group" : "dm") as "group" | "dm",
+          }).catch(console.error);
           callFrame?.destroy();
           navigate(-1);
         });
