@@ -405,7 +405,7 @@ export default function HomeScreen() {
     !!userProfile.carName;
 
   const isActiveDriver = !!myListing;
-  const isActiveRider = !!myBooking;
+
 
   const feedListings = (listings ?? []).filter((l) => l.driverId !== userId);
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
