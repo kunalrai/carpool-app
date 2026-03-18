@@ -258,10 +258,7 @@ function RiderBanner({
 
 function RideCard({
   listing,
-  disableJoin,
-  joinLabel,
   onClick,
-  onJoin,
 }: {
   listing: {
     _id: string;
@@ -273,10 +270,7 @@ function RideCard({
     totalSeats: number;
     driver?: { name?: string; carName?: string; carColor?: string } | null;
   };
-  disableJoin: boolean;
-  joinLabel: string;
   onClick: () => void;
-  onJoin: (e: React.MouseEvent) => void;
 }) {
   const driverName = listing.driver?.name ?? "Driver";
   const initials = avatarInitials(driverName);
@@ -645,19 +639,11 @@ export default function HomeScreen() {
         ) : (
           <div className="px-4 space-y-3">
             {feedListings.map((listing) => {
-              const alreadyJoined = !!myBooking && myBooking.listingId === listing._id;
-              const isFull = listing.seatsLeft === 0 || listing.status === "full";
-              const disableJoin = isFull || isActiveRider;
-              const joinLabel = alreadyJoined ? "Joined" : isFull ? "Full" : isActiveRider ? "In a ride" : "Join";
-
               return (
                 <RideCard
                   key={listing._id}
                   listing={listing}
-                  disableJoin={disableJoin}
-                  joinLabel={joinLabel}
                   onClick={() => navigate(`/listing/${listing._id}`)}
-                  onJoin={(e) => { e.stopPropagation(); if (!disableJoin) navigate(`/listing/${listing._id}`); }}
                 />
               );
             })}
