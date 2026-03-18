@@ -281,75 +281,87 @@ function RideCard({
   const driverName = listing.driver?.name ?? "Driver";
   const initials = avatarInitials(driverName);
   const color = avatarColor(driverName);
+  const takenSeats = listing.totalSeats - listing.seatsLeft;
+  const carLine = [listing.driver?.carColor, listing.driver?.carName].filter(Boolean).join(" ");
 
   return (
     <div
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:bg-gray-50"
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 cursor-pointer active:bg-gray-50"
       onClick={onClick}
     >
-      <div className="p-4">
-        {/* Header row: avatar + name + price */}
-        <div className="flex items-start gap-3 mb-4">
-          <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}>
-            <span className="text-white text-sm font-bold">{initials}</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-900 leading-tight">{driverName}</p>
-            {listing.driver?.carName && (
-              <p className="text-xs text-gray-400 mt-0.5">
-                {listing.driver.carColor ? `${listing.driver.carColor} ` : ""}
-                {listing.driver.carName}
-              </p>
-            )}
-          </div>
-          <div className="text-right shrink-0">
-            <p className="text-base font-bold text-gray-900">₹{listing.fare}</p>
-            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md tracking-wide">
-              FIXED PRICE
-            </span>
-          </div>
+      {/* ── Header: avatar · name · price ── */}
+      <div className="flex items-start gap-3 mb-4">
+        {/* Avatar */}
+        <div className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shrink-0`}>
+          <span className="text-white text-sm font-bold">{initials}</span>
         </div>
 
-        {/* Route timeline */}
-        <div className="flex gap-3 mb-4">
-          <div className="flex flex-col items-center pt-1.5 shrink-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-            <div className="w-px bg-gray-200 my-1" style={{ height: 28 }} />
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-gray-700 font-medium truncate pr-2">{listing.fromLabel}</p>
-              <p className="text-xs text-gray-400 shrink-0">{formatDeparture(listing.departureTime)}</p>
+        {/* Name + car */}
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-900 leading-tight">{driverName}</p>
+          {carLine && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-green-500 shrink-0" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5l-4-4 1.41-1.41L10 13.67l6.59-6.59L18 8.5l-8 8z" />
+              </svg>
+              <span className="text-xs text-gray-400">{carLine}</span>
             </div>
-            <p className="text-sm text-gray-500 truncate">{listing.toLabel}</p>
+          )}
+        </div>
+
+        {/* Price */}
+        <div className="text-right shrink-0">
+          <p className="text-lg font-bold text-gray-900">₹{listing.fare}</p>
+          <p className="text-[10px] font-bold text-gray-400 tracking-wide">FIXED PRICE</p>
+        </div>
+      </div>
+
+      {/* ── Route timeline ── */}
+      <div className="flex gap-3 mb-4">
+        <div className="flex flex-col items-center pt-1 shrink-0">
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <div className="w-px bg-gray-200 my-1" style={{ height: 26 }} />
+          <div className="w-3 h-3 rounded-full border-2 border-gray-400 bg-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-700 font-medium truncate pr-2">{listing.fromLabel}</p>
+            <p className="text-sm text-gray-400 shrink-0 tabular-nums">{formatDeparture(listing.departureTime)}</p>
+          </div>
+          <p className="text-sm text-gray-500 truncate">{listing.toLabel}</p>
+        </div>
+      </div>
+
+      {/* ── Footer: seat indicators · seats left ── */}
+      <div className="flex items-center justify-between pt-1">
+        {/* Taken-seat pill */}
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center bg-gray-100 rounded-full px-2 py-1 gap-1">
+            <span className="text-xs font-bold text-gray-600">{takenSeats}</span>
+            <div className="flex gap-0.5">
+              {Array.from({ length: listing.totalSeats }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2 h-2 rounded-full ${i < takenSeats ? "bg-gray-400" : "bg-gray-200"}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Footer: seats + join */}
-        <div className="flex items-center justify-between">
-          <span className={`text-xs font-semibold flex items-center gap-1.5 ${
-            listing.seatsLeft === 0 ? "text-red-500" : "text-green-600"
-          }`}>
-            {listing.seatsLeft > 0 && (
-              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        {/* Seats left */}
+        {listing.seatsLeft === 0 ? (
+          <span className="text-xs font-semibold text-red-500">Full</span>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+              <svg viewBox="0 0 24 24" className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-            )}
-            {listing.seatsLeft === 0 ? "Full" : `${listing.seatsLeft} Seats Left`}
-          </span>
-          <button
-            onClick={onJoin}
-            disabled={disableJoin}
-            className={`text-sm font-semibold px-5 py-1.5 rounded-xl transition-colors ${
-              disableJoin
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-brand-700 text-white active:bg-brand-800"
-            }`}
-          >
-            {joinLabel}
-          </button>
-        </div>
+            </div>
+            <span className="text-sm font-semibold text-green-600">{listing.seatsLeft} Seats Left</span>
+          </div>
+        )}
       </div>
     </div>
   );
