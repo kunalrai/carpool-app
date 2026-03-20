@@ -98,7 +98,7 @@ After the first admin exists, additional admins can be granted from within the A
 |---|---|---|
 | `/` | Landing page | Public |
 | `/login` | Login & Registration (OTP flow) | Public |
-| `/home` | Home — listings feed, My Ride banner, direction filter | Authenticated |
+| `/home` | Home — Find Pool & Offer Pool tabs, ride requests | Authenticated |
 | `/post-ride` | Post a Ride | Drivers only |
 | `/listing/:id` | Listing Detail + Join | Authenticated |
 | `/my-listing` | My Listing Management | Active drivers |
@@ -121,10 +121,11 @@ After the first admin exists, additional admins can be granted from within the A
 ```
 convex/                 # Backend — schema, queries, mutations, actions
   schema.ts             # DB tables: users, listings, bookings, messages,
-                        #   rideMessages, directMessages, blogs
+                        #   rideMessages, directMessages, blogs, rideRequests
   users.ts              # User queries + mutations
   listings.ts           # Listing lifecycle (post, cancel, start, complete, expire)
   bookings.ts           # Join/cancel ride (atomic seat decrement)
+  rideRequests.ts       # Ride request post/cancel/query + expiry cron
   auth.ts               # OTP send/verify (MSG91 action)
   admin.ts              # Admin queries + mutations (suspend, makeAdmin)
   chat.ts               # Community group chat
@@ -133,12 +134,14 @@ convex/                 # Backend — schema, queries, mutations, actions
   calls.ts              # Daily.co room creation + token generation
   ai.ts                 # AI ride offer parser (OpenRouter)
   blogs.ts              # Blog CRUD
-  crons.ts              # Auto-expire listings (runs every 5 min)
+  crons.ts              # Auto-expire listings + ride requests (every 5 min)
 
 src/
   contexts/             # AuthContext (userId stored in localStorage)
   components/           # AppShell, BottomNav, shared UI
   screens/              # One file per screen
+  lib/
+    matching.ts         # haversineKm + matchPercent route similarity utility
   App.tsx               # Route definitions + auth guards
   main.tsx              # ConvexProvider + BrowserRouter + React root
 
@@ -151,7 +154,9 @@ scripts/                # generate-icons.mjs (sharp)
 ## Key Business Rules
 
 - One active listing per driver at a time
-- Listings auto-expire 30 minutes after departure time (via cron)
+- One active ride request per rider at a time
+- Listings auto-expire 60 minutes after departure time (via cron)
+- Ride requests auto-expire 60 minutes after departure time (via cron)
 - `joinRide` atomically decrements `seatsLeft` and creates a booking
 - `cancelBooking` reverts listing status from `full → open` if needed
 - Driver cannot join their own ride
@@ -179,6 +184,39 @@ Three chat scopes:
 | Direct DM (driver ↔ rider) | `directMessages` | `/dm/:listingId/:otherUserId` |
 
 Voice/video calls use **Daily.co**. `convex/calls.ts` creates or reuses a private room per listing and returns a short-lived meeting token. Requires `DAILY_API_KEY` in Convex environment variables.
+
+---
+
+## Ride Requests & Route Matching
+
+Riders who can't find a suitable listing can post a **ride request** from the Find Pool tab. Requests capture pickup location, dropoff, desired departure time, seats needed, and an optional note.
+
+Drivers see all active requests in the **Offer Pool tab** under "Riders Looking for a Ride", sorted by route match % so the best candidates appear first.
+
+### Match % algorithm
+
+Match % is computed client-side in `src/lib/matching.ts` using the Haversine formula:
+
+- Pickup proximity score: `max(0, 1 − pickupDist / 5 km) × 100`
+- Dropoff proximity score: `max(0, 1 − dropoffDist / 5 km) × 100`
+- Final: `round((pickupScore + dropoffScore) / 2)`
+
+| Distance per endpoint | Score |
+|---|---|
+| 0 km | 100% |
+| 2.5 km | 50% |
+| 5 km+ | 0% |
+
+Badge colours: **green** ≥ 80%, **yellow** ≥ 50%, **grey** < 50%.
+
+When a rider has an active request, each listing card in the Find Pool feed also shows its match % against the request.
+
+### Request lifecycle
+
+```
+active → cancelled (rider cancels)
+       → expired   (cron, 60 min after departure)
+```
 
 ---
 
