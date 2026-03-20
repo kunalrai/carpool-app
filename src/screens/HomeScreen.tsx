@@ -25,7 +25,7 @@ function aqiLevel(aqi: number) {
 function AqiCard({ aqi, pollutant }: { aqi: number; pollutant: string }) {
   const lv = aqiLevel(aqi);
   return (
-    <div className={`mx-4 mt-3 mb-0 rounded-2xl px-4 py-3 flex items-center gap-3 ${lv.cardBg}`}>
+    <div className={`mx-4 mt-12 mb-0 rounded-2xl px-4 py-3 flex items-center gap-3 ${lv.cardBg}`}>
       <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
         <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="currentColor">
           <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 5-8 5z" />
@@ -707,8 +707,13 @@ export default function HomeScreen() {
 
       <div className="pb-28 bg-gray-50 min-h-screen">
 
+        {/* ── AQI Card ── */}
+        {aqiData && (
+          <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
+        )}
+
         {/* ── Top bar ── */}
-        <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between">
+        <div className="bg-white px-4 pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={() => setDrawerOpen(true)}
             className="p-2 -ml-2 rounded-xl active:bg-gray-100"
@@ -730,11 +735,6 @@ export default function HomeScreen() {
             </svg>
           </button>
         </div>
-
-        {/* ── AQI Card ── */}
-        {aqiData && (
-          <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
-        )}
 
         {/* ── Greeting ── */}
         <div className="bg-white px-4 pt-1 pb-4">
