@@ -346,7 +346,25 @@ function PostRequestSheet({
   const [seats, setSeats] = useState(1);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) { setError("Geolocation not supported"); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const result = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          setFrom(result);
+        } catch {
+          setError("Could not determine your location");
+        } finally { setLocating(false); }
+      },
+      () => { setError("Location access denied"); setLocating(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleSubmit = async () => {
     if (!from || !to) { setError("Please set pickup and drop locations"); return; }
@@ -390,6 +408,20 @@ function PostRequestSheet({
               <div className="flex-1">
                 <LocationInput placeholder="From — pickup area…" value={from} onChange={setFrom} />
               </div>
+              <button
+                onClick={handleUseMyLocation}
+                disabled={locating}
+                title="Use my location"
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100 disabled:opacity-40"
+              >
+                {locating ? (
+                  <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                  </svg>
+                )}
+              </button>
             </div>
             <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
             <div className="flex items-center gap-3 px-4 pt-2 pb-4">
@@ -616,8 +648,6 @@ function RideRequestCard({ request, matchPct }: { request: ActiveRequest; matchP
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
-type ActiveSearch = { fromLat: number; fromLng: number; toLat: number; toLng: number };
-
 export default function HomeScreen() {
   const navigate = useNavigate();
   const { userId } = useAuth();
@@ -626,22 +656,13 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<"find" | "offer">("find");
   const [showPostReqSheet, setShowPostReqSheet] = useState(false);
 
-  const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
-  const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
-  const [activeSearch, setActiveSearch] = useState<ActiveSearch | null>(null);
-  const [locating, setLocating] = useState(false);
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmCancelListing, setConfirmCancelListing] = useState(false);
   const [confirmCancelSeat, setConfirmCancelSeat] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const listings = useQuery(
-    api.listings.getActiveListings,
-    activeSearch
-      ? { fromLat: activeSearch.fromLat, fromLng: activeSearch.fromLng, toLat: activeSearch.toLat, toLng: activeSearch.toLng }
-      : {}
-  );
+  const listings = useQuery(api.listings.getActiveListings, {});
   const myListing = useQuery(api.listings.getMyActiveListing, { userId: userId! });
   const myBooking = useQuery(api.bookings.getMyBooking, { userId: userId! });
   const userProfile = useQuery(api.users.getUserProfile, { userId: userId! });
@@ -693,40 +714,6 @@ export default function HomeScreen() {
     await cancelRequestMut({ requestId: myRequest!._id, riderId: userId! });
   });
 
-  const handleUseMyLocation = () => {
-    if (!navigator.geolocation) {
-      setActionError("Geolocation is not supported by your browser");
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const result = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-          setSearchFrom(result);
-        } catch {
-          setActionError("Could not determine your location");
-        } finally {
-          setLocating(false);
-        }
-      },
-      () => {
-        setActionError("Location access denied. Please allow location permission.");
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
-  const handleSearch = () => {
-    if (!searchFrom || !searchTo) return;
-    setActiveSearch({ fromLat: searchFrom.lat, fromLng: searchFrom.lng, toLat: searchTo.lat, toLng: searchTo.lng });
-  };
-  const handleClearSearch = () => {
-    setSearchFrom(null);
-    setSearchTo(null);
-    setActiveSearch(null);
-  };
 
   return (
     <>
@@ -816,76 +803,6 @@ export default function HomeScreen() {
         {/* ══ FIND POOL TAB ══ */}
         {activeTab === "find" && (
           <>
-            {/* ── Search Card ── */}
-            <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
-                <div className="flex-1">
-                  <LocationInput placeholder="From — pickup area…" value={searchFrom} onChange={setSearchFrom} />
-                </div>
-                <button
-                  onClick={handleUseMyLocation}
-                  disabled={locating}
-                  title="Use my location"
-                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100 disabled:opacity-40"
-                >
-                  {locating ? (
-                    <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-                      <path d="M12 9a3 3 0 100 6 3 3 0 000-6z" fill="currentColor" stroke="none" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
-              <div className="flex items-center gap-3 px-4 pt-2 pb-4">
-                <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
-                <div className="flex-1">
-                  <LocationInput placeholder="To — drop area…" value={searchTo} onChange={setSearchTo} />
-                </div>
-              </div>
-              <div className="flex gap-3 px-4 pb-4">
-                <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-                  </svg>
-                  <span className="text-sm text-gray-600 font-medium">Today</span>
-                </div>
-                <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-                    <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
-                  </svg>
-                  <span className="text-sm text-gray-600 font-medium">1 Seat</span>
-                </div>
-              </div>
-              <div className="px-4 pb-4 flex gap-2">
-                <button
-                  onClick={handleSearch}
-                  disabled={!searchFrom || !searchTo}
-                  className="flex-1 flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
-                >
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
-                  </svg>
-                  Search Rides
-                </button>
-                {activeSearch && (
-                  <button onClick={handleClearSearch} className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100">
-                    Clear
-                  </button>
-                )}
-              </div>
-              {activeSearch && (
-                <p className="text-xs text-brand-600 font-medium px-4 pb-3">
-                  Showing rides within 3 km of your route
-                </p>
-              )}
-            </div>
-
             {/* ── My Request Banner ── */}
             {myRequest && (
               <div className="mb-4">
@@ -926,9 +843,6 @@ export default function HomeScreen() {
             {/* ── Available Rides header ── */}
             <div className="flex items-center justify-between px-4 mb-3">
               <h2 className="text-base font-bold text-gray-900">Available Rides</h2>
-              <span className="text-xs text-brand-600 font-semibold">
-                {activeSearch ? "Filtered" : "See All"}
-              </span>
             </div>
 
             {/* ── Feed ── */}
@@ -957,12 +871,8 @@ export default function HomeScreen() {
                     <circle cx="16.5" cy="18.5" r="1.5" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold text-gray-500">
-                  {activeSearch ? "No rides found on this route" : "No rides available"}
-                </p>
-                <p className="text-xs mt-1 text-gray-400">
-                  {activeSearch ? "Try a wider area or check back later" : "Check back soon"}
-                </p>
+                <p className="text-sm font-semibold text-gray-500">No rides available</p>
+                <p className="text-xs mt-1 text-gray-400">Check back soon or post a request below</p>
               </div>
             ) : (
               <div className="px-4 space-y-3">
