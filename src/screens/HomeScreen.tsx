@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import LocationInput from "../components/LocationInput";
 import DrawerNav from "../components/DrawerNav";
 import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
+import { reverseGeocode } from "../hooks/usePlacesAutocomplete";
 import { matchPercent } from "../lib/matching";
 
 // ── AQI Card ──────────────────────────────────────────────────────────────────
@@ -628,6 +629,7 @@ export default function HomeScreen() {
   const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
   const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
   const [activeSearch, setActiveSearch] = useState<ActiveSearch | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmCancelListing, setConfirmCancelListing] = useState(false);
@@ -690,6 +692,31 @@ export default function HomeScreen() {
   const handleCancelRequest = () => withAction(async () => {
     await cancelRequestMut({ requestId: myRequest!._id, riderId: userId! });
   });
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setActionError("Geolocation is not supported by your browser");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const result = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          setSearchFrom(result);
+        } catch {
+          setActionError("Could not determine your location");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        setActionError("Location access denied. Please allow location permission.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const handleSearch = () => {
     if (!searchFrom || !searchTo) return;
@@ -796,6 +823,22 @@ export default function HomeScreen() {
                 <div className="flex-1">
                   <LocationInput placeholder="From — pickup area…" value={searchFrom} onChange={setSearchFrom} />
                 </div>
+                <button
+                  onClick={handleUseMyLocation}
+                  disabled={locating}
+                  title="Use my location"
+                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100 disabled:opacity-40"
+                >
+                  {locating ? (
+                    <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                      <path d="M12 9a3 3 0 100 6 3 3 0 000-6z" fill="currentColor" stroke="none" />
+                    </svg>
+                  )}
+                </button>
               </div>
               <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
               <div className="flex items-center gap-3 px-4 pt-2 pb-4">
