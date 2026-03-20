@@ -25,7 +25,7 @@ function aqiLevel(aqi: number) {
 function AqiCard({ aqi, pollutant }: { aqi: number; pollutant: string }) {
   const lv = aqiLevel(aqi);
   return (
-    <div className={`mx-4 mb-4 rounded-2xl px-4 py-3 flex items-center gap-3 ${lv.cardBg}`}>
+    <div className={`mx-4 mt-3 mb-0 rounded-2xl px-4 py-3 flex items-center gap-3 ${lv.cardBg}`}>
       <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
         <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="currentColor">
           <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 5-8 5z" />
@@ -731,6 +731,11 @@ export default function HomeScreen() {
           </button>
         </div>
 
+        {/* ── AQI Card ── */}
+        {aqiData && (
+          <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
+        )}
+
         {/* ── Greeting ── */}
         <div className="bg-white px-4 pt-1 pb-4">
           <h1 className="text-2xl font-bold text-gray-900">Hey, {firstName}!</h1>
@@ -777,11 +782,6 @@ export default function HomeScreen() {
         </div>
 
         <div className="h-3" />
-
-        {/* ── AQI Card ── */}
-        {aqiData && (
-          <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
-        )}
 
         {/* ── Error banner ── */}
         {actionError && (
