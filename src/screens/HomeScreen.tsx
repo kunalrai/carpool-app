@@ -332,6 +332,8 @@ function MyRequestBanner({
 function PostRequestSheet({
   onClose,
   onSubmit,
+  initialFrom = null,
+  initialTo = null,
 }: {
   onClose: () => void;
   onSubmit: (data: {
@@ -339,9 +341,11 @@ function PostRequestSheet({
     toLabel: string; toLat: number; toLng: number;
     departureTime: number; seatsNeeded: number; note?: string;
   }) => Promise<void>;
+  initialFrom?: PlaceResult | null;
+  initialTo?: PlaceResult | null;
 }) {
-  const [from, setFrom] = useState<PlaceResult | null>(null);
-  const [to, setTo] = useState<PlaceResult | null>(null);
+  const [from, setFrom] = useState<PlaceResult | null>(initialFrom);
+  const [to, setTo] = useState<PlaceResult | null>(initialTo);
   const [timeStr, setTimeStr] = useState(defaultTimeStr);
   const [seats, setSeats] = useState(1);
   const [note, setNote] = useState("");
@@ -656,6 +660,10 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<"find" | "offer">("find");
   const [showPostReqSheet, setShowPostReqSheet] = useState(false);
 
+  const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
+  const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
+  const [locating, setLocating] = useState(false);
+
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmCancelListing, setConfirmCancelListing] = useState(false);
@@ -714,6 +722,22 @@ export default function HomeScreen() {
     await cancelRequestMut({ requestId: myRequest!._id, riderId: userId! });
   });
 
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) { setActionError("Geolocation not supported"); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const result = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          setSearchFrom(result);
+        } catch {
+          setActionError("Could not determine your location");
+        } finally { setLocating(false); }
+      },
+      () => { setActionError("Location access denied. Please allow location permission."); setLocating(false); },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   return (
     <>
@@ -803,6 +827,53 @@ export default function HomeScreen() {
         {/* ══ FIND POOL TAB ══ */}
         {activeTab === "find" && (
           <>
+            {/* ── Search / Request Card ── */}
+            <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* From */}
+              <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
+                <div className="flex-1">
+                  <LocationInput placeholder="From — pickup area…" value={searchFrom} onChange={setSearchFrom} />
+                </div>
+                <button
+                  onClick={handleUseMyLocation}
+                  disabled={locating}
+                  title="Use my location"
+                  className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100 disabled:opacity-40"
+                >
+                  {locating ? (
+                    <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {/* Divider */}
+              <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
+              {/* To */}
+              <div className="flex items-center gap-3 px-4 pt-2 pb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+                <div className="flex-1">
+                  <LocationInput placeholder="To — drop area…" value={searchTo} onChange={setSearchTo} />
+                </div>
+              </div>
+              {/* Post Request button */}
+              <div className="px-4 pb-4">
+                <button
+                  onClick={() => setShowPostReqSheet(true)}
+                  disabled={!!myRequest}
+                  className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-semibold py-3 rounded-xl text-sm active:bg-purple-700 disabled:opacity-40"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  {myRequest ? "Request already posted" : "Post Ride Request"}
+                </button>
+              </div>
+            </div>
+
             {/* ── My Request Banner ── */}
             {myRequest && (
               <div className="mb-4">
@@ -811,21 +882,6 @@ export default function HomeScreen() {
                   onCancel={handleCancelRequest}
                   loading={actionLoading}
                 />
-              </div>
-            )}
-
-            {/* ── Post Request CTA ── */}
-            {!myRequest && (
-              <div className="mx-4 mb-4">
-                <button
-                  onClick={() => setShowPostReqSheet(true)}
-                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-purple-300 text-purple-700 font-semibold py-3 rounded-2xl text-sm active:bg-purple-50"
-                >
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  Can't find a ride? Post a request
-                </button>
               </div>
             )}
 
@@ -1017,6 +1073,8 @@ export default function HomeScreen() {
       {showPostReqSheet && (
         <PostRequestSheet
           onClose={() => setShowPostReqSheet(false)}
+          initialFrom={searchFrom}
+          initialTo={searchTo}
           onSubmit={async (data) => {
             await postRequestMut({ riderId: userId!, ...data });
             setShowPostReqSheet(false);
