@@ -743,40 +743,33 @@ export default function HomeScreen() {
         </div>
 
         {/* ── Category Tabs ── */}
-        <div className="bg-white px-4 pb-4">
-          <div className="flex gap-3">
+        <div className="bg-white border-b border-gray-100">
+          <div className="flex">
             <button
               onClick={() => setActiveTab("find")}
-              className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-colors ${
-                activeTab === "find" ? "border-brand-700 bg-brand-50" : "border-gray-200 bg-white"
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === "find"
+                  ? "border-brand-700 text-brand-700"
+                  : "border-transparent text-gray-400"
               }`}
             >
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center ${activeTab === "find" ? "bg-brand-700" : "bg-gray-100"}`}>
-                <svg viewBox="0 0 24 24" className={`w-6 h-6 ${activeTab === "find" ? "text-white" : "text-gray-500"}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <p className={`text-sm font-bold leading-tight ${activeTab === "find" ? "text-brand-700" : "text-gray-700"}`}>Find Pool</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Browse available rides</p>
-              </div>
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
+              </svg>
+              Find Pool
             </button>
-
             <button
               onClick={() => setActiveTab("offer")}
-              className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-colors ${
-                activeTab === "offer" ? "border-brand-700 bg-brand-50" : "border-gray-200 bg-white"
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === "offer"
+                  ? "border-brand-700 text-brand-700"
+                  : "border-transparent text-gray-400"
               }`}
             >
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center ${activeTab === "offer" ? "bg-brand-700" : "bg-gray-100"}`}>
-                <svg viewBox="0 0 24 24" className={`w-6 h-6 ${activeTab === "offer" ? "text-white" : "text-gray-500"}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <p className={`text-sm font-bold leading-tight ${activeTab === "offer" ? "text-brand-700" : "text-gray-700"}`}>Offer Pool</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">Share your ride</p>
-              </div>
+              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Offer Pool
             </button>
           </div>
         </div>
