@@ -7,21 +7,21 @@ A fixed-route carpooling PWA connecting **Gaur City (GC1/GC2)** and **HCL campus
 - No in-app payment — fare paid directly to driver
 - Installable on Android & iOS as a PWA
 
-**Live app:** https://carpool-virid.vercel.app
-
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18 + Vite, TypeScript |
+| Frontend | React 18 + Vite 6, TypeScript |
 | Styling | Tailwind CSS v3 |
-| Backend + Database | Convex (real-time) |
-| Auth | Mobile OTP via MSG91 *(mock in dev)* |
-| Push Notifications | Firebase Cloud Messaging *(mock in dev)* |
+| Backend + Database | Convex (real-time queries, mutations, actions) |
+| Auth | Mobile OTP via MSG91 *(mock `123456` in dev)* |
+| Push Notifications | Firebase Cloud Messaging *(console.log in dev)* |
+| Voice/Video Calls | Daily.co |
+| AI Parser | OpenRouter (`z-ai/glm-4.5-air:free`) |
 | PWA | vite-plugin-pwa + Workbox |
-| Hosting | Vercel |
+| Hosting | Render (static site) |
 
 ---
 
@@ -43,7 +43,7 @@ npm install
 npx convex dev
 ```
 
-This will open a browser to log in, create a project, push the schema, and automatically write `VITE_CONVEX_URL` to `.env.local`.
+This opens a browser to log in, creates a project, pushes the schema, and writes `VITE_CONVEX_URL` to `.env.local`.
 
 ### 3. Run the app
 
@@ -58,6 +58,23 @@ npm run dev
 ```
 
 App runs at `http://localhost:5173`
+
+---
+
+## Environment Variables
+
+### Frontend (`.env.local`)
+
+| Variable | Description |
+|---|---|
+| `VITE_CONVEX_URL` | Auto-set by `npx convex dev` |
+
+### Convex backend (set in Convex Dashboard → Settings → Environment Variables)
+
+| Variable | Description |
+|---|---|
+| `DAILY_API_KEY` | Daily.co API key — required for voice/video calls |
+| `OPENROUTER_API_KEY` | OpenRouter key — optional, enables AI ride parser |
 
 ---
 
@@ -79,36 +96,54 @@ After the first admin exists, additional admins can be granted from within the A
 
 | Route | Screen | Access |
 |---|---|---|
+| `/` | Landing page | Public |
 | `/login` | Login & Registration (OTP flow) | Public |
-| `/home` | Home — listings feed, My Ride banner | Authenticated |
-| `/post-ride` | Post a Ride | Drivers only (has car details) |
+| `/home` | Home — listings feed, My Ride banner, direction filter | Authenticated |
+| `/post-ride` | Post a Ride | Drivers only |
 | `/listing/:id` | Listing Detail + Join | Authenticated |
 | `/my-listing` | My Listing Management | Active drivers |
 | `/profile` | Profile — edit details, logout | Authenticated |
-| `/admin` | Admin Panel — manage users | Admin only |
+| `/chat` | Community group chat | Authenticated |
+| `/dm/:listingId/:otherUserId` | Direct chat (driver ↔ rider) | Authenticated |
+| `/ride-chat/:listingId` | Ride group chat (driver + confirmed riders) | Authenticated |
+| `/call/:mode/:listingId` | Group voice call | Authenticated |
+| `/call/:mode/:listingId/:otherUserId` | 1-on-1 voice call | Authenticated |
+| `/admin` | Admin panel — manage users | Admin only |
+| `/admin/blog` | Blog management | Admin only |
+| `/blog` | Public blog list | Public |
+| `/blog/:slug` | Blog post | Public |
+| `/privacy` `/terms` `/data-safety` | Legal pages | Public |
 
 ---
 
 ## Project Structure
 
 ```
-convex/          # Backend — schema, queries, mutations, actions
-  schema.ts      # Database tables: users, listings, bookings
-  users.ts       # User queries + mutations
-  listings.ts    # Listing queries + mutations (post, cancel, start, end)
-  bookings.ts    # Booking queries + mutations (join, cancel)
-  auth.ts        # OTP send/verify actions
-  admin.ts       # Admin queries + mutations
+convex/                 # Backend — schema, queries, mutations, actions
+  schema.ts             # DB tables: users, listings, bookings, messages,
+                        #   rideMessages, directMessages, blogs
+  users.ts              # User queries + mutations
+  listings.ts           # Listing lifecycle (post, cancel, start, complete, expire)
+  bookings.ts           # Join/cancel ride (atomic seat decrement)
+  auth.ts               # OTP send/verify (MSG91 action)
+  admin.ts              # Admin queries + mutations (suspend, makeAdmin)
+  chat.ts               # Community group chat
+  rideMessages.ts       # Ride group chat
+  directMessages.ts     # 1-on-1 DM between driver and rider
+  calls.ts              # Daily.co room creation + token generation
+  ai.ts                 # AI ride offer parser (OpenRouter)
+  blogs.ts              # Blog CRUD
+  crons.ts              # Auto-expire listings (runs every 5 min)
 
 src/
-  contexts/      # AuthContext (userId in localStorage)
-  components/    # BottomNav
-  screens/       # One file per screen (Login, Home, PostRide, etc.)
-  App.tsx        # Route definitions + auth guards
-  main.tsx       # ConvexProvider + React root
+  contexts/             # AuthContext (userId stored in localStorage)
+  components/           # AppShell, BottomNav, shared UI
+  screens/              # One file per screen
+  App.tsx               # Route definitions + auth guards
+  main.tsx              # ConvexProvider + BrowserRouter + React root
 
-public/          # PWA icons (generated via scripts/generate-icons.mjs)
-scripts/         # Icon generation script (sharp)
+public/                 # PWA icons
+scripts/                # generate-icons.mjs (sharp)
 ```
 
 ---
@@ -116,16 +151,46 @@ scripts/         # Icon generation script (sharp)
 ## Key Business Rules
 
 - One active listing per driver at a time
-- Listings auto-expire **30 minutes** after departure time
-- `joinRide` atomically decrements `seatsLeft`
+- Listings auto-expire 30 minutes after departure time (via cron)
+- `joinRide` atomically decrements `seatsLeft` and creates a booking
+- `cancelBooking` reverts listing status from `full → open` if needed
 - Driver cannot join their own ride
 - Rider can only have one confirmed booking at a time
+- Fare is always ₹80, set server-side on `postListing`
+
+### Listing status lifecycle
+
+```
+open → full → started → completed
+                      → cancelled
+            expired (via cron)
+```
+
+---
+
+## Messaging & Calls
+
+Three chat scopes:
+
+| Scope | Table | Route |
+|---|---|---|
+| Community (all users) | `messages` | `/chat` |
+| Ride group (driver + confirmed riders) | `rideMessages` | `/ride-chat/:listingId` |
+| Direct DM (driver ↔ rider) | `directMessages` | `/dm/:listingId/:otherUserId` |
+
+Voice/video calls use **Daily.co**. `convex/calls.ts` creates or reuses a private room per listing and returns a short-lived meeting token. Requires `DAILY_API_KEY` in Convex environment variables.
+
+---
+
+## AI Ride Parser
+
+`convex/ai.ts` exposes a `parseRideOffer` action used in community chat. It detects ride offer messages and returns structured JSON (direction, time, seats, pickup point). Uses OpenRouter with model `z-ai/glm-4.5-air:free`. Degrades silently if `OPENROUTER_API_KEY` is unset.
 
 ---
 
 ## Regenerating Icons
 
-If you update `public/icon.svg`, regenerate all PNG icons with:
+If you update `public/icon.svg`, regenerate all PNG sizes with:
 
 ```bash
 npm run generate-icons
@@ -135,15 +200,8 @@ npm run generate-icons
 
 ## Deployment
 
-Hosted on **Vercel**. Every push to `main` auto-deploys.
+Hosted on **Render** as a static site. Push to `main` to deploy.
 
 ```bash
-git push origin main  # triggers auto-deploy
+npm run build   # outputs to dist/
 ```
-
----
-
-## Pending
-
-- **Step 11** — Wire up [MSG91](https://msg91.com) for real OTP delivery
-- **Step 12** — Wire up [Firebase Cloud Messaging](https://firebase.google.com) for push notifications

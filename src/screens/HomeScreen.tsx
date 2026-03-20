@@ -370,6 +370,7 @@ export default function HomeScreen() {
   const { userId } = useAuth();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"find" | "offer">("find");
 
   const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
   const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
@@ -404,7 +405,6 @@ export default function HomeScreen() {
     (userProfile.role === "giver" || userProfile.role === "both") &&
     !!userProfile.carName;
 
-  const isActiveDriver = !!myListing;
 
 
   const feedListings = (listings ?? []).filter((l) => l.driverId !== userId);
@@ -478,9 +478,52 @@ export default function HomeScreen() {
         </div>
 
         {/* ── Greeting ── */}
-        <div className="bg-white px-4 pt-1 pb-5">
-          <h1 className="text-2xl font-bold text-gray-900">Where to, {firstName}?</h1>
-          <p className="text-sm text-gray-400 mt-1">Ready for your fluid commute today.</p>
+        <div className="bg-white px-4 pt-1 pb-4">
+          <h1 className="text-2xl font-bold text-gray-900">Hey, {firstName}!</h1>
+          <p className="text-sm text-gray-400 mt-1">What would you like to do today?</p>
+        </div>
+
+        {/* ── Category Tabs ── */}
+        <div className="bg-white px-4 pb-4">
+          <div className="flex gap-3">
+            <button
+              onClick={() => setActiveTab("find")}
+              className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-colors ${
+                activeTab === "find"
+                  ? "border-brand-700 bg-brand-50"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center ${activeTab === "find" ? "bg-brand-700" : "bg-gray-100"}`}>
+                <svg viewBox="0 0 24 24" className={`w-6 h-6 ${activeTab === "find" ? "text-white" : "text-gray-500"}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className={`text-sm font-bold leading-tight ${activeTab === "find" ? "text-brand-700" : "text-gray-700"}`}>Find Pool</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Browse available rides</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("offer")}
+              className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-colors ${
+                activeTab === "offer"
+                  ? "border-brand-700 bg-brand-50"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center ${activeTab === "offer" ? "bg-brand-700" : "bg-gray-100"}`}>
+                <svg viewBox="0 0 24 24" className={`w-6 h-6 ${activeTab === "offer" ? "text-white" : "text-gray-500"}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className={`text-sm font-bold leading-tight ${activeTab === "offer" ? "text-brand-700" : "text-gray-700"}`}>Offer Pool</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Share your ride</p>
+              </div>
+            </button>
+          </div>
         </div>
 
         <div className="h-3" />
@@ -489,79 +532,6 @@ export default function HomeScreen() {
         {aqiData && (
           <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
         )}
-
-        {/* ── Search Card ── */}
-        <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* From */}
-          <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
-            <div className="flex-1">
-              <LocationInput
-                placeholder="From — pickup area…"
-                value={searchFrom}
-                onChange={setSearchFrom}
-              />
-            </div>
-          </div>
-          {/* Divider */}
-          <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
-          {/* To */}
-          <div className="flex items-center gap-3 px-4 pt-2 pb-4">
-            <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
-            <div className="flex-1">
-              <LocationInput
-                placeholder="To — drop area…"
-                value={searchTo}
-                onChange={setSearchTo}
-              />
-            </div>
-          </div>
-
-          {/* Date + Seats row */}
-          <div className="flex gap-3 px-4 pb-4">
-            <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-              <span className="text-sm text-gray-600 font-medium">Today</span>
-            </div>
-            <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
-              <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-                <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
-              </svg>
-              <span className="text-sm text-gray-600 font-medium">1 Seat</span>
-            </div>
-          </div>
-
-          {/* Search button */}
-          <div className="px-4 pb-4 flex gap-2">
-            <button
-              onClick={handleSearch}
-              disabled={!searchFrom || !searchTo}
-              className="flex-1 flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
-            >
-              <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
-              </svg>
-              Search Rides
-            </button>
-            {activeSearch && (
-              <button
-                onClick={handleClearSearch}
-                className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          {activeSearch && (
-            <p className="text-xs text-brand-600 font-medium px-4 pb-3">
-              Showing rides within 3 km of your route
-            </p>
-          )}
-        </div>
 
         {/* ── Error banner ── */}
         {actionError && (
@@ -573,94 +543,211 @@ export default function HomeScreen() {
           </div>
         )}
 
-        {/* ── My Ride Banners ── */}
-        {(myListing || myBooking) && (
-          <div className="space-y-3 mb-4">
-            {myListing && (
-              <DriverBanner
-                listing={myListing}
-                onCancel={() => setConfirmCancelListing(true)}
-                onStart={handleStartRide}
-                onEnd={handleEndRide}
-                loading={actionLoading}
-              />
-            )}
+        {/* ══ FIND POOL TAB ══ */}
+        {activeTab === "find" && (
+          <>
+            {/* ── Search Card ── */}
+            <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* From */}
+              <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
+                <div className="flex-1">
+                  <LocationInput
+                    placeholder="From — pickup area…"
+                    value={searchFrom}
+                    onChange={setSearchFrom}
+                  />
+                </div>
+              </div>
+              {/* Divider */}
+              <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
+              {/* To */}
+              <div className="flex items-center gap-3 px-4 pt-2 pb-4">
+                <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+                <div className="flex-1">
+                  <LocationInput
+                    placeholder="To — drop area…"
+                    value={searchTo}
+                    onChange={setSearchTo}
+                  />
+                </div>
+              </div>
+
+              {/* Date + Seats row */}
+              <div className="flex gap-3 px-4 pb-4">
+                <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+                  </svg>
+                  <span className="text-sm text-gray-600 font-medium">Today</span>
+                </div>
+                <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+                    <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
+                  </svg>
+                  <span className="text-sm text-gray-600 font-medium">1 Seat</span>
+                </div>
+              </div>
+
+              {/* Search button */}
+              <div className="px-4 pb-4 flex gap-2">
+                <button
+                  onClick={handleSearch}
+                  disabled={!searchFrom || !searchTo}
+                  className="flex-1 flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />
+                  </svg>
+                  Search Rides
+                </button>
+                {activeSearch && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {activeSearch && (
+                <p className="text-xs text-brand-600 font-medium px-4 pb-3">
+                  Showing rides within 3 km of your route
+                </p>
+              )}
+            </div>
+
+            {/* ── Rider Banner ── */}
             {myBooking && (
-              <RiderBanner
-                booking={myBooking}
-                onCancelSeat={() => setConfirmCancelSeat(true)}
-                loading={actionLoading}
-              />
+              <div className="mb-4">
+                <RiderBanner
+                  booking={myBooking}
+                  onCancelSeat={() => setConfirmCancelSeat(true)}
+                  loading={actionLoading}
+                />
+              </div>
             )}
-          </div>
+
+            {/* ── Available Rides header ── */}
+            <div className="flex items-center justify-between px-4 mb-3">
+              <h2 className="text-base font-bold text-gray-900">Available Rides</h2>
+              <span className="text-xs text-brand-600 font-semibold">
+                {activeSearch ? "Filtered" : "See All"}
+              </span>
+            </div>
+
+            {/* ── Feed ── */}
+            {listings === undefined ? (
+              <div className="px-4 space-y-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="bg-white rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
+                    <div className="flex gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-200" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-2/5" />
+                        <div className="h-3 bg-gray-100 rounded w-1/3" />
+                      </div>
+                    </div>
+                    <div className="h-12 bg-gray-100 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            ) : feedListings.length === 0 ? (
+              <div className="flex flex-col items-center py-14 text-gray-400">
+                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <svg viewBox="0 0 24 24" className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="1" y="9" width="22" height="9" rx="2" />
+                    <path d="M3 9l2-5h14l2 5" />
+                    <circle cx="7.5" cy="18.5" r="1.5" />
+                    <circle cx="16.5" cy="18.5" r="1.5" />
+                  </svg>
+                </div>
+                <p className="text-sm font-semibold text-gray-500">
+                  {activeSearch ? "No rides found on this route" : "No rides available"}
+                </p>
+                <p className="text-xs mt-1 text-gray-400">
+                  {activeSearch ? "Try a wider area or check back later" : "Check back soon"}
+                </p>
+              </div>
+            ) : (
+              <div className="px-4 space-y-3">
+                {feedListings.map((listing) => (
+                  <RideCard
+                    key={listing._id}
+                    listing={listing}
+                    onClick={() => navigate(`/listing/${listing._id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
 
-        {/* ── Available Rides header ── */}
-        <div className="flex items-center justify-between px-4 mb-3">
-          <h2 className="text-base font-bold text-gray-900">Available Rides</h2>
-          <span className="text-xs text-brand-600 font-semibold">
-            {activeSearch ? "Filtered" : "See All"}
-          </span>
-        </div>
-
-        {/* ── Feed ── */}
-        {listings === undefined ? (
-          <div className="px-4 space-y-3">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
-                <div className="flex gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gray-200" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-2/5" />
-                    <div className="h-3 bg-gray-100 rounded w-1/3" />
-                  </div>
-                </div>
-                <div className="h-12 bg-gray-100 rounded-xl" />
-              </div>
-            ))}
-          </div>
-        ) : feedListings.length === 0 ? (
-          <div className="flex flex-col items-center py-14 text-gray-400">
-            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <svg viewBox="0 0 24 24" className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="9" width="22" height="9" rx="2" />
-                <path d="M3 9l2-5h14l2 5" />
-                <circle cx="7.5" cy="18.5" r="1.5" />
-                <circle cx="16.5" cy="18.5" r="1.5" />
-              </svg>
-            </div>
-            <p className="text-sm font-semibold text-gray-500">
-              {activeSearch ? "No rides found on this route" : "No rides available"}
-            </p>
-            <p className="text-xs mt-1 text-gray-400">
-              {activeSearch ? "Try a wider area or check back later" : "Check back soon"}
-            </p>
-          </div>
-        ) : (
-          <div className="px-4 space-y-3">
-            {feedListings.map((listing) => {
-              return (
-                <RideCard
-                  key={listing._id}
-                  listing={listing}
-                  onClick={() => navigate(`/listing/${listing._id}`)}
+        {/* ══ OFFER POOL TAB ══ */}
+        {activeTab === "offer" && (
+          <>
+            {myListing ? (
+              /* Driver has active listing */
+              <div className="mb-4">
+                <DriverBanner
+                  listing={myListing}
+                  onCancel={() => setConfirmCancelListing(true)}
+                  onStart={handleStartRide}
+                  onEnd={handleEndRide}
+                  loading={actionLoading}
                 />
-              );
-            })}
-          </div>
+              </div>
+            ) : hasCarDetails ? (
+              /* Driver has car, no active listing → prompt to post */
+              <div className="mx-4">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mb-4">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-brand-700" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="9" width="22" height="9" rx="2" />
+                      <path d="M3 9l2-5h14l2 5" />
+                      <circle cx="7.5" cy="18.5" r="1.5" />
+                      <circle cx="16.5" cy="18.5" r="1.5" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">Ready to share your ride?</h3>
+                  <p className="text-sm text-gray-400 mb-5">Post your trip and pick up riders along your route. Fixed fare ₹80/seat.</p>
+                  <button
+                    onClick={() => navigate("/post-ride")}
+                    className="w-full flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    Post a Ride
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* User has no car details → prompt to update profile */
+              <div className="mx-4">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 mb-1">Add your car details</h3>
+                  <p className="text-sm text-gray-400 mb-5">To offer a ride, update your profile with your car information and set your role to Driver.</p>
+                  <button
+                    onClick={() => navigate("/profile")}
+                    className="w-full flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800"
+                  >
+                    Update Profile
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
-
-      {/* ── Offer a Ride FAB ── */}
-      {hasCarDetails && !isActiveDriver && (
-        <button
-          onClick={() => navigate("/post-ride")}
-          className="fixed bottom-20 right-4 bg-brand-700 text-white font-semibold text-sm px-5 py-3.5 rounded-full shadow-lg active:bg-brand-800 z-30 flex items-center gap-2"
-        >
-          <span className="text-lg leading-none">+</span>
-          Offer a Ride
-        </button>
-      )}
 
       {/* ── Confirm dialogs ── */}
       {confirmCancelListing && (
