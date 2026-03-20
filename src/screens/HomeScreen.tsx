@@ -406,7 +406,7 @@ function PostRequestSheet({
 
         <div className="px-5 pt-4 space-y-4">
           {/* From / To */}
-          <div className="bg-gray-50 rounded-2xl overflow-hidden">
+          <div className="bg-gray-50 rounded-2xl">
             <div className="flex items-center gap-3 px-4 pt-4 pb-2">
               <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
               <div className="flex-1">
@@ -831,7 +831,7 @@ export default function HomeScreen() {
         {activeTab === "find" && (
           <>
             {/* ── Search / Request Card ── */}
-            <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100">
               {/* From */}
               <div className="flex items-center gap-3 px-4 pt-4 pb-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
@@ -966,7 +966,7 @@ export default function HomeScreen() {
                 />
               </div>
             ) : hasCarDetails ? (
-              <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100">
                 <div className="px-4 pt-4 pb-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Where are you going?</p>
                   {/* From */}
