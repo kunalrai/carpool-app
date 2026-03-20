@@ -28,14 +28,16 @@ export default function PostRideScreen() {
   const { userId } = useAuth();
   const { state } = useLocation() as {
     state?: {
+      from?: PlaceResult;
+      to?: PlaceResult;
       departureTime?: string; // "HH:MM" 24h
       seats?: number;
       pickupPoint?: string;
     } | null;
   };
 
-  const [fromPlace, setFromPlace] = useState<PlaceResult | null>(null);
-  const [toPlace, setToPlace] = useState<PlaceResult | null>(null);
+  const [fromPlace, setFromPlace] = useState<PlaceResult | null>(state?.from ?? null);
+  const [toPlace, setToPlace] = useState<PlaceResult | null>(state?.to ?? null);
   const [timeValue, setTimeValue] = useState(state?.departureTime ?? "");
   const [seats, setSeats] = useState(state?.seats ?? 2);
   const [fare, setFare] = useState(80);

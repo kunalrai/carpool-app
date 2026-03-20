@@ -664,6 +664,9 @@ export default function HomeScreen() {
   const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
   const [locating, setLocating] = useState(false);
 
+  const [offerFrom, setOfferFrom] = useState<PlaceResult | null>(null);
+  const [offerTo, setOfferTo] = useState<PlaceResult | null>(null);
+
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirmCancelListing, setConfirmCancelListing] = useState(false);
@@ -963,26 +966,35 @@ export default function HomeScreen() {
                 />
               </div>
             ) : hasCarDetails ? (
-              <div className="mx-4 mb-4">
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mb-4">
-                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-brand-700" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="1" y="9" width="22" height="9" rx="2" />
-                      <path d="M3 9l2-5h14l2 5" />
-                      <circle cx="7.5" cy="18.5" r="1.5" />
-                      <circle cx="16.5" cy="18.5" r="1.5" />
-                    </svg>
+              <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="px-4 pt-4 pb-2">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Where are you going?</p>
+                  {/* From */}
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
+                    <div className="flex-1">
+                      <LocationInput placeholder="From — your pickup…" value={offerFrom} onChange={setOfferFrom} />
+                    </div>
                   </div>
-                  <h3 className="text-base font-bold text-gray-900 mb-1">Ready to share your ride?</h3>
-                  <p className="text-sm text-gray-400 mb-5">Post your trip and pick up riders along your route. Fixed fare ₹80/seat.</p>
+                  <div className="ml-[1.375rem] border-l-2 border-dashed border-gray-200 h-3" />
+                  {/* To */}
+                  <div className="flex items-center gap-3 mt-2 mb-4">
+                    <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+                    <div className="flex-1">
+                      <LocationInput placeholder="To — destination…" value={offerTo} onChange={setOfferTo} />
+                    </div>
+                  </div>
+                </div>
+                <div className="px-4 pb-4">
                   <button
-                    onClick={() => navigate("/post-ride")}
-                    className="w-full flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800"
+                    onClick={() => navigate("/post-ride", { state: { from: offerFrom, to: offerTo } })}
+                    disabled={!offerFrom || !offerTo}
+                    className="w-full flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
                   >
                     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 5v14M5 12h14" />
+                      <path d="M5 12h14M13 6l6 6-6 6" />
                     </svg>
-                    Post a Ride
+                    Continue to Post Ride
                   </button>
                 </div>
               </div>
