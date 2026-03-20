@@ -11,6 +11,13 @@ crons.interval(
   internal.listings.expireListings
 );
 
+// Expire ride requests 60 minutes after their departure time.
+crons.interval(
+  "expire-old-requests",
+  { minutes: 5 },
+  internal.rideRequests.expireRequests
+);
+
 // Auto-create listings for recurring templates once per hour.
 // Checks active templates whose day-of-week (IST) matches today.
 crons.interval(

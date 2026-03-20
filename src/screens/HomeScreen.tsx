@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import LocationInput from "../components/LocationInput";
 import DrawerNav from "../components/DrawerNav";
 import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
+import { matchPercent } from "../lib/matching";
 
 // ── AQI Card ──────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,35 @@ function avatarColor(name: string) {
 }
 function avatarInitials(name: string) {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function defaultTimeStr(): string {
+  const d = new Date(Date.now() + 30 * 60 * 1000);
+  const mins = Math.round(d.getMinutes() / 15) * 15;
+  if (mins === 60) { d.setHours(d.getHours() + 1, 0, 0, 0); }
+  else { d.setMinutes(mins, 0, 0); }
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function parseTimeToday(timeStr: string): number {
+  const [h, m] = timeStr.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.getTime();
+}
+
+// ── Match Badge ───────────────────────────────────────────────────────────────
+
+function MatchBadge({ pct }: { pct: number }) {
+  const cls =
+    pct >= 80 ? "bg-green-100 text-green-700" :
+    pct >= 50 ? "bg-yellow-100 text-yellow-700" :
+                "bg-gray-100 text-gray-500";
+  return (
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cls}`}>
+      {pct}% match
+    </span>
+  );
 }
 
 // ── Confirm Dialog ────────────────────────────────────────────────────────────
@@ -254,10 +284,181 @@ function RiderBanner({
   );
 }
 
+// ── My Request Banner ─────────────────────────────────────────────────────────
+
+type MyRequest = NonNullable<
+  ReturnType<typeof useQuery<typeof api.rideRequests.getMyActiveRequest>>
+>;
+
+function MyRequestBanner({
+  request, onCancel, loading,
+}: {
+  request: MyRequest; onCancel: () => void; loading: boolean;
+}) {
+  return (
+    <div className="mx-4 rounded-2xl bg-purple-600 p-4">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0 pr-3">
+          <p className="text-xs font-semibold text-purple-200 uppercase tracking-widest mb-1">
+            My Ride Request
+          </p>
+          <p className="text-sm font-bold text-white truncate">{request.fromLabel}</p>
+          <p className="text-xs text-purple-200 truncate">→ {request.toLabel}</p>
+        </div>
+        <div className="text-right shrink-0">
+          <p className="text-xl font-bold text-white">{formatDeparture(request.departureTime)}</p>
+          <p className="text-xs text-purple-200">{request.seatsNeeded} seat{request.seatsNeeded > 1 ? "s" : ""} needed</p>
+        </div>
+      </div>
+      {request.note && (
+        <p className="text-xs text-purple-100 bg-white/10 rounded-xl px-3 py-2 mb-3">
+          {request.note}
+        </p>
+      )}
+      <button
+        onClick={onCancel}
+        disabled={loading}
+        className="w-full border-2 border-white text-white font-semibold py-2.5 rounded-xl text-sm active:bg-white/10 disabled:opacity-50"
+      >
+        {loading ? "Cancelling…" : "Cancel Request"}
+      </button>
+    </div>
+  );
+}
+
+// ── Post Request Sheet ────────────────────────────────────────────────────────
+
+function PostRequestSheet({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (data: {
+    fromLabel: string; fromLat: number; fromLng: number;
+    toLabel: string; toLat: number; toLng: number;
+    departureTime: number; seatsNeeded: number; note?: string;
+  }) => Promise<void>;
+}) {
+  const [from, setFrom] = useState<PlaceResult | null>(null);
+  const [to, setTo] = useState<PlaceResult | null>(null);
+  const [timeStr, setTimeStr] = useState(defaultTimeStr);
+  const [seats, setSeats] = useState(1);
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    if (!from || !to) { setError("Please set pickup and drop locations"); return; }
+    setLoading(true);
+    setError(null);
+    try {
+      await onSubmit({
+        fromLabel: from.label, fromLat: from.lat, fromLng: from.lng,
+        toLabel: to.label, toLat: to.lat, toLng: to.lng,
+        departureTime: parseTimeToday(timeStr),
+        seatsNeeded: seats,
+        note: note.trim() || undefined,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onClose}>
+      <div
+        className="w-full max-w-md bg-white rounded-t-3xl animate-slide-up pb-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
+          <h3 className="text-base font-bold text-gray-900">Post a Ride Request</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-5 pt-4 space-y-4">
+          {/* From / To */}
+          <div className="bg-gray-50 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
+              <div className="flex-1">
+                <LocationInput placeholder="From — pickup area…" value={from} onChange={setFrom} />
+              </div>
+            </div>
+            <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
+            <div className="flex items-center gap-3 px-4 pt-2 pb-4">
+              <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
+              <div className="flex-1">
+                <LocationInput placeholder="To — drop area…" value={to} onChange={setTo} />
+              </div>
+            </div>
+          </div>
+
+          {/* Time + Seats */}
+          <div className="flex gap-3">
+            <div className="flex-1 bg-gray-50 rounded-xl px-3 py-3">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Departure</p>
+              <input
+                type="time"
+                value={timeStr}
+                onChange={(e) => setTimeStr(e.target.value)}
+                className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none"
+              />
+            </div>
+            <div className="flex-1 bg-gray-50 rounded-xl px-3 py-3">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Seats needed</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSeats((s) => Math.max(1, s - 1))}
+                  className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300"
+                >−</button>
+                <span className="text-sm font-bold text-gray-800 w-4 text-center">{seats}</span>
+                <button
+                  onClick={() => setSeats((s) => Math.min(4, s + 1))}
+                  className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300"
+                >+</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Note */}
+          <div className="bg-gray-50 rounded-xl px-4 py-3">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Note (optional)</p>
+            <textarea
+              rows={2}
+              maxLength={200}
+              placeholder="e.g. I'm near the main gate…"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full bg-transparent text-sm text-gray-800 outline-none resize-none placeholder-gray-400"
+            />
+          </div>
+
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !from || !to}
+            className="w-full bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
+          >
+            {loading ? "Posting…" : "Post Request"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Ride Card ─────────────────────────────────────────────────────────────────
 
 function RideCard({
   listing,
+  matchPct,
   onClick,
 }: {
   listing: {
@@ -270,6 +471,7 @@ function RideCard({
     totalSeats: number;
     driver?: { name?: string; carName?: string; carColor?: string } | null;
   };
+  matchPct?: number;
   onClick: () => void;
 }) {
   const driverName = listing.driver?.name ?? "Driver";
@@ -285,12 +487,9 @@ function RideCard({
     >
       {/* ── Header: avatar · name · price ── */}
       <div className="flex items-start gap-3 mb-4">
-        {/* Avatar */}
         <div className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shrink-0`}>
           <span className="text-white text-sm font-bold">{initials}</span>
         </div>
-
-        {/* Name + car */}
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 leading-tight">{driverName}</p>
           {carLine && (
@@ -302,8 +501,6 @@ function RideCard({
             </div>
           )}
         </div>
-
-        {/* Price */}
         <div className="text-right shrink-0">
           <p className="text-lg font-bold text-gray-900">₹{listing.fare}</p>
           <p className="text-[10px] font-bold text-gray-400 tracking-wide">FIXED PRICE</p>
@@ -326,24 +523,19 @@ function RideCard({
         </div>
       </div>
 
-      {/* ── Footer: seat indicators · seats left ── */}
+      {/* ── Footer: seat indicators · match badge · seats left ── */}
       <div className="flex items-center justify-between pt-1">
-        {/* Taken-seat pill */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <div className="flex items-center bg-gray-100 rounded-full px-2 py-1 gap-1">
             <span className="text-xs font-bold text-gray-600">{takenSeats}</span>
             <div className="flex gap-0.5">
               {Array.from({ length: listing.totalSeats }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`w-2 h-2 rounded-full ${i < takenSeats ? "bg-gray-400" : "bg-gray-200"}`}
-                />
+                <div key={i} className={`w-2 h-2 rounded-full ${i < takenSeats ? "bg-gray-400" : "bg-gray-200"}`} />
               ))}
             </div>
           </div>
+          {matchPct !== undefined && <MatchBadge pct={matchPct} />}
         </div>
-
-        {/* Seats left */}
         {listing.seatsLeft === 0 ? (
           <span className="text-xs font-semibold text-red-500">Full</span>
         ) : (
@@ -361,6 +553,66 @@ function RideCard({
   );
 }
 
+// ── Ride Request Card ─────────────────────────────────────────────────────────
+
+type ActiveRequest = {
+  _id: string;
+  riderId: string;
+  fromLabel: string;
+  toLabel: string;
+  departureTime: number;
+  seatsNeeded: number;
+  note?: string;
+  rider?: { name?: string } | null;
+};
+
+function RideRequestCard({ request, matchPct }: { request: ActiveRequest; matchPct: number }) {
+  const riderName = request.rider?.name ?? "Rider";
+  const initials = avatarInitials(riderName);
+  const color = avatarColor(riderName);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      {/* Header */}
+      <div className="flex items-start gap-3 mb-4">
+        <div className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shrink-0`}>
+          <span className="text-white text-sm font-bold">{initials}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-900 leading-tight">{riderName}</p>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {request.seatsNeeded} seat{request.seatsNeeded > 1 ? "s" : ""} needed
+          </p>
+        </div>
+        <MatchBadge pct={matchPct} />
+      </div>
+
+      {/* Route */}
+      <div className="flex gap-3 mb-3">
+        <div className="flex flex-col items-center pt-1 shrink-0">
+          <div className="w-3 h-3 rounded-full bg-purple-500" />
+          <div className="w-px bg-gray-200 my-1" style={{ height: 26 }} />
+          <div className="w-3 h-3 rounded-full border-2 border-gray-400 bg-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-700 font-medium truncate pr-2">{request.fromLabel}</p>
+            <p className="text-sm text-gray-400 shrink-0 tabular-nums">{formatDeparture(request.departureTime)}</p>
+          </div>
+          <p className="text-sm text-gray-500 truncate">{request.toLabel}</p>
+        </div>
+      </div>
+
+      {/* Note */}
+      {request.note && (
+        <p className="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">
+          {request.note}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 type ActiveSearch = { fromLat: number; fromLng: number; toLat: number; toLng: number };
@@ -371,6 +623,7 @@ export default function HomeScreen() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"find" | "offer">("find");
+  const [showPostReqSheet, setShowPostReqSheet] = useState(false);
 
   const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
   const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
@@ -390,11 +643,15 @@ export default function HomeScreen() {
   const myListing = useQuery(api.listings.getMyActiveListing, { userId: userId! });
   const myBooking = useQuery(api.bookings.getMyBooking, { userId: userId! });
   const userProfile = useQuery(api.users.getUserProfile, { userId: userId! });
+  const myRequest = useQuery(api.rideRequests.getMyActiveRequest, { riderId: userId! });
+  const allRequests = useQuery(api.rideRequests.getActiveRequests, {});
 
   const cancelListingMut = useMutation(api.listings.cancelListing);
   const startRideMut = useMutation(api.listings.startRide);
   const endRideMut = useMutation(api.listings.endRide);
   const cancelBookingMut = useMutation(api.bookings.cancelBooking);
+  const postRequestMut = useMutation(api.rideRequests.postRequest);
+  const cancelRequestMut = useMutation(api.rideRequests.cancelRequest);
 
   const aqiData = useQuery(api.airQuality.getCachedAqi);
   const refreshAqi = useAction(api.airQuality.refreshAqiIfStale);
@@ -404,8 +661,6 @@ export default function HomeScreen() {
     userProfile &&
     (userProfile.role === "giver" || userProfile.role === "both") &&
     !!userProfile.carName;
-
-
 
   const feedListings = (listings ?? []).filter((l) => l.driverId !== userId);
   const firstName = userProfile?.name?.split(" ")[0] ?? "there";
@@ -422,25 +677,24 @@ export default function HomeScreen() {
     await cancelListingMut({ listingId: myListing!._id, driverId: userId! });
     setConfirmCancelListing(false);
   });
-
   const handleStartRide = () => withAction(async () => {
     await startRideMut({ listingId: myListing!._id, driverId: userId! });
   });
-
   const handleEndRide = () => withAction(async () => {
     await endRideMut({ listingId: myListing!._id, driverId: userId! });
   });
-
   const handleCancelSeat = () => withAction(async () => {
     await cancelBookingMut({ bookingId: myBooking!._id, riderId: userId! });
     setConfirmCancelSeat(false);
+  });
+  const handleCancelRequest = () => withAction(async () => {
+    await cancelRequestMut({ requestId: myRequest!._id, riderId: userId! });
   });
 
   const handleSearch = () => {
     if (!searchFrom || !searchTo) return;
     setActiveSearch({ fromLat: searchFrom.lat, fromLng: searchFrom.lng, toLat: searchTo.lat, toLng: searchTo.lng });
   };
-
   const handleClearSearch = () => {
     setSearchFrom(null);
     setSearchTo(null);
@@ -489,9 +743,7 @@ export default function HomeScreen() {
             <button
               onClick={() => setActiveTab("find")}
               className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-colors ${
-                activeTab === "find"
-                  ? "border-brand-700 bg-brand-50"
-                  : "border-gray-200 bg-white"
+                activeTab === "find" ? "border-brand-700 bg-brand-50" : "border-gray-200 bg-white"
               }`}
             >
               <div className={`w-11 h-11 rounded-full flex items-center justify-center ${activeTab === "find" ? "bg-brand-700" : "bg-gray-100"}`}>
@@ -508,9 +760,7 @@ export default function HomeScreen() {
             <button
               onClick={() => setActiveTab("offer")}
               className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 py-4 transition-colors ${
-                activeTab === "offer"
-                  ? "border-brand-700 bg-brand-50"
-                  : "border-gray-200 bg-white"
+                activeTab === "offer" ? "border-brand-700 bg-brand-50" : "border-gray-200 bg-white"
               }`}
             >
               <div className={`w-11 h-11 rounded-full flex items-center justify-center ${activeTab === "offer" ? "bg-brand-700" : "bg-gray-100"}`}>
@@ -548,32 +798,19 @@ export default function HomeScreen() {
           <>
             {/* ── Search Card ── */}
             <div className="mx-4 mb-4 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              {/* From */}
               <div className="flex items-center gap-3 px-4 pt-4 pb-2">
                 <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
                 <div className="flex-1">
-                  <LocationInput
-                    placeholder="From — pickup area…"
-                    value={searchFrom}
-                    onChange={setSearchFrom}
-                  />
+                  <LocationInput placeholder="From — pickup area…" value={searchFrom} onChange={setSearchFrom} />
                 </div>
               </div>
-              {/* Divider */}
               <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
-              {/* To */}
               <div className="flex items-center gap-3 px-4 pt-2 pb-4">
                 <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
                 <div className="flex-1">
-                  <LocationInput
-                    placeholder="To — drop area…"
-                    value={searchTo}
-                    onChange={setSearchTo}
-                  />
+                  <LocationInput placeholder="To — drop area…" value={searchTo} onChange={setSearchTo} />
                 </div>
               </div>
-
-              {/* Date + Seats row */}
               <div className="flex gap-3 px-4 pb-4">
                 <div className="flex items-center gap-2 flex-1 bg-gray-50 rounded-xl px-3 py-2">
                   <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -589,8 +826,6 @@ export default function HomeScreen() {
                   <span className="text-sm text-gray-600 font-medium">1 Seat</span>
                 </div>
               </div>
-
-              {/* Search button */}
               <div className="px-4 pb-4 flex gap-2">
                 <button
                   onClick={handleSearch}
@@ -603,21 +838,43 @@ export default function HomeScreen() {
                   Search Rides
                 </button>
                 {activeSearch && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100"
-                  >
+                  <button onClick={handleClearSearch} className="px-4 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold active:bg-gray-100">
                     Clear
                   </button>
                 )}
               </div>
-
               {activeSearch && (
                 <p className="text-xs text-brand-600 font-medium px-4 pb-3">
                   Showing rides within 3 km of your route
                 </p>
               )}
             </div>
+
+            {/* ── My Request Banner ── */}
+            {myRequest && (
+              <div className="mb-4">
+                <MyRequestBanner
+                  request={myRequest}
+                  onCancel={handleCancelRequest}
+                  loading={actionLoading}
+                />
+              </div>
+            )}
+
+            {/* ── Post Request CTA ── */}
+            {!myRequest && (
+              <div className="mx-4 mb-4">
+                <button
+                  onClick={() => setShowPostReqSheet(true)}
+                  className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-purple-300 text-purple-700 font-semibold py-3 rounded-2xl text-sm active:bg-purple-50"
+                >
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                  Can't find a ride? Post a request
+                </button>
+              </div>
+            )}
 
             {/* ── Rider Banner ── */}
             {myBooking && (
@@ -673,13 +930,17 @@ export default function HomeScreen() {
               </div>
             ) : (
               <div className="px-4 space-y-3">
-                {feedListings.map((listing) => (
-                  <RideCard
-                    key={listing._id}
-                    listing={listing}
-                    onClick={() => navigate(`/listing/${listing._id}`)}
-                  />
-                ))}
+                {feedListings.map((listing) => {
+                  const pct = myRequest ? matchPercent(listing, myRequest) : undefined;
+                  return (
+                    <RideCard
+                      key={listing._id}
+                      listing={listing}
+                      matchPct={pct}
+                      onClick={() => navigate(`/listing/${listing._id}`)}
+                    />
+                  );
+                })}
               </div>
             )}
           </>
@@ -688,8 +949,8 @@ export default function HomeScreen() {
         {/* ══ OFFER POOL TAB ══ */}
         {activeTab === "offer" && (
           <>
+            {/* Driver state: active listing / post prompt / no car */}
             {myListing ? (
-              /* Driver has active listing */
               <div className="mb-4">
                 <DriverBanner
                   listing={myListing}
@@ -700,8 +961,7 @@ export default function HomeScreen() {
                 />
               </div>
             ) : hasCarDetails ? (
-              /* Driver has car, no active listing → prompt to post */
-              <div className="mx-4">
+              <div className="mx-4 mb-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
                   <div className="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mb-4">
                     <svg viewBox="0 0 24 24" className="w-8 h-8 text-brand-700" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -725,8 +985,7 @@ export default function HomeScreen() {
                 </div>
               </div>
             ) : (
-              /* User has no car details → prompt to update profile */
-              <div className="mx-4">
+              <div className="mx-4 mb-4">
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col items-center text-center">
                   <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                     <svg viewBox="0 0 24 24" className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -738,16 +997,86 @@ export default function HomeScreen() {
                   <p className="text-sm text-gray-400 mb-5">To offer a ride, update your profile with your car information and set your role to Driver.</p>
                   <button
                     onClick={() => navigate("/profile")}
-                    className="w-full flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800"
+                    className="w-full bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800"
                   >
                     Update Profile
                   </button>
                 </div>
               </div>
             )}
+
+            {/* ── Riders Looking section ── */}
+            <div className="mt-2">
+              <div className="flex items-center justify-between px-4 mb-3">
+                <h2 className="text-base font-bold text-gray-900">Riders Looking for a Ride</h2>
+                {allRequests !== undefined && (
+                  <span className="text-xs text-brand-600 font-semibold">
+                    {allRequests.filter((r) => r.riderId !== userId).length} active
+                  </span>
+                )}
+              </div>
+
+              {allRequests === undefined ? (
+                <div className="px-4 space-y-3">
+                  {[0, 1].map((i) => (
+                    <div key={i} className="bg-white rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
+                      <div className="flex gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-200" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-2/5" />
+                          <div className="h-3 bg-gray-100 rounded w-1/3" />
+                        </div>
+                      </div>
+                      <div className="h-10 bg-gray-100 rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              ) : allRequests.filter((r) => r.riderId !== userId).length === 0 ? (
+                <div className="flex flex-col items-center py-10 text-gray-400">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+                      <circle cx="17" cy="7" r="3" /><path d="M21 21v-2a4 4 0 00-3-3.87" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-500">No ride requests yet</p>
+                  <p className="text-xs mt-1 text-gray-400">Riders will appear here when they post a request</p>
+                </div>
+              ) : (
+                <div className="px-4 space-y-3">
+                  {allRequests
+                    .filter((r) => r.riderId !== userId)
+                    .sort((a, b) => {
+                      // Sort by match % descending if driver has listing
+                      if (myListing) {
+                        return matchPercent(myListing, b) - matchPercent(myListing, a);
+                      }
+                      return a.departureTime - b.departureTime;
+                    })
+                    .map((r) => (
+                      <RideRequestCard
+                        key={r._id}
+                        request={r}
+                        matchPct={myListing ? matchPercent(myListing, r) : 0}
+                      />
+                    ))}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
+
+      {/* ── Post Request Sheet ── */}
+      {showPostReqSheet && (
+        <PostRequestSheet
+          onClose={() => setShowPostReqSheet(false)}
+          onSubmit={async (data) => {
+            await postRequestMut({ riderId: userId!, ...data });
+            setShowPostReqSheet(false);
+          }}
+        />
+      )}
 
       {/* ── Confirm dialogs ── */}
       {confirmCancelListing && (
