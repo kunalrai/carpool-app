@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 import LocationInput from "../components/LocationInput";
@@ -9,44 +9,6 @@ import type { PlaceResult } from "../hooks/usePlacesAutocomplete";
 import { reverseGeocode } from "../hooks/usePlacesAutocomplete";
 import { matchPercent } from "../lib/matching";
 
-// ── AQI Card ──────────────────────────────────────────────────────────────────
-
-const AQI_LEVELS = [
-  { max: 25,  label: "GOOD",      cardBg: "bg-green-50",   badge: "bg-green-500",   text: "text-green-700"  },
-  { max: 50,  label: "FAIR",      cardBg: "bg-lime-50",    badge: "bg-lime-500",    text: "text-lime-700"   },
-  { max: 75,  label: "MODERATE",  cardBg: "bg-yellow-50",  badge: "bg-yellow-500",  text: "text-yellow-700" },
-  { max: 100, label: "POOR",      cardBg: "bg-orange-50",  badge: "bg-orange-500",  text: "text-orange-700" },
-  { max: Infinity, label: "HAZARDOUS", cardBg: "bg-red-50", badge: "bg-red-500",    text: "text-red-700"    },
-];
-
-function aqiLevel(aqi: number) {
-  return AQI_LEVELS.find((l) => aqi <= l.max) ?? AQI_LEVELS[AQI_LEVELS.length - 1];
-}
-
-function AqiCard({ aqi, pollutant }: { aqi: number; pollutant: string }) {
-  const lv = aqiLevel(aqi);
-  return (
-    <div className={`mx-4 mt-12 mb-0 rounded-2xl px-4 py-3 flex items-center gap-3 ${lv.cardBg}`}>
-      <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-        <svg viewBox="0 0 24 24" className="w-5 h-5 text-green-600" fill="currentColor">
-          <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 5-8 5z" />
-        </svg>
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-0.5">
-          AIR QUALITY · GAUR CITY
-        </p>
-        <p className={`text-lg font-bold leading-tight ${lv.text}`}>
-          {aqi}{" "}
-          <span className="text-sm font-semibold">{pollutant.toUpperCase()}</span>
-        </p>
-      </div>
-      <span className={`text-[10px] font-bold text-white px-2.5 py-1 rounded-full tracking-wide ${lv.badge}`}>
-        {lv.label}
-      </span>
-    </div>
-  );
-}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -687,10 +649,6 @@ export default function HomeScreen() {
   const postRequestMut = useMutation(api.rideRequests.postRequest);
   const cancelRequestMut = useMutation(api.rideRequests.cancelRequest);
 
-  const aqiData = useQuery(api.airQuality.getCachedAqi);
-  const refreshAqi = useAction(api.airQuality.refreshAqiIfStale);
-  useEffect(() => { refreshAqi({}); }, [refreshAqi]);
-
   const hasCarDetails =
     userProfile &&
     (userProfile.role === "giver" || userProfile.role === "both") &&
@@ -747,11 +705,6 @@ export default function HomeScreen() {
       <DrawerNav open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       <div className="pb-28 bg-gray-50 min-h-screen">
-
-        {/* ── AQI Card ── */}
-        {aqiData && (
-          <AqiCard aqi={aqiData.aqi} pollutant={aqiData.dominantPollutant} />
-        )}
 
         {/* ── Top bar ── */}
         <div className="bg-white px-4 pt-4 pb-4 flex items-center justify-between">
