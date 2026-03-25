@@ -9,7 +9,6 @@ Disallow: /admin
 Disallow: /home
 Disallow: /profile
 Disallow: /chat
-Disallow: /post-ride
 Disallow: /my-listing
 Disallow: /listing/
 Disallow: /dm/

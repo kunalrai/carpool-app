@@ -4,8 +4,7 @@ import BottomNav from "./components/BottomNav";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import LoginScreen from "./screens/LoginScreen";
-import HomeScreen from "./screens/HomeScreen";
-import PostRideScreen from "./screens/PostRideScreen";
+import ChatHomeScreen from "./screens/ChatHomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import AdminScreen from "./screens/AdminScreen";
 import ListingDetailScreen from "./screens/ListingDetailScreen";
@@ -69,7 +68,7 @@ function AppRoutes() {
         path="/home"
         element={
           <PrivateRoute>
-            <TabLayout><HomeScreen /></TabLayout>
+            <TabLayout><ChatHomeScreen /></TabLayout>
           </PrivateRoute>
         }
       />
@@ -101,7 +100,6 @@ function AppRoutes() {
       />
 
       {/* Full-screen pushed screens (no bottom nav) */}
-      <Route path="/post-ride" element={<PrivateRoute><PostRideScreen /></PrivateRoute>} />
       <Route path="/listing/:id" element={<PrivateRoute><ListingDetailScreen /></PrivateRoute>} />
       <Route path="/my-listing" element={<PrivateRoute><MyListingScreen /></PrivateRoute>} />
       <Route path="/dm/:listingId/:otherUserId" element={<PrivateRoute><DirectChatScreen /></PrivateRoute>} />
