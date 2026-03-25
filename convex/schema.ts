@@ -173,6 +173,33 @@ export default defineSchema({
     .index("by_receiver_read", ["receiverId", "read"]),
 
   /**
+   * rideRequests — a rider's "I'm looking for a ride" post.
+   * Drivers see these in the Offer Pool tab with a route match %.
+   * Status lifecycle: active → cancelled | expired (cron patches to expired).
+   */
+  rideRequests: defineTable({
+    riderId: v.id("users"),
+    fromLabel: v.string(),
+    toLabel: v.string(),
+    fromLat: v.number(),
+    fromLng: v.number(),
+    toLat: v.number(),
+    toLng: v.number(),
+    departureTime: v.number(),  // Unix ms — desired departure window
+    seatsNeeded: v.number(),    // 1–4
+    note: v.optional(v.string()),
+    status: v.union(
+      v.literal("active"),
+      v.literal("cancelled"),
+      v.literal("expired")
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_rider", ["riderId"])
+    .index("by_status", ["status"])
+    .index("by_rider_status", ["riderId", "status"]),
+
+  /**
    * appSettings — single-row table for global feature flags.
    * Always has at most one document; query returns defaults if absent.
    */

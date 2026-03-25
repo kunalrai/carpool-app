@@ -32,12 +32,28 @@ async function ensureMapsLoaded() {
     key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "",
     v: "weekly",
   });
-  await importLibrary("places");
+  await Promise.all([importLibrary("places"), importLibrary("geocoding")]);
   _autocompleteService = new google.maps.places.AutocompleteService();
   // PlacesService requires a DOM element (used only for getDetails)
   const div = document.createElement("div");
   _placesService = new google.maps.places.PlacesService(div);
   _loaded = true;
+}
+
+/** Reverse geocodes a lat/lng to a PlaceResult using the Maps Geocoding API. */
+export async function reverseGeocode(lat: number, lng: number): Promise<PlaceResult> {
+  await ensureMapsLoaded();
+  const geocoder = new google.maps.Geocoder();
+  return new Promise((resolve, reject) => {
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status !== google.maps.GeocoderStatus.OK || !results?.length) {
+        reject(new Error("Could not determine your location"));
+        return;
+      }
+      const r = results[0];
+      resolve({ label: r.formatted_address, lat, lng, placeId: r.place_id });
+    });
+  });
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────

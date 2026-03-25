@@ -113,7 +113,7 @@ export default function LocationInput({ label, placeholder, value, onChange }: P
 
       {/* Predictions dropdown */}
       {showDropdown && predictions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-[200] overflow-hidden">
           {predictions.map((pred) => (
             <button
               key={pred.placeId}
