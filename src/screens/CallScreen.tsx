@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAction, useMutation, useQuery } from "convex/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "../contexts/AuthContext";
@@ -57,7 +58,6 @@ export default function CallScreen() {
     try {
       await callRef.current?.leave();
     } catch {
-      // leave() failed — navigate away regardless
       navigate(-1);
     }
   }, [endCall, listingId, mode, navigate]);
@@ -127,112 +127,196 @@ export default function CallScreen() {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center px-6">
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center px-6"
+      style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)" }}
+    >
+      {/* Decorative orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute rounded-full"
+          style={{ width: 300, height: 300, top: -80, right: -60, background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)", filter: "blur(40px)" }}
+        />
+        <motion.div
+          animate={{ y: [0, 20, 0], scale: [1, 0.9, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="absolute rounded-full"
+          style={{ width: 250, height: 250, bottom: -50, left: -40, background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)", filter: "blur(40px)" }}
+        />
+      </div>
 
       {/* Calls disabled by admin */}
       {appSettings?.callsEnabled === false && (
-        <div className="text-center text-white px-6">
-          <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center mx-auto mb-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center relative z-10"
+        >
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(255,255,255,0.1)" }}
+          >
             <PhoneOffIcon />
           </div>
-          <p className="text-base font-semibold mb-2">Calls are currently disabled</p>
-          <p className="text-sm text-gray-400 mb-6">The admin has turned off voice calls.</p>
-          <button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-white/10 text-white rounded-xl text-sm font-semibold active:bg-white/20">
+          <p className="text-base font-semibold text-white mb-2">Calls are currently disabled</p>
+          <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>The admin has turned off voice calls.</p>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate(-1)}
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
+          >
             Go back
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       {/* Connecting */}
       {appSettings?.callsEnabled !== false && status === "connecting" && (
-        <div className="text-center text-white">
-          <div className="w-20 h-20 rounded-full bg-brand-700 flex items-center justify-center mx-auto mb-5 animate-pulse">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center relative z-10"
+        >
+          <motion.div
+            animate={{ scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
+            style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+          >
             <PhoneIcon />
-          </div>
-          <p className="text-lg font-semibold">
+          </motion.div>
+          <p className="text-lg font-semibold text-white">
             {mode === "group" ? "Joining group call…" : "Connecting…"}
           </p>
-          <p className="text-sm text-gray-400 mt-1">Setting up secure audio</p>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>Setting up secure audio</p>
           <button
             onClick={() => navigate(-1)}
-            className="mt-6 text-sm text-gray-400 underline active:text-gray-200"
+            className="mt-6 text-sm underline"
+            style={{ color: "rgba(255,255,255,0.4)" }}
           >
             Cancel
           </button>
-        </div>
+        </motion.div>
       )}
 
       {/* Error */}
       {appSettings?.callsEnabled !== false && status === "error" && (
-        <div className="text-center text-white">
-          <div className="w-16 h-16 rounded-full bg-red-800 flex items-center justify-center mx-auto mb-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center relative z-10"
+        >
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.3)" }}
+          >
             <PhoneOffIcon />
           </div>
-          <p className="text-base font-semibold text-red-300 mb-2">Call failed</p>
-          <p className="text-sm text-gray-400 mb-6">{error}</p>
-          <button
+          <p className="text-base font-semibold mb-2" style={{ color: "#fca5a5" }}>Call failed</p>
+          <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.5)" }}>{error}</p>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={() => navigate(-1)}
-            className="px-6 py-2.5 bg-white/10 text-white rounded-xl text-sm font-semibold active:bg-white/20"
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)" }}
           >
             Go back
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       {/* In-call UI */}
-      {appSettings?.callsEnabled !== false && status === "joined" && (
-        <div className="w-full max-w-sm flex flex-col items-center gap-8">
-          {/* Title */}
-          <div className="text-center">
-            <p className="text-white font-semibold text-lg">
-              {mode === "group" ? "Group Call" : "Voice Call"}
-            </p>
-            <p className="text-gray-400 text-sm mt-0.5">
-              {participants.length} participant{participants.length !== 1 ? "s" : ""}
-            </p>
-          </div>
+      <AnimatePresence>
+        {appSettings?.callsEnabled !== false && status === "joined" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-sm flex flex-col items-center gap-8 relative z-10"
+          >
+            {/* Title */}
+            <div className="text-center">
+              <p className="text-white font-semibold text-lg">
+                {mode === "group" ? "Group Call" : "Voice Call"}
+              </p>
+              <p className="text-sm mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {participants.length} participant{participants.length !== 1 ? "s" : ""}
+              </p>
+            </div>
 
-          {/* Participant avatars */}
-          <div className="flex flex-wrap justify-center gap-4">
-            {participants.map((p) => (
-              <div key={p.id} className="flex flex-col items-center gap-1.5">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg transition-all ${
-                  p.isSpeaking ? "bg-green-600 ring-4 ring-green-400" : "bg-gray-700"
-                }`}>
-                  {p.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?"}
-                </div>
-                <p className="text-xs text-gray-300 text-center max-w-[64px] truncate">{p.name}</p>
-                {!p.audioOn && (
-                  <span className="text-[10px] text-red-400">muted</span>
-                )}
-              </div>
-            ))}
-          </div>
+            {/* Participant avatars */}
+            <div className="flex flex-wrap justify-center gap-5">
+              {participants.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex flex-col items-center gap-1.5"
+                >
+                  <motion.div
+                    animate={p.isSpeaking ? {
+                      scale: [1, 1.08, 1],
+                      boxShadow: ["0 0 0 0 rgba(99,102,241,0)", "0 0 0 8px rgba(99,102,241,0.4)", "0 0 0 0 rgba(99,102,241,0)"],
+                    } : {}}
+                    transition={p.isSpeaking ? { duration: 1, repeat: Infinity } : {}}
+                    className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-lg"
+                    style={{
+                      background: p.isSpeaking
+                        ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                        : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    }}
+                  >
+                    {p.name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "?"}
+                  </motion.div>
+                  <p className="text-xs text-center max-w-[64px] truncate" style={{ color: "rgba(255,255,255,0.7)" }}>{p.name}</p>
+                  {!p.audioOn && (
+                    <span className="text-[10px]" style={{ color: "#fca5a5" }}>muted</span>
+                  )}
+                </motion.div>
+              ))}
+            </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-6">
-            {/* Mute toggle */}
-            <button
-              onClick={toggleMute}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${
-                muted ? "bg-red-600 active:bg-red-700" : "bg-gray-700 active:bg-gray-600"
-              }`}
-              aria-label={muted ? "Unmute" : "Mute"}
+            {/* Glass panel for controls */}
+            <div
+              className="flex items-center gap-6 px-8 py-5 rounded-3xl"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(12px)",
+              }}
             >
-              {muted ? <MicOffIcon /> : <MicIcon />}
-            </button>
+              {/* Mute toggle */}
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={toggleMute}
+                className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={
+                  muted
+                    ? { background: "linear-gradient(135deg, #dc2626, #b91c1c)" }
+                    : { background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.15)" }
+                }
+                aria-label={muted ? "Unmute" : "Mute"}
+              >
+                {muted ? <MicOffIcon /> : <MicIcon />}
+              </motion.button>
 
-            {/* Leave */}
-            <button
-              onClick={handleLeave}
-              className="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center active:bg-red-700"
-              aria-label="End call"
-            >
-              <PhoneOffIcon />
-            </button>
-          </div>
-        </div>
-      )}
+              {/* Leave */}
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={handleLeave}
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}
+                aria-label="End call"
+              >
+                <PhoneOffIcon />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
