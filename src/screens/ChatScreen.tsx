@@ -66,12 +66,12 @@ export default function ChatScreen() {
             return;
           }
 
-          // Map AI-detected direction to hardcoded GC↔HCL coordinates
-          const GC = { label: "Gaur City, Greater Noida", lat: 28.6123, lng: 77.4312 };
-          const HCL = { label: "HCL Campus, Sector 136, Noida", lat: 28.5245, lng: 77.3799 };
-          const isGcToHcl = result.direction === "GC_TO_HCL";
-          const from = isGcToHcl ? GC : HCL;
-          const to = isGcToHcl ? HCL : GC;
+          // Map AI-detected direction to generic office/home coordinates
+          const HOME = { label: "Home", lat: 28.6123, lng: 77.4312 };
+          const OFFICE = { label: "Office", lat: 28.5245, lng: 77.3799 };
+          const isToOffice = result.direction === "TO_OFFICE";
+          const from = isToOffice ? HOME : OFFICE;
+          const to = isToOffice ? OFFICE : HOME;
 
           await postListing({
             userId: userId!,
@@ -87,7 +87,7 @@ export default function ChatScreen() {
             pickupPoint: result.pickupPoint ?? undefined,
           });
 
-          const dir = isGcToHcl ? "GC → HCL" : "HCL → GC";
+          const dir = isToOffice ? "Home → Office" : "Office → Home";
           const time = new Date(departureMs).toLocaleTimeString("en-IN", {
             hour: "2-digit", minute: "2-digit", hour12: true,
           });
@@ -119,7 +119,7 @@ export default function ChatScreen() {
       {/* Header */}
       <div className="px-4 pt-12 pb-4 bg-white border-b border-gray-100 shrink-0">
         <h1 className="text-xl font-bold text-gray-900">Community Chat</h1>
-        <p className="text-xs text-gray-500 mt-0.5">GaurCity ↔ HCL · All members</p>
+        <p className="text-xs text-gray-500 mt-0.5">Community · All members</p>
       </div>
 
       {/* Messages */}
@@ -134,7 +134,7 @@ export default function ChatScreen() {
           <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 py-16">
             <p className="text-2xl mb-2">👋</p>
             <p className="text-sm font-medium">No messages yet</p>
-            <p className="text-xs mt-1">Say hello to the GaurCity-HCL community!</p>
+            <p className="text-xs mt-1">Say hello to the community!</p>
           </div>
         )}
 

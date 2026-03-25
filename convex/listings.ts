@@ -69,14 +69,14 @@ export const expireListings = internalMutation({
 
 /**
  * One-time migration — run from Convex dashboard after deploying new schema.
- * Patches old GC↔HCL listings (which have a `direction` field) with hardcoded coordinates.
+ * Patches old listings with hardcoded coordinates (direction field).
  * Safe to run multiple times (skips already-migrated listings).
  */
 export const migrateListingsToGeo = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const GC = { label: "Gaur City, Greater Noida", lat: 28.6123, lng: 77.4312 };
-    const HCL = { label: "HCL Campus, Sector 136, Noida", lat: 28.5245, lng: 77.3799 };
+    const HOME = { label: "Home", lat: 28.6123, lng: 77.4312 };
+    const OFFICE = { label: "Office", lat: 28.5245, lng: 77.3799 };
 
     const all = await ctx.db.query("listings").collect();
     let patched = 0;
@@ -88,9 +88,9 @@ export const migrateListingsToGeo = internalMutation({
       const dir = (listing as Record<string, unknown>).direction as string | undefined;
       if (!dir) continue;
 
-      const isGcToHcl = dir === "GC_TO_HCL";
-      const from = isGcToHcl ? GC : HCL;
-      const to = isGcToHcl ? HCL : GC;
+      const isToOffice = dir === "TO_OFFICE";
+      const from = isToOffice ? HOME : OFFICE;
+      const to = isToOffice ? OFFICE : HOME;
 
       await ctx.db.patch(listing._id, {
         fromLabel: from.label,
@@ -99,7 +99,7 @@ export const migrateListingsToGeo = internalMutation({
         fromLng: from.lng,
         toLat: to.lat,
         toLng: to.lng,
-        fare: 80,
+        fare: 80, // default fare for old listings
       });
       patched++;
     }

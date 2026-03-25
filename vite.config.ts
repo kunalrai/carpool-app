@@ -17,9 +17,9 @@ export default defineConfig({
         "apple-touch-icon.png",
       ],
       manifest: {
-        name: "GaurCity-HCL Carpool",
-        short_name: "GC Carpool",
-        description: "Fixed-route carpooling between Gaur City and HCL campus — ₹80 per seat",
+        name: "CarPool",
+        short_name: "CarPool",
+        description: "Community carpooling app — share rides with your community",
         theme_color: "#1d4ed8",
         background_color: "#1d4ed8",
         display: "standalone",

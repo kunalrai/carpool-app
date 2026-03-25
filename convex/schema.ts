@@ -59,8 +59,8 @@ export default defineSchema({
    */
   listings: defineTable({
     driverId: v.id("users"),
-    fromLabel: v.string(),         // e.g. "Gaur City 1, Greater Noida"
-    toLabel: v.string(),           // e.g. "HCL Campus, Sector 136, Noida"
+    fromLabel: v.string(),         // e.g. "Home, Greater Noida"
+    toLabel: v.string(),           // e.g. "Office, Sector 136, Noida"
     fromLat: v.number(),
     fromLng: v.number(),
     toLat: v.number(),
@@ -90,7 +90,7 @@ export default defineSchema({
     .index("by_created", ["createdAt"]),
 
   /**
-   * messages — community group chat for all GaurCity-HCL carpool members.
+   * messages — community group chat for all CarPool members.
    * Any registered user can read and send.
    */
   messages: defineTable({
@@ -150,7 +150,7 @@ export default defineSchema({
     .index("by_slug", ["slug"]),
 
   /**
-   * airQualityCache — single-row cache for the Gaur City AQI.
+   * airQualityCache — single-row cache for local area AQI.
    * Refreshed at most every 30 minutes by the fetchAndCacheAqi action.
    * All users share this one record, keeping API calls ≤ 48/day.
    */
