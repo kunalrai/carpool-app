@@ -93,7 +93,7 @@ function WelcomeCards() {
           style={{ background: "linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%)", border: "1px solid #c7d2fe" }}>
           <p className="text-[10px] font-bold text-indigo-500 mb-1 tracking-wide">TaraAI</p>
           <p className="text-sm text-gray-800 leading-relaxed">
-            Hi! I'm <strong>TaraAI</strong>, your smart ride guide for Gaur City commuters. 🙏
+            Hi! I'm <strong>TaraAI</strong>, your smart ride guide for City commuters. 🙏
           </p>
         </div>
       </motion.div>
@@ -459,7 +459,7 @@ export default function ChatScreen() {
             </div>
           </div>
           <div className="ml-auto">
-            <div className="text-[10px] text-blue-300 text-right font-medium">Gaur City</div>
+            <div className="text-[10px] text-blue-300 text-right font-medium">City</div>
             <div className="text-[10px] text-blue-300 text-right">Commuter AI</div>
           </div>
         </div>

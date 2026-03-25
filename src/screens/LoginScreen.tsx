@@ -269,7 +269,6 @@ export default function LoginScreen() {
         >
           <div style={{ padding: "1rem", color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>
             <div style={{ fontWeight: 700, marginBottom: "0.5rem", color: "#a78bfa" }}>🚗 Today's Ride</div>
-            <div>Gaur City → Sector 62</div>
             <div style={{ marginTop: "0.25rem", color: "rgba(255,255,255,0.45)" }}>8:30 AM · 2 seats left</div>
             <div style={{ marginTop: "0.5rem", background: "rgba(99,102,241,0.3)", borderRadius: "0.5rem", padding: "0.25rem 0.5rem", display: "inline-block", fontWeight: 700, color: "#60a5fa" }}>₹80/seat</div>
           </div>

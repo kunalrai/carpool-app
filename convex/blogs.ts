@@ -151,12 +151,12 @@ The groups that last months and years in our community are the ones where everyo
         slug: "carpooling-vs-cabs-the-honest-comparison",
         title: "Carpooling vs. Cabs: The Honest Comparison for GC Commuters",
         excerpt:
-          "Ola, Uber, or carpool? We broke down the real cost, comfort, and reliability of each option for the Gaur City to HCL route so you don't have to.",
+          "Ola, Uber, or carpool? We broke down the real cost, comfort, and reliability of each option for the City to HCL route so you don't have to.",
         coverEmoji: "🛣️",
         tags: ["comparison", "savings", "cabs", "carpooling"],
         content: `## The Three Options Every GC Resident Has
 
-If you live in Gaur City and work at HCL or anywhere in the sector 62 belt, you have roughly three ways to get there every day:
+If you live in City and work at HCL or anywhere in the sector 126 belt, you have roughly three ways to get there every day:
 
 - Auto-rickshaw + shared cab
 - Ola or Uber

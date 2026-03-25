@@ -64,7 +64,7 @@ export default function BlogsPage() {
             <span style={{ color: C.primary }}>Read, learn, share.</span>
           </h1>
           <p className="text-lg max-w-xl" style={{ color: C.onSurfaceVariant }}>
-            Tips, stories, and guides for Gaur City ↔ HCL commuters.
+            Tips, stories, and guides for City ↔ HCL commuters.
           </p>
         </div>
       </section>

@@ -146,7 +146,7 @@ export default function DataSafety() {
 
         {/* Footer */}
         <div className="pt-10 border-t mt-10 text-xs" style={{ borderColor: C.outlineVariant + "33", color: C.outline }}>
-          © 2025 GC Ridepool · Gaur City ↔ HCL Tech Park
+          © 2025 GC Ridepool · 
         </div>
       </div>
     </div>
