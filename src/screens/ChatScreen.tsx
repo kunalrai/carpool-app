@@ -388,6 +388,38 @@ export default function ChatScreen() {
     }, () => {}, { enableHighAccuracy: true, timeout: 10000 });
   };
 
+  // ── Free-form chat handler ─────────────────────────────────────────────────
+
+  const [freeText, setFreeText] = useState("");
+
+  const handleFreeSend = () => {
+    const text = freeText.trim();
+    if (!text) return;
+    setFreeText("");
+    addUser(text);
+    const lower = text.toLowerCase();
+    // Intent detection
+    if (/offer|post.*ride|drive|giving.*ride/i.test(lower)) {
+      setTimeout(() => startOffer(), 300);
+    } else if (/find|need.*ride|looking.*ride|seek|book.*seat/i.test(lower)) {
+      setTimeout(() => startSeek(), 300);
+    } else if (/recurring|weekly|daily|every (day|week|monday)/i.test(lower)) {
+      setTimeout(() => startRecurring(), 300);
+    } else if (/hi|hello|hey|namaste|hii/i.test(lower)) {
+      setTimeout(() => addBot("Namaste! 🙏 I'm TaraAI — tap Offer Ride, Recurring, or Find Ride below to get started. Or ask me anything!"), 300);
+    } else if (/how.*work|what.*do|help|what can/i.test(lower)) {
+      setTimeout(() => addBot("Here's what I can do:\n\n🚗 Offer Ride — Post a one-time ride for today\n🔁 Recurring — Auto-post your ride every week\n🙋 Find Ride — Request a seat and let drivers find you\n\nJust tap the buttons below!"), 300);
+    } else if (/fare|price|cost|pay|money|₹/i.test(lower)) {
+      setTimeout(() => addBot("Fares are set by the driver when posting a ride. The app charges ₹0 platform fees — you pay the driver directly when you board. 💸"), 300);
+    } else if (/safe|trust|verify|otp/i.test(lower)) {
+      setTimeout(() => addBot("All users are OTP-verified with their mobile number. You can also chat with your driver before the ride. Stay safe! 🛡️"), 300);
+    } else if (/cancel|cancell/i.test(lower)) {
+      setTimeout(() => addBot("You can cancel your ride or booking anytime from the Home screen — just tap your active ride banner. No penalties! ✅"), 300);
+    } else {
+      setTimeout(() => addBot("I'm best at helping you post or find rides! 🙏\n\nTap one of the buttons below:\n🚗 Offer Ride · 🔁 Recurring · 🙋 Find Ride"), 300);
+    }
+  };
+
   const isLocation = wizard?.step === "from" || wizard?.step === "to";
   const isTime     = wizard?.step === "time";
   const isSeats    = wizard?.step === "seats";
@@ -680,6 +712,26 @@ export default function ChatScreen() {
               </svg>
               Find Ride
             </motion.button>
+
+          {/* Free-form text input */}
+          <div className="flex items-center gap-2 rounded-2xl px-3 py-1.5"
+            style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}>
+            <input
+              type="text"
+              value={freeText}
+              onChange={(e) => setFreeText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleFreeSend(); }}
+              placeholder="Ask TaraAI anything…"
+              className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400"
+            />
+            <motion.button whileTap={{ scale: 0.88 }} onClick={handleFreeSend} disabled={!freeText.trim()}
+              className="w-8 h-8 rounded-xl flex items-center justify-center disabled:opacity-30"
+              style={{ background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)" }}>
+              <svg viewBox="0 0 24 24" className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </motion.button>
+          </div>
           </motion.div>
         )}
       </AnimatePresence>

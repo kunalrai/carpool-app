@@ -35,14 +35,14 @@ function DarkShell({
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <span className="flex-1 text-center text-sm font-semibold text-white">GC Carpool</span>
+          <span className="flex-1 text-center text-sm font-semibold text-white">CarPool</span>
           <div className="w-9" />
         </div>
 
         {/* Heading */}
         <div className="px-6 pt-1 pb-4">
           <h1 className="text-2xl font-extrabold text-white leading-snug">
-            Welcome to <span className="text-brand-400">GC Carpool</span>
+            Welcome to <span className="text-brand-400">CarPool</span>
           </h1>
           <p className="text-sm text-white/60 mt-1">
             Find or offer rides on any route, in seconds.
@@ -382,8 +382,8 @@ export default function LoginScreen() {
   // ── Register phase ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <div className="bg-brand-700 px-6 pt-14 pb-6 text-white">
-        <h1 className="text-xl font-bold">GC Carpool</h1>
+      <div className="px-6 pt-14 pb-6 text-white" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
+        <h1 className="text-xl font-bold">CarPool</h1>
         <p className="text-brand-200 text-xs mt-0.5">Share rides · Save money</p>
       </div>
 

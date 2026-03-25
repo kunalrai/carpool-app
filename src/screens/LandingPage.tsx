@@ -1,464 +1,462 @@
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
-// ── Design tokens (Material You palette from reference) ───────────────────
-const C = {
-  primary: "#003d9b",
-  primaryContainer: "#0052cc",
-  surface: "#faf8ff",
-  surfaceContainer: "#ededf8",
-  surfaceContainerLow: "#f3f3fd",
-  surfaceContainerHigh: "#e7e7f2",
-  surfaceContainerHighest: "#e1e2ec",
-  surfaceContainerLowest: "#ffffff",
-  onSurface: "#191b23",
-  onSurfaceVariant: "#434654",
-  outline: "#737685",
-  outlineVariant: "#c3c6d6",
-  secondaryContainer: "#c7dfff",
-  onSecondaryContainer: "#4b637e",
-  tertiaryFixed: "#ffdbcf",
-  onTertiaryFixed: "#380d00",
-  onPrimary: "#ffffff",
-};
+// ── TaraAI Avatar ──────────────────────────────────────────────────────────
 
-function glassNav(): React.CSSProperties {
-  return { background: "rgba(250, 248, 255, 0.75)", backdropFilter: "blur(24px)" };
+function TaraAvatar({ size = 48 }: { size?: number }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0, position: "relative", overflow: "hidden",
+    }}>
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: "50%",
+        background: "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5) 0%, transparent 60%)",
+      }} />
+      <span style={{ color: "white", fontWeight: 800, fontSize: size * 0.28, position: "relative" }}>AI</span>
+    </div>
+  );
 }
 
-// ── Components ────────────────────────────────────────────────────────────
+// ── Floating Orb ───────────────────────────────────────────────────────────
+
+function FloatOrb({ x, y, size, color, delay }: { x: string; y: string; size: number; color: string; delay: number }) {
+  return (
+    <motion.div
+      animate={{ y: [0, -24, 0], scale: [1, 1.08, 1], opacity: [0.18, 0.28, 0.18] }}
+      transition={{ repeat: Infinity, duration: 6 + delay, ease: "easeInOut", delay }}
+      style={{
+        position: "absolute", left: x, top: y,
+        width: size, height: size, borderRadius: "50%",
+        background: color, filter: "blur(60px)", pointerEvents: "none",
+      }}
+    />
+  );
+}
 
 // ── Main ──────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const navigate = useNavigate();
 
+  const fadeUp = {
+    initial: { opacity: 0, y: 32 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: 0.55 },
+  };
+
   return (
-    <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface, color: C.onSurface }} className="min-h-screen antialiased overflow-x-hidden">
+    <div style={{ fontFamily: "'Inter', sans-serif", background: "#0f172a", color: "white", overflowX: "hidden" }}>
 
       {/* ── Nav ── */}
-      <nav
-        className="sticky top-0 z-50 py-4 px-6 md:px-10 flex items-center justify-between border-b"
-        style={{ ...glassNav(), borderColor: C.outlineVariant + "33" }}
-      >
-        <div className="flex items-center gap-8">
-          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }} className="text-2xl font-extrabold tracking-tight">
-            GC Carpool
-          </span>
-          <div className="hidden md:flex items-center gap-6">
-            {[
-              { label: "Find a Ride", action: () => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" }) },
-              { label: "How It Works", action: () => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" }) },
-              { label: "Blog", action: () => navigate("/blog") },
-            ].map(({ label, action }) => (
-              <button
-                key={label}
-                onClick={action}
-                style={{ color: C.onSurfaceVariant }}
-                className="hover:text-blue-800 font-medium text-sm transition-colors"
-              >
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 50,
+        background: "rgba(15,23,42,0.7)", backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(99,102,241,0.15)",
+        padding: "1rem 1.5rem", display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "2.5rem" }}>
+          <span style={{
+            fontSize: "1.4rem", fontWeight: 900, letterSpacing: "-0.03em",
+            background: "linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          }}>CarPool</span>
+          <div style={{ display: "flex", gap: "1.5rem" }} className="hidden md:flex">
+            {["How It Works", "Blog"].map(label => (
+              <button key={label}
+                onClick={() => label === "Blog" ? navigate("/blog") : document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
+                style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem", fontWeight: 500, background: "none", border: "none", cursor: "pointer" }}>
                 {label}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/login")}
-            style={{ color: C.primary }}
-            className="px-4 py-2 font-semibold text-sm hidden sm:block"
-          >
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <button onClick={() => navigate("/login")}
+            style={{ color: "#93c5fd", fontWeight: 600, fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", padding: "0.5rem 1rem" }}
+            className="hidden sm:block">
             Log In
           </button>
-          <button
+          <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
             onClick={() => navigate("/login")}
-            className="px-5 py-2.5 text-white font-semibold text-sm rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
-            style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
-          >
-            Sign Up Free
-          </button>
+            style={{
+              background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
+              color: "white", fontWeight: 700, fontSize: "0.875rem", border: "none", cursor: "pointer",
+              padding: "0.6rem 1.4rem", borderRadius: "9999px",
+              boxShadow: "0 4px 20px rgba(99,102,241,0.4)",
+            }}>
+            Get Started
+          </motion.button>
         </div>
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative flex items-center px-6 md:px-16 pt-20 pb-16 overflow-hidden" style={{ background: C.surface }}>
-        {/* Background decoration */}
-        <div className="absolute right-0 top-0 w-1/2 h-full opacity-[0.06] pointer-events-none select-none"
-          style={{ background: `radial-gradient(ellipse at 80% 40%, ${C.primary}, transparent 70%)` }} />
-        <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none"
-          style={{ background: C.primary + "0a" }} />
+      <section style={{ position: "relative", overflow: "hidden", padding: "6rem 1.5rem 5rem", minHeight: "85vh", display: "flex", alignItems: "center" }}>
+        {/* Animated orbs */}
+        <FloatOrb x="5%" y="10%" size={400} color="rgba(37,99,235,0.35)" delay={0} />
+        <FloatOrb x="60%" y="5%" size={350} color="rgba(124,58,237,0.3)" delay={1.5} />
+        <FloatOrb x="20%" y="60%" size={300} color="rgba(5,150,105,0.2)" delay={3} />
+        <FloatOrb x="75%" y="55%" size={280} color="rgba(239,68,68,0.15)" delay={2} />
 
-        <div className="relative z-10 max-w-7xl mx-auto w-full">
+        {/* Grid overlay */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          backgroundImage: "linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }} />
+
+        <div style={{ maxWidth: "64rem", margin: "0 auto", width: "100%", position: "relative", zIndex: 2 }}>
           {/* Badge */}
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-8 tracking-wider uppercase"
-            style={{ background: C.secondaryContainer, color: C.onSecondaryContainer }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Carpool any route, any time
-          </div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", padding: "0.4rem 1rem", borderRadius: "9999px", marginBottom: "2rem", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)" }}>
+            <motion.span animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 1.8 }}
+              style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+            <span style={{ color: "#a5b4fc" }}>Powered by TaraAI · Smart Commutes</span>
+          </motion.div>
 
           {/* Headline */}
-          <h1
-            className="text-[clamp(3rem,10vw,6.5rem)] font-extrabold leading-[0.92] tracking-tight mb-8"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
-          >
-            Your Route.<br />
-            <span style={{ color: C.primary }}>Share the ride.</span>
-          </h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
+            style={{ fontSize: "clamp(2.8rem,8vw,5.5rem)", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.04em", marginBottom: "1.5rem" }}>
+            Smarter Rides.<br />
+            <span style={{ background: "linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Share the Way.
+            </span>
+          </motion.h1>
 
-          <p className="text-lg md:text-xl mb-10 max-w-xl leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-            The community carpooling app for daily commuters.
-            Post a ride, claim a seat, and split the trip with neighbours going your way.
-          </p>
+          <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}
+            style={{ fontSize: "1.15rem", color: "rgba(255,255,255,0.6)", maxWidth: "36rem", lineHeight: 1.7, marginBottom: "2.5rem" }}>
+            The community carpooling app for daily commuters. Post a ride or find a seat — guided by TaraAI in seconds.
+          </motion.p>
 
-          {/* CTA widget */}
-          <div className="flex flex-col sm:flex-row gap-3 p-1.5 rounded-2xl w-full md:w-auto" style={{ background: C.surfaceContainerLow }}>
-            <div className="flex items-center gap-4 bg-white px-5 py-4 rounded-xl shadow-sm flex-1">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.outline }}>Any route</span>
-                <span className="font-semibold text-sm" style={{ color: C.onSurface }}>Search rides near you</span>
-              </div>
-            </div>
-            <button
+          {/* CTA buttons */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }}
+            style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <motion.button whileHover={{ scale: 1.04, y: -2 }} whileTap={{ scale: 0.96 }}
               onClick={() => navigate("/login")}
-              className="px-8 py-4 rounded-xl font-bold text-white text-sm transition-transform hover:scale-[1.02] active:scale-95 whitespace-nowrap"
-              style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
-            >
-              Find a Ride
-            </button>
-          </div>
+              style={{
+                background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
+                color: "white", fontWeight: 700, fontSize: "1rem", border: "none", cursor: "pointer",
+                padding: "0.875rem 2.5rem", borderRadius: "9999px",
+                boxShadow: "0 8px 32px rgba(99,102,241,0.5)",
+              }}>
+              Start Riding Free →
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/login")}
+              style={{
+                color: "white", fontWeight: 600, fontSize: "1rem",
+                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer",
+                padding: "0.875rem 2rem", borderRadius: "9999px", backdropFilter: "blur(8px)",
+              }}>
+              Offer a Ride
+            </motion.button>
+          </motion.div>
+
+          {/* Social proof */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
+            style={{ display: "flex", alignItems: "center", gap: "1rem", marginTop: "3rem" }}>
+            <div style={{ display: "flex" }}>
+              {["AK","SR","PM","RV"].map((initials, i) => (
+                <div key={i} style={{
+                  width: 36, height: 36, borderRadius: "50%", border: "2px solid #0f172a",
+                  marginLeft: i > 0 ? -10 : 0, display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.65rem", fontWeight: 700, color: "white",
+                  background: ["#2563eb","#7c3aed","#059669","#dc2626"][i],
+                }}>{initials}</div>
+              ))}
+            </div>
+            <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>
+              <strong style={{ color: "white" }}>2,000+ commuters</strong> sharing rides daily
+            </p>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Stats Bar ── */}
-      <section className="px-6 md:px-16 py-16 mb-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {[
-            { val: "2,000+", label: "Active Riders" },
-            { val: "4", label: "Seats Per Ride" },
-            { val: "₹0", label: "App Fees Ever" },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="p-8 flex flex-col items-center justify-center text-center shadow-xl border"
-              style={{ background: C.surfaceContainerLowest, borderColor: C.outlineVariant + "1a", borderRadius: "9999px" }}
-            >
-              <span
-                className="text-4xl font-extrabold mb-1"
-                style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }}
-              >
-                {s.val}
-              </span>
-              <span className="text-sm font-medium" style={{ color: C.onSurfaceVariant }}>{s.label}</span>
+      {/* ── TaraAI Feature ── */}
+      <section style={{ padding: "5rem 1.5rem", background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(99,102,241,0.1)" }}>
+        <div style={{ maxWidth: "64rem", margin: "0 auto" }}>
+          <motion.div {...fadeUp} style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.75rem", padding: "0.75rem 1.5rem", borderRadius: "9999px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", marginBottom: "1.5rem" }}>
+              <TaraAvatar size={32} />
+              <span style={{ fontWeight: 700, fontSize: "0.875rem", background: "linear-gradient(135deg,#60a5fa,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Meet TaraAI</span>
             </div>
+            <h2 style={{ fontSize: "clamp(2rem,5vw,3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: "1rem" }}>
+              Your AI Ride Guide.<br />
+              <span style={{ background: "linear-gradient(135deg,#a78bfa,#34d399)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Always Online.</span>
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "1.05rem", maxWidth: "36rem", margin: "0 auto", lineHeight: 1.7 }}>
+              No forms, no menus. Just chat with TaraAI to post your ride, find a seat, or set up a weekly commute.
+            </p>
+          </motion.div>
+
+          {/* Chat demo mockup */}
+          <motion.div {...fadeUp} transition={{ duration: 0.55, delay: 0.1 }}
+            style={{
+              maxWidth: "28rem", margin: "0 auto",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(99,102,241,0.2)",
+              borderRadius: "1.5rem", overflow: "hidden",
+              boxShadow: "0 20px 60px rgba(99,102,241,0.2)",
+            }}>
+            {/* Chat header */}
+            <div style={{ padding: "1rem 1.25rem", background: "linear-gradient(135deg,#1e3a8a,#312e81)", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <TaraAvatar size={40} />
+              <div>
+                <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "white" }}>TaraAI</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                  <motion.span animate={{ opacity: [1,0.3,1] }} transition={{ repeat: Infinity, duration: 1.8 }}
+                    style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} />
+                  <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>Online · Your ride guide</span>
+                </div>
+              </div>
+            </div>
+            {/* Messages */}
+            <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+              {[
+                { from: "tara", text: "Hi! I'm TaraAI 🙏 Want to offer a ride or find one?" },
+                { from: "user", text: "I want to offer a ride to Noida Sector 62" },
+                { from: "tara", text: "Great! Where are you starting from? 📍" },
+                { from: "user", text: "Gaur City 2, Greater Noida West" },
+                { from: "tara", text: "Perfect route! What time do you depart? 🕐" },
+              ].map((msg, i) => (
+                <motion.div key={i}
+                  initial={{ opacity: 0, x: msg.from === "user" ? 20 : -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.4 }}
+                  style={{ display: "flex", justifyContent: msg.from === "user" ? "flex-end" : "flex-start", alignItems: "flex-end", gap: "0.5rem" }}>
+                  {msg.from === "tara" && <TaraAvatar size={24} />}
+                  <div style={{
+                    maxWidth: "78%", padding: "0.6rem 0.9rem", fontSize: "0.8rem", lineHeight: 1.5,
+                    background: msg.from === "user" ? "linear-gradient(135deg,#2563eb,#7c3aed)" : "rgba(255,255,255,0.08)",
+                    color: msg.from === "user" ? "white" : "rgba(255,255,255,0.85)",
+                    border: msg.from === "tara" ? "1px solid rgba(99,102,241,0.2)" : "none",
+                    borderRadius: msg.from === "user" ? "1rem 1rem 0.2rem 1rem" : "1rem 1rem 1rem 0.2rem",
+                  }}>
+                    {msg.text}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {/* Action buttons in chat */}
+            <div style={{ padding: "0 1.25rem 1.25rem", display: "flex", gap: "0.5rem" }}>
+              {[{ label: "🚗 Offer Ride", bg: "linear-gradient(135deg,#2563eb,#1d4ed8)" }, { label: "🙋 Find Ride", bg: "linear-gradient(135deg,#7c3aed,#9333ea)" }].map(btn => (
+                <button key={btn.label} onClick={() => navigate("/login")}
+                  style={{ flex: 1, padding: "0.6rem", borderRadius: "0.75rem", background: btn.bg, color: "white", fontWeight: 700, fontSize: "0.75rem", border: "none", cursor: "pointer" }}>
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Stats ── */}
+      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid rgba(99,102,241,0.1)" }}>
+        <div style={{ maxWidth: "64rem", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: "1.5rem" }}>
+          {[
+            { val: "2,000+", label: "Active Riders", icon: "👥" },
+            { val: "4", label: "Seats Per Ride", icon: "🪑" },
+            { val: "₹0", label: "Platform Fee", icon: "💸" },
+            { val: "24/7", label: "TaraAI Online", icon: "🤖" },
+          ].map((s, i) => (
+            <motion.div key={s.label}
+              initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.5 }}
+              style={{
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(99,102,241,0.15)",
+                borderRadius: "1.5rem", padding: "2rem 1.5rem", textAlign: "center",
+              }}>
+              <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{s.icon}</div>
+              <div style={{ fontSize: "2.2rem", fontWeight: 900, background: "linear-gradient(135deg,#60a5fa,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "0.25rem" }}>{s.val}</div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 500 }}>{s.label}</div>
+            </motion.div>
           ))}
         </div>
       </section>
 
-      {/* ── Bento Features ── */}
-      <section className="px-6 md:px-16 py-24" style={{ background: C.surface }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-14">
-            <h2
-              className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
-            >
-              Engineered for<br />Professionalism.
-            </h2>
-            <p className="max-w-md text-base" style={{ color: C.onSurfaceVariant }}>
-              Why commuters trust GC Carpool every day.
-            </p>
-          </div>
-
-          {/* Bento grid */}
-          <div className="grid grid-cols-12 gap-5">
-            {/* Large card — Real-Time Listings */}
-            <div
-              className="col-span-12 md:col-span-7 p-10 md:p-12 flex flex-col justify-end relative overflow-hidden group min-h-[260px]"
-              style={{ background: C.surfaceContainerLowest, borderRadius: "2rem" }}
-            >
-              {/* Large decorative shield icon, right side */}
-              <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-[0.12] group-hover:opacity-[0.2] transition-opacity pointer-events-none">
-                <svg width="160" height="160" viewBox="0 0 24 24" fill={C.primary}>
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
-                </svg>
-              </div>
-              <span
-                className="px-3 py-1 rounded-full text-xs font-bold w-fit mb-4"
-                style={{ background: C.tertiaryFixed, color: C.onTertiaryFixed }}
-              >
-                PRIVACY FIRST
+      {/* ── Features Bento ── */}
+      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid rgba(99,102,241,0.1)" }}>
+        <div style={{ maxWidth: "64rem", margin: "0 auto" }}>
+          <motion.div {...fadeUp} style={{ marginBottom: "3rem" }}>
+            <h2 style={{ fontSize: "clamp(2rem,5vw,3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", marginBottom: "0.75rem" }}>
+              Built for daily commuters.<br />
+              <span style={{ background: "linear-gradient(135deg,#60a5fa,#34d399)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                Refined with AI.
               </span>
-              <h3 className="text-2xl md:text-3xl font-bold mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
-                Real-Time Listings
-              </h3>
-              <p className="max-w-sm text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-                See rides the moment drivers post them. No refreshing, no delays —
-                instant live updates to every rider simultaneously.
-              </p>
-            </div>
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.5)", maxWidth: "32rem" }}>Everything you need for a smooth commute, every day.</p>
+          </motion.div>
 
-            {/* Blue card — Always Punctual */}
-            <div
-              className="col-span-12 md:col-span-5 p-10 md:p-12 flex flex-col justify-center relative overflow-hidden min-h-[260px]"
-              style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)`, borderRadius: "2rem" }}
-            >
-              <div className="absolute -bottom-10 -right-10 w-48 h-48 rounded-full blur-2xl" style={{ background: "rgba(255,255,255,0.08)" }} />
-              {/* Clock icon at top */}
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)" className="mb-6">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 11h-5v-2h3V7h2v6z" />
-              </svg>
-              <h3 className="text-2xl md:text-3xl font-bold mb-3 text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Always Punctual
-              </h3>
-              <p className="text-white/75 text-sm leading-relaxed">
-                Drivers post their departure time and riders join instantly.
-                Coordinate via group chat so everyone is ready on time.
-              </p>
-            </div>
-
-            {/* Small card — Eco-friendly / PWA */}
-            <div
-              className="col-span-12 md:col-span-4 p-10 flex flex-col items-center text-center justify-center min-h-[220px]"
-              style={{ background: C.surfaceContainerHigh, borderRadius: "2rem" }}
-            >
-              {/* Leaf icon */}
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="#7b2600" className="mb-4">
-                <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 008 20C19 20 22 3 22 3c-1 2-8 2-8 2-.93 0-1.83.09-2.7.26C13.67 4.08 16 2 16 2s-6 1-9 7c-.75 1.46-1.26 3.14-1.63 4.84C4.78 10.4 3 7.83 3 4.9V3L1 5c0 5.52 3.47 10.26 8.38 12.09A8.5 8.5 0 0117 8z" />
-              </svg>
-              <h3 className="text-xl font-bold mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
-                Eco-Friendly
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-                Fewer cars on the road, shared by neighbours going the same way.
-              </p>
-            </div>
-
-            {/* Wide card — Trusted Community */}
-            <div
-              className="col-span-12 md:col-span-8 p-8 md:px-14 flex items-center gap-8 min-h-[220px]"
-              style={{ background: C.secondaryContainer, borderRadius: "2rem" }}
-            >
-              {/* Stacked avatar circles with counter */}
-              <div className="flex -space-x-4 shrink-0">
-                {["AK", "SR", "PM"].map((initials, i) => (
-                  <div
-                    key={i}
-                    className="w-14 h-14 rounded-full border-4 flex items-center justify-center text-xs font-bold text-white"
-                    style={{
-                      borderColor: C.secondaryContainer,
-                      background: [C.primary, "#1d4ed8", "#1e40af"][i],
-                    }}
-                  >
-                    {initials}
-                  </div>
-                ))}
-                <div
-                  className="w-14 h-14 rounded-full border-4 flex items-center justify-center text-xs font-bold text-white"
-                  style={{ borderColor: C.secondaryContainer, background: C.primary }}
-                >
-                  500+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "1.25rem" }}>
+            {[
+              {
+                cols: "span 12 / span 12",
+                gradient: "linear-gradient(135deg,#1e3a8a 0%,#312e81 100%)",
+                icon: "⚡",
+                tag: "REAL-TIME",
+                title: "Live Ride Feed",
+                desc: "Rides appear the instant drivers post them. No refresh needed — real-time updates via Convex.",
+                style: { minHeight: 240 },
+              },
+              {
+                cols: "span 12 / span 12",
+                gradient: "linear-gradient(135deg,#059669 0%,#0d9488 100%)",
+                icon: "🔁",
+                tag: "SMART",
+                title: "Recurring Rides",
+                desc: "Set once, auto-posts every week. TaraAI manages your schedule so you never forget.",
+                style: { minHeight: 240 },
+              },
+              {
+                cols: "span 12 / span 12",
+                gradient: "linear-gradient(135deg,#7c3aed 0%,#9333ea 100%)",
+                icon: "🗣️",
+                tag: "AI CHAT",
+                title: "Talk to TaraAI",
+                desc: "Post rides via conversation. No forms, just chat.",
+                style: { minHeight: 200 },
+              },
+              {
+                cols: "span 12 / span 12",
+                gradient: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)",
+                border: "1px solid rgba(99,102,241,0.2)",
+                icon: "💬",
+                tag: "CONNECTED",
+                title: "Group Chat + Calls",
+                desc: "Every ride has its own group chat. Voice call your carpool before you set off.",
+                style: { minHeight: 200 },
+              },
+            ].map((card, i) => (
+              <motion.div key={card.title}
+                initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.5 }}
+                style={{
+                  gridColumn: card.cols, background: card.gradient,
+                  border: card.border ?? "none",
+                  borderRadius: "1.75rem", padding: "2.5rem",
+                  display: "flex", flexDirection: "column", justifyContent: "flex-end",
+                  position: "relative", overflow: "hidden",
+                  ...card.style,
+                }}>
+                <div style={{ position: "absolute", top: "50%", right: "1.5rem", transform: "translateY(-50%)", fontSize: "5rem", opacity: 0.15, pointerEvents: "none" }}>
+                  {card.icon}
                 </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-bold mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
-                  Trusted Community
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: C.onSecondaryContainer }}>
-                  Join the growing network of commuters sharing daily rides. Verified by OTP.
-                </p>
-              </div>
-            </div>
+                <span style={{ fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.12em", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginBottom: "0.75rem", display: "block" }}>{card.tag}</span>
+                <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: "white", marginBottom: "0.5rem" }}>{card.title}</h3>
+                <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.6, maxWidth: "28rem" }}>{card.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how" className="px-6 md:px-16 py-28 bg-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-16 md:gap-20">
-          {/* Left */}
-          <div className="md:w-1/3">
-            <h2
-              className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-[0.92]"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}
-            >
-              Three steps.<br />One commute.
+      <section id="how" style={{ padding: "5rem 1.5rem", borderTop: "1px solid rgba(99,102,241,0.1)" }}>
+        <div style={{ maxWidth: "64rem", margin: "0 auto" }}>
+          <motion.div {...fadeUp} style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+            <h2 style={{ fontSize: "clamp(2rem,5vw,3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", marginBottom: "0.75rem" }}>
+              Three steps.<br />
+              <span style={{ background: "linear-gradient(135deg,#60a5fa,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>One commute.</span>
             </h2>
-            <p className="text-base mb-10 leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-              From sign-up to seat booked in under a minute.
-            </p>
-            <button
-              onClick={() => navigate("/login")}
-              className="flex items-center gap-2 font-bold text-sm group"
-              style={{ color: C.primary }}
-            >
-              Get Started Now
-              <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-            </button>
-          </div>
-
-          {/* Steps — staggered */}
-          <div className="md:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "1rem" }}>From sign-up to seat booked in under a minute.</p>
+          </motion.div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "1.5rem" }}>
             {[
-              { num: "01", title: "Sign Up", desc: "Enter your mobile, verify with an OTP. Your account is ready in 30 seconds — no password ever.", offset: "" },
-              { num: "02", title: "Post or Join", desc: "Drivers post departure time and seats. Riders browse the live feed and claim a seat instantly.", offset: "md:translate-y-4" },
-              { num: "03", title: "Ride & Chat", desc: "Coordinate via group chat or voice call inside the app. Pay your driver directly when you board.", offset: "md:translate-y-8" },
-            ].map((s) => (
-              <div
-                key={s.num}
-                className={`p-8 rounded-3xl border border-transparent hover:border-blue-200 transition-all ${s.offset}`}
-                style={{ background: C.surfaceContainerLow }}
-              >
-                <span
-                  className="text-6xl font-extrabold block mb-6"
-                  style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.outlineVariant + "88" }}
-                >
-                  {s.num}
-                </span>
-                <h3 className="text-xl font-bold mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.onSurface }}>
-                  {s.title}
-                </h3>
-                <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>{s.desc}</p>
-              </div>
+              { num: "01", title: "Sign Up", desc: "Enter your mobile, verify with OTP. Ready in 30 seconds — no password.", gradient: "linear-gradient(135deg,#1e3a8a,#312e81)" },
+              { num: "02", title: "Chat with TaraAI", desc: "Tell TaraAI if you want to offer or find a ride. She'll guide you step by step.", gradient: "linear-gradient(135deg,#7c3aed,#9333ea)" },
+              { num: "03", title: "Ride & Pay", desc: "Coordinate via group chat or voice call. Pay your driver directly when you board.", gradient: "linear-gradient(135deg,#059669,#0d9488)" },
+            ].map((s, i) => (
+              <motion.div key={s.num}
+                initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.12, duration: 0.5 }}
+                style={{
+                  background: s.gradient, borderRadius: "1.75rem",
+                  padding: "2.5rem 2rem", position: "relative", overflow: "hidden",
+                }}>
+                <div style={{ position: "absolute", top: "1.5rem", right: "1.5rem", fontSize: "3.5rem", fontWeight: 900, color: "rgba(255,255,255,0.1)" }}>{s.num}</div>
+                <h3 style={{ fontSize: "1.4rem", fontWeight: 800, color: "white", marginBottom: "0.75rem", marginTop: "2rem" }}>{s.title}</h3>
+                <p style={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.7 }}>{s.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── CTA Banner ── */}
-      <section className="px-6 md:px-16 py-16 md:py-20" style={{ background: C.surface }}>
-        <div
-          className="max-w-7xl mx-auto rounded-[2rem] p-12 md:p-20 flex flex-col items-center text-center text-white relative overflow-hidden"
-          style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryContainer} 100%)` }}
-        >
-          {/* Blobs */}
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl" style={{ background: "rgba(255,255,255,0.07)" }} />
-          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full blur-2xl" style={{ background: "rgba(255,255,255,0.05)" }} />
-
-          <h2
-            className="text-4xl md:text-6xl font-extrabold mb-6 max-w-3xl relative z-10 leading-tight"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-          >
-            Join the smarter commute revolution.
-          </h2>
-          <p className="text-white/75 text-base md:text-lg mb-10 max-w-xl relative z-10 leading-relaxed">
-            Your neighbours are already sharing daily rides.
-            Free to join — just your phone number.
-          </p>
-
-          <div className="flex flex-wrap gap-4 justify-center relative z-10">
-            <button
-              onClick={() => navigate("/login")}
-              className="bg-white px-10 py-4 rounded-full font-extrabold text-base shadow-2xl hover:bg-gray-50 transition-colors active:scale-95"
-              style={{ color: C.primary }}
-            >
-              Start Riding
-            </button>
-            <button
-              onClick={() => navigate("/login")}
-              className="border-2 border-white/30 text-white px-10 py-4 rounded-full font-extrabold text-base hover:bg-white/10 transition-colors active:scale-95"
-            >
-              Offer a Ride
-            </button>
+      {/* ── CTA ── */}
+      <section style={{ padding: "4rem 1.5rem 6rem", borderTop: "1px solid rgba(99,102,241,0.1)" }}>
+        <motion.div {...fadeUp}
+          style={{
+            maxWidth: "56rem", margin: "0 auto",
+            background: "linear-gradient(135deg,#1e3a8a 0%,#312e81 50%,#4c1d95 100%)",
+            borderRadius: "2rem", padding: "4rem 2.5rem", textAlign: "center",
+            position: "relative", overflow: "hidden",
+            boxShadow: "0 24px 80px rgba(99,102,241,0.35)",
+          }}>
+          <div style={{ position: "absolute", top: 0, right: 0, width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle,rgba(255,255,255,0.07),transparent)", pointerEvents: "none" }} />
+          <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "center" }}>
+            <TaraAvatar size={56} />
           </div>
+          <h2 style={{ fontSize: "clamp(2rem,5vw,3.5rem)", fontWeight: 900, color: "white", marginBottom: "1rem", letterSpacing: "-0.03em" }}>
+            Join the smarter commute.
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "1.05rem", maxWidth: "32rem", margin: "0 auto 2.5rem", lineHeight: 1.7 }}>
+            Your neighbours are already sharing daily rides. Free to join — just your phone number.
+          </p>
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+            <motion.button whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/login")}
+              style={{ background: "white", color: "#1e3a8a", fontWeight: 800, fontSize: "1rem", border: "none", cursor: "pointer", padding: "0.875rem 2.5rem", borderRadius: "9999px", boxShadow: "0 8px 32px rgba(0,0,0,0.2)" }}>
+              Start Riding Free
+            </motion.button>
+            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+              onClick={() => navigate("/login")}
+              style={{ color: "white", fontWeight: 700, fontSize: "1rem", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)", cursor: "pointer", padding: "0.875rem 2rem", borderRadius: "9999px" }}>
+              Offer a Ride
+            </motion.button>
+          </div>
+          <p style={{ marginTop: "2rem", fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>Install as PWA · Works Offline · No App Store</p>
+        </motion.div>
+      </section>
 
-          {/* PWA install nudge */}
-          <div className="mt-14 relative z-10 flex flex-col items-center gap-3">
-            <p className="text-xs font-bold tracking-widest uppercase opacity-60">Works on any device</p>
-            <div className="flex gap-6 text-white/80">
-              {["Install as App", "No App Store", "Offline Ready"].map((label) => (
-                <div key={label} className="flex flex-col items-center gap-1">
-                  <span className="text-[11px] font-semibold">{label}</span>
+      {/* ── Footer ── */}
+      <footer style={{ padding: "3rem 1.5rem", borderTop: "1px solid rgba(99,102,241,0.1)", background: "rgba(0,0,0,0.2)" }}>
+        <div style={{ maxWidth: "64rem", margin: "0 auto" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: "2.5rem", marginBottom: "2.5rem" }}>
+            <div style={{ maxWidth: "18rem" }}>
+              <span style={{ fontSize: "1.4rem", fontWeight: 900, background: "linear-gradient(135deg,#60a5fa,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "block", marginBottom: "0.75rem" }}>CarPool</span>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.875rem", lineHeight: 1.7 }}>The community carpooling app. Fast, secure, and community-run.</p>
+            </div>
+            <div style={{ display: "flex", gap: "3rem", flexWrap: "wrap" }}>
+              {[
+                { heading: "Product", items: [{ label: "Find a Ride", to: null }, { label: "Offer a Ride", to: null }, { label: "Blog", to: "/blog" }] },
+                { heading: "Legal", items: [{ label: "Privacy Policy", to: "/privacy" }, { label: "Terms", to: "/terms" }, { label: "Data Safety", to: "/data-safety" }] },
+              ].map(col => (
+                <div key={col.heading} style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                  <span style={{ fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "0.25rem" }}>{col.heading}</span>
+                  {col.items.map(item => (
+                    item.to ? (
+                      <button key={item.label} onClick={() => navigate(item.to!)}
+                        style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem", background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
+                        {item.label}
+                      </button>
+                    ) : (
+                      <span key={item.label} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem" }}>{item.label}</span>
+                    )
+                  ))}
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer
-        className="py-20 px-6 md:px-16 border-t"
-        style={{ background: C.surfaceContainerLowest, borderColor: C.outlineVariant + "33" }}
-      >
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
-          {/* Brand */}
-          <div className="max-w-xs">
-            <span
-              className="text-2xl font-extrabold tracking-tight mb-4 block"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: C.primary }}
-            >
-              GC Carpool
-            </span>
-            <p className="text-sm leading-relaxed" style={{ color: C.onSurfaceVariant }}>
-              The community carpooling app for daily commuters.
-              Fast, secure, and community-run.
-            </p>
+          <div style={{ borderTop: "1px solid rgba(99,102,241,0.1)", paddingTop: "1.5rem", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.8rem" }}>© 2025 CarPool. Built for the community.</span>
+            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.8rem" }}>Share rides · Save money · Reduce traffic</span>
           </div>
-
-          {/* Links */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-10 md:gap-20">
-            {[
-              {
-                heading: "Product",
-                items: [
-                  { label: "Find a Ride", to: null },
-                  { label: "Offer a Ride", to: null },
-                  { label: "How It Works", to: null },
-                  { label: "Blog", to: "/blog" },
-                ],
-              },
-              {
-                heading: "Privacy",
-                items: [
-                  { label: "Privacy Policy", to: "/privacy" },
-                  { label: "Terms of Service", to: "/terms" },
-                  { label: "Data Safety", to: "/data-safety" },
-                ],
-              },
-              {
-                heading: "App",
-                items: [
-                  { label: "Install as PWA", to: null },
-                  { label: "Add to Home Screen", to: null },
-                  { label: "Works Offline", to: null },
-                ],
-              },
-            ].map((col) => (
-              <div key={col.heading} className="flex flex-col gap-3">
-                <span className="font-bold text-xs tracking-widest uppercase" style={{ color: C.outline }}>
-                  {col.heading}
-                </span>
-                {col.items.map(({ label, to }) =>
-                  to ? (
-                    <button
-                      key={label}
-                      onClick={() => navigate(to)}
-                      className="text-sm text-left hover:text-blue-800 transition-colors"
-                      style={{ color: C.onSurfaceVariant }}
-                    >
-                      {label}
-                    </button>
-                  ) : (
-                    <span key={label} className="text-sm" style={{ color: C.onSurfaceVariant }}>
-                      {label}
-                    </span>
-                  )
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div
-          className="max-w-7xl mx-auto mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-3"
-          style={{ borderColor: C.outlineVariant + "22" }}
-        >
-          <span className="text-xs" style={{ color: C.outline }}>© 2025 GC Carpool. Built for the community.</span>
-          <span className="text-xs" style={{ color: C.outline }}>Share rides · Save money · Reduce traffic</span>
         </div>
       </footer>
-
     </div>
   );
 }

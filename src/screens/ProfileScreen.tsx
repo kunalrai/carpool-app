@@ -137,8 +137,8 @@ export default function ProfileScreen() {
   // ── Loading ───────────────────────────────────────────────────────────────
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-900 animate-pulse">
-        <div className="h-56 bg-gray-800" />
+      <div className="min-h-screen animate-pulse" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
+        <div className="h-56 opacity-50" style={{ background: "rgba(255,255,255,0.1)" }} />
         <div className="bg-white mx-4 -mt-6 rounded-2xl p-4 space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-100 rounded-xl" />)}
         </div>
@@ -161,7 +161,7 @@ export default function ProfileScreen() {
         <div className="pb-24 bg-gray-50 min-h-screen">
 
           {/* ── Dark hero header ── */}
-          <div className="bg-gray-900 pb-14 pt-12 px-4">
+          <div className="pb-14 pt-12 px-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
             <div className="flex items-center justify-between mb-6">
               <button onClick={() => navigate(-1)} className="p-1 active:opacity-60">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -352,13 +352,13 @@ export default function ProfileScreen() {
       <div className="pb-24 bg-white min-h-screen">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-12 pb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 pt-12 pb-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
           <button onClick={() => { setMode("view"); setError(null); }} className="p-1 active:opacity-60">
-            <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <span className="font-bold text-gray-900 text-base">Edit Profile</span>
+          <span className="font-bold text-white text-base">Edit Profile</span>
           <div className="w-7" />
         </div>
 
