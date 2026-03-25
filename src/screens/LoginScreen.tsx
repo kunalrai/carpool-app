@@ -1,52 +1,93 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAction, useMutation } from "convex/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
 import { Id } from "../../convex/_generated/dataModel";
 
 type Phase = "splash" | "mobile" | "otp" | "register";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=900&q=80";
+// ── Floating orb ──────────────────────────────────────────────────────────
 
-// ── Dark screen shell ─────────────────────────────────────────────────────
-
-function DarkShell({
-  onBack,
-  children,
-}: {
-  onBack: () => void;
-  children: React.ReactNode;
-}) {
+function Orb({ x, y, size, color, delay }: { x: string; y: string; size: number; color: string; delay: number }) {
   return (
-    <div className="fixed inset-0 bg-gray-950 flex flex-col overflow-hidden">
-      <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-2/5 object-cover object-center" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-gray-950/75 to-gray-950" />
+    <motion.div
+      animate={{ y: [0, -20, 0], scale: [1, 1.1, 1], opacity: [0.2, 0.35, 0.2] }}
+      transition={{ repeat: Infinity, duration: 5 + delay, ease: "easeInOut", delay }}
+      style={{
+        position: "absolute", left: x, top: y,
+        width: size, height: size, borderRadius: "50%",
+        background: color, filter: "blur(50px)", pointerEvents: "none",
+      }}
+    />
+  );
+}
 
-      <div
-        className="relative z-10 flex-1 overflow-y-auto"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        {/* Nav bar */}
-        <div className="flex items-center px-4 pt-6 pb-1">
-          <button onClick={onBack} className="p-2 -ml-2 active:opacity-60">
-            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+// ── TaraAI avatar ─────────────────────────────────────────────────────────
+
+function TaraAvatar({ size = 56 }: { size?: number }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      position: "relative", overflow: "hidden", flexShrink: 0,
+      boxShadow: "0 8px 32px rgba(99,102,241,0.5)",
+    }}>
+      <div style={{
+        position: "absolute", inset: 0, borderRadius: "50%",
+        background: "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.5) 0%, transparent 60%)",
+      }} />
+      <span style={{ color: "white", fontWeight: 900, fontSize: size * 0.28, position: "relative" }}>AI</span>
+    </div>
+  );
+}
+
+// ── Dark shell for mobile/otp phases ─────────────────────────────────────
+
+function DarkShell({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
+  return (
+    <div style={{ minHeight: "100vh", background: "#0f172a", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <Orb x="5%" y="8%" size={280} color="rgba(37,99,235,0.4)" delay={0} />
+      <Orb x="55%" y="3%" size={240} color="rgba(124,58,237,0.35)" delay={1.5} />
+      <Orb x="15%" y="55%" size={200} color="rgba(5,150,105,0.25)" delay={2.5} />
+
+      {/* Grid */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage: "linear-gradient(rgba(99,102,241,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.04) 1px,transparent 1px)",
+        backgroundSize: "50px 50px",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 10, flex: 1, overflowY: "auto", paddingTop: "env(safe-area-inset-top)" }}>
+        {/* Nav */}
+        <div style={{ display: "flex", alignItems: "center", padding: "1.5rem 1rem 0.5rem" }}>
+          <motion.button whileTap={{ scale: 0.9 }} onClick={onBack}
+            style={{ padding: "0.5rem", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "0.625rem", cursor: "pointer", display: "flex" }}>
+            <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, color: "white" }} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-          </button>
-          <span className="flex-1 text-center text-sm font-semibold text-white">CarPool</span>
-          <div className="w-9" />
+          </motion.button>
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <span style={{
+              fontSize: "1.1rem", fontWeight: 900, letterSpacing: "-0.03em",
+              background: "linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>CarPool</span>
+          </div>
+          <div style={{ width: 36 }} />
         </div>
 
         {/* Heading */}
-        <div className="px-6 pt-1 pb-4">
-          <h1 className="text-2xl font-extrabold text-white leading-snug">
-            Welcome to <span className="text-brand-400">CarPool</span>
-          </h1>
-          <p className="text-sm text-white/60 mt-1">
-            Find or offer rides on any route, in seconds.
-          </p>
+        <div style={{ padding: "1.5rem 1.5rem 1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem" }}>
+            <TaraAvatar size={40} />
+            <div>
+              <h1 style={{ fontSize: "1.3rem", fontWeight: 900, color: "white", margin: 0, lineHeight: 1.2 }}>Welcome back</h1>
+              <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", margin: 0 }}>TaraAI is ready to find your ride</p>
+            </div>
+          </div>
         </div>
 
         {children}
@@ -54,6 +95,35 @@ function DarkShell({
     </div>
   );
 }
+
+// ── Gradient input field style ────────────────────────────────────────────
+
+const glassCard: React.CSSProperties = {
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(99,102,241,0.25)",
+  borderRadius: "1.25rem",
+  padding: "1.25rem",
+  backdropFilter: "blur(12px)",
+  margin: "0 1rem 0.75rem",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(99,102,241,0.3)",
+  borderRadius: "0.75rem", padding: "0.875rem 1rem", color: "white",
+  fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.08em",
+  textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "0.4rem",
+};
+
+const gradientBtn: React.CSSProperties = {
+  width: "100%", background: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
+  color: "white", fontWeight: 700, fontSize: "0.95rem", border: "none", cursor: "pointer",
+  padding: "0.9rem", borderRadius: "0.875rem", marginTop: "0.75rem",
+  boxShadow: "0 6px 24px rgba(99,102,241,0.45)",
+};
 
 // ── Main component ────────────────────────────────────────────────────────
 
@@ -83,65 +153,39 @@ export default function LoginScreen() {
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const digitRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null));
 
-  // Auto-focus mobile input when entering mobile phase
   useEffect(() => {
-    if (phase === "mobile") {
-      setTimeout(() => mobileInputRef.current?.focus(), 100);
-    }
+    if (phase === "mobile") setTimeout(() => mobileInputRef.current?.focus(), 100);
   }, [phase]);
 
-  // Auto-focus first OTP box when entering OTP phase
   useEffect(() => {
     if (phase === "otp") {
-      setCountdown(60);
-      setCanResend(false);
+      setCountdown(60); setCanResend(false);
       setTimeout(() => digitRefs.current[0]?.focus(), 100);
-
       const timer = setInterval(() => {
-        setCountdown((c) => {
-          if (c <= 1) { clearInterval(timer); setCanResend(true); return 0; }
-          return c - 1;
-        });
+        setCountdown((c) => { if (c <= 1) { clearInterval(timer); setCanResend(true); return 0; } return c - 1; });
       }, 1000);
       return () => clearInterval(timer);
     }
   }, [phase]);
 
   const handleSendOtp = async () => {
-    if (!/^[6-9]\d{9}$/.test(mobile)) {
-      setError("Enter a valid 10-digit Indian mobile number");
-      return;
-    }
-    setError(null);
-    setLoading(true);
-    try {
-      await sendOtp({ mobile });
-      setPhase("otp");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to send OTP");
-    } finally {
-      setLoading(false);
-    }
+    if (!/^[6-9]\d{9}$/.test(mobile)) { setError("Enter a valid 10-digit Indian mobile number"); return; }
+    setError(null); setLoading(true);
+    try { await sendOtp({ mobile }); setPhase("otp"); }
+    catch (e) { setError(e instanceof Error ? e.message : "Failed to send OTP"); }
+    finally { setLoading(false); }
   };
 
   const handleVerifyOtp = async () => {
     const otp = digits.join("");
     if (otp.length < 6) { setError("Enter the 6-digit OTP"); return; }
-    setError(null);
-    setLoading(true);
+    setError(null); setLoading(true);
     try {
       const result = await verifyOtp({ mobile, otp });
-      if (result.isNewUser) {
-        setPhase("register");
-      } else {
-        login(result.userId! as Id<"users">);
-        navigate("/home", { replace: true });
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "OTP verification failed");
-    } finally {
-      setLoading(false);
-    }
+      if (result.isNewUser) { setPhase("register"); }
+      else { login(result.userId! as Id<"users">); navigate("/home", { replace: true }); }
+    } catch (e) { setError(e instanceof Error ? e.message : "OTP verification failed"); }
+    finally { setLoading(false); }
   };
 
   const handleRegister = async () => {
@@ -151,59 +195,36 @@ export default function LoginScreen() {
       if (!carColor.trim()) { setError("Car color is required"); return; }
       if (!carNumber.trim()) { setError("Car number is required"); return; }
     }
-    setError(null);
-    setLoading(true);
+    setError(null); setLoading(true);
     try {
       const userId = await registerUser({
-        mobile,
-        name: name.trim(),
-        role: offerRides ? "both" : "taker",
+        mobile, name: name.trim(), role: offerRides ? "both" : "taker",
         carName: offerRides ? carName.trim() : undefined,
         carColor: offerRides ? carColor.trim() : undefined,
         carNumber: offerRides ? carNumber.trim() : undefined,
       });
-      login(userId);
-      navigate("/home", { replace: true });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Registration failed");
-    } finally {
-      setLoading(false);
-    }
+      login(userId); navigate("/home", { replace: true });
+    } catch (e) { setError(e instanceof Error ? e.message : "Registration failed"); }
+    finally { setLoading(false); }
   };
 
   const handleResend = async () => {
     if (!canResend) return;
-    setDigits(Array(6).fill(""));
-    setError(null);
-    setLoading(true);
-    try {
-      await sendOtp({ mobile });
-      setPhase("otp");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to resend OTP");
-    } finally {
-      setLoading(false);
-    }
+    setDigits(Array(6).fill("")); setError(null); setLoading(true);
+    try { await sendOtp({ mobile }); setPhase("otp"); }
+    catch (e) { setError(e instanceof Error ? e.message : "Failed to resend OTP"); }
+    finally { setLoading(false); }
   };
 
-  // OTP digit input handler — auto-advance and auto-backtrack
   const handleDigitChange = (index: number, value: string) => {
     const digit = value.replace(/\D/g, "").slice(-1);
     setError(null);
-    setDigits((prev) => {
-      const next = [...prev];
-      next[index] = digit;
-      return next;
-    });
-    if (digit && index < 5) {
-      digitRefs.current[index + 1]?.focus();
-    }
+    setDigits((prev) => { const next = [...prev]; next[index] = digit; return next; });
+    if (digit && index < 5) digitRefs.current[index + 1]?.focus();
   };
 
   const handleDigitKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      digitRefs.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !digits[index] && index > 0) digitRefs.current[index - 1]?.focus();
   };
 
   const handleDigitPaste = (e: React.ClipboardEvent) => {
@@ -213,8 +234,7 @@ export default function LoginScreen() {
     const next = Array(6).fill("");
     pasted.split("").forEach((ch, i) => { next[i] = ch; });
     setDigits(next);
-    const focusIdx = Math.min(pasted.length, 5);
-    digitRefs.current[focusIdx]?.focus();
+    digitRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
   const maskedMobile = `+91 ${mobile.slice(0, 2)}${"•".repeat(6)}${mobile.slice(8)}`;
@@ -222,46 +242,118 @@ export default function LoginScreen() {
   // ── Splash ───────────────────────────────────────────────────────────────
   if (phase === "splash") {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-gray-900">
-        <img src={HERO_IMAGE} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/60" />
-        <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl px-6 pt-7 pb-8"
-             style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}>
-          <h1 className="text-3xl font-extrabold text-gray-900 leading-tight mb-2">
+      <div style={{ minHeight: "100vh", background: "#0f172a", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <Orb x="5%" y="5%" size={320} color="rgba(37,99,235,0.4)" delay={0} />
+        <Orb x="50%" y="2%" size={280} color="rgba(124,58,237,0.35)" delay={1.5} />
+        <Orb x="10%" y="50%" size={240} color="rgba(5,150,105,0.2)" delay={3} />
+        <Orb x="65%" y="60%" size={200} color="rgba(239,68,68,0.15)" delay={2} />
+
+        {/* Grid */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          backgroundImage: "linear-gradient(rgba(99,102,241,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.04) 1px,transparent 1px)",
+          backgroundSize: "50px 50px",
+        }} />
+
+        {/* 3D perspective card in background */}
+        <motion.div
+          animate={{ rotateX: [0, 4, 0], rotateY: [0, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+          style={{
+            position: "absolute", top: "8%", right: "-5%", width: 220, height: 140,
+            background: "linear-gradient(135deg, rgba(37,99,235,0.25) 0%, rgba(124,58,237,0.2) 100%)",
+            border: "1px solid rgba(99,102,241,0.3)", borderRadius: "1.25rem",
+            transformStyle: "preserve-3d", perspective: 800,
+            backdropFilter: "blur(8px)", pointerEvents: "none",
+          }}
+        >
+          <div style={{ padding: "1rem", color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>
+            <div style={{ fontWeight: 700, marginBottom: "0.5rem", color: "#a78bfa" }}>🚗 Today's Ride</div>
+            <div>Gaur City → Sector 62</div>
+            <div style={{ marginTop: "0.25rem", color: "rgba(255,255,255,0.45)" }}>8:30 AM · 2 seats left</div>
+            <div style={{ marginTop: "0.5rem", background: "rgba(99,102,241,0.3)", borderRadius: "0.5rem", padding: "0.25rem 0.5rem", display: "inline-block", fontWeight: 700, color: "#60a5fa" }}>₹80/seat</div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          animate={{ rotateX: [0, -3, 0], rotateY: [0, 5, 0] }}
+          transition={{ repeat: Infinity, duration: 10, ease: "easeInOut", delay: 2 }}
+          style={{
+            position: "absolute", top: "22%", left: "-8%", width: 180, height: 100,
+            background: "linear-gradient(135deg, rgba(5,150,105,0.25) 0%, rgba(13,148,136,0.2) 100%)",
+            border: "1px solid rgba(5,150,105,0.3)", borderRadius: "1rem",
+            transformStyle: "preserve-3d", perspective: 800,
+            backdropFilter: "blur(8px)", pointerEvents: "none",
+          }}
+        >
+          <div style={{ padding: "0.875rem", color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>
+            <div style={{ fontWeight: 700, marginBottom: "0.25rem", color: "#34d399" }}>✓ Booking Confirmed</div>
+            <div style={{ color: "rgba(255,255,255,0.45)" }}>Driver: Priya S.</div>
+          </div>
+        </motion.div>
+
+        {/* Bottom sheet */}
+        <motion.div
+          initial={{ y: 60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 28, delay: 0.2 }}
+          style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            background: "rgba(15,23,42,0.95)", backdropFilter: "blur(24px)",
+            borderTop: "1px solid rgba(99,102,241,0.2)", borderRadius: "2rem 2rem 0 0",
+            padding: "2rem 1.5rem", paddingBottom: "calc(2rem + env(safe-area-inset-bottom))",
+          }}
+        >
+          {/* Brand + TaraAI */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.875rem", marginBottom: "1.5rem" }}>
+            <TaraAvatar size={52} />
+            <div>
+              <div style={{
+                fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.04em", lineHeight: 1,
+                background: "linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)",
+                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+              }}>CarPool</div>
+              <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", marginTop: "0.1rem" }}>
+                Powered by TaraAI
+              </div>
+            </div>
+          </div>
+
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "white", lineHeight: 1.2, marginBottom: "0.5rem" }}>
             The Smarter<br />
-            <span className="text-brand-700">Commute</span>
-          </h1>
-          <p className="text-sm text-gray-500 mb-5">
-            Find or offer rides on any route, in seconds.
+            <span style={{ background: "linear-gradient(135deg,#60a5fa,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              Daily Commute
+            </span>
+          </h2>
+          <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.45)", marginBottom: "1.5rem", lineHeight: 1.6 }}>
+            Post or find a ride — guided by AI in seconds.
           </p>
-          <div className="flex gap-3 mb-6">
-            <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
-              <span className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 text-brand-700" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </span>
-              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Verified</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-2.5">
-              <span className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 24 24" className="w-4 h-4 text-brand-700" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                </svg>
-              </span>
-              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Instant</span>
-            </div>
+
+          {/* Feature pills */}
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+            {[{ icon: "✓", text: "OTP Verified" }, { icon: "⚡", text: "Instant" }, { icon: "₹0", text: "No Fees" }].map(f => (
+              <div key={f.text} style={{
+                display: "flex", alignItems: "center", gap: "0.3rem",
+                background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.2)",
+                borderRadius: "9999px", padding: "0.3rem 0.75rem",
+                fontSize: "0.72rem", fontWeight: 700, color: "#a5b4fc",
+              }}>
+                <span>{f.icon}</span><span>{f.text}</span>
+              </div>
+            ))}
           </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.97 }}
+            onClick={() => setPhase("mobile")}
+            style={{ ...gradientBtn, marginTop: 0, marginBottom: "0.75rem" }}>
+            Get Started Free →
+          </motion.button>
           <button onClick={() => setPhase("mobile")}
-            className="w-full bg-brand-700 text-white font-semibold py-4 rounded-2xl text-base active:bg-brand-800 transition-colors mb-4">
-            Get Started
+            style={{ width: "100%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "0.875rem", color: "rgba(255,255,255,0.6)", fontWeight: 600, fontSize: "0.9rem", padding: "0.875rem", cursor: "pointer" }}>
+            Log In
           </button>
-          <div className="flex items-center justify-center">
-            <button onClick={() => setPhase("mobile")} className="text-sm font-semibold text-gray-700 active:opacity-60">
-              Log In
-            </button>
-          </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -270,44 +362,39 @@ export default function LoginScreen() {
   if (phase === "mobile") {
     return (
       <DarkShell onBack={() => { setMobile(""); setError(null); setPhase("splash"); }}>
-        <div className="mx-4 bg-white rounded-2xl p-5 mb-3">
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Get Started</h2>
-          <p className="text-sm text-gray-500 mb-4">Enter your phone number to continue.</p>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} style={glassCard}>
+          <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", marginBottom: "0.25rem" }}>Enter your number</h2>
+          <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.45)", marginBottom: "1.25rem" }}>We'll send a one-time code to verify you</p>
 
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Phone Number</p>
-          <div className="flex items-center bg-gray-100 rounded-xl px-3 py-1 gap-2">
-            <span className="text-lg leading-none">🇮🇳</span>
-            <span className="text-sm font-semibold text-gray-700">+91</span>
-            <div className="w-px h-5 bg-gray-300 mx-1" />
+          <label style={labelStyle}>Phone Number</label>
+          <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "0.75rem", padding: "0.25rem 0.75rem", gap: "0.5rem" }}>
+            <span style={{ fontSize: "1.1rem" }}>🇮🇳</span>
+            <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "rgba(255,255,255,0.6)", borderRight: "1px solid rgba(255,255,255,0.15)", paddingRight: "0.5rem" }}>+91</span>
             <input
               ref={mobileInputRef}
-              type="tel"
-              inputMode="numeric"
-              maxLength={10}
+              type="tel" inputMode="numeric" maxLength={10}
               placeholder="00000 00000"
               value={mobile}
-              onChange={(e) => {
-                setMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
-                setError(null);
-              }}
+              onChange={(e) => { setMobile(e.target.value.replace(/\D/g, "").slice(0, 10)); setError(null); }}
               onKeyDown={(e) => { if (e.key === "Enter" && mobile.length === 10) handleSendOtp(); }}
-              className="flex-1 bg-transparent text-base font-medium text-gray-900 placeholder-gray-400 tracking-widest outline-none py-2"
+              style={{ flex: 1, background: "transparent", border: "none", color: "white", fontSize: "0.95rem", fontWeight: 500, outline: "none", padding: "0.625rem 0", letterSpacing: "0.1em" }}
             />
-            {mobile.length > 0 && (
-              <span className="text-xs text-gray-400 shrink-0">{mobile.length}/10</span>
-            )}
+            {mobile.length > 0 && <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)" }}>{mobile.length}/10</span>}
           </div>
 
-          {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+          {error && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ color: "#f87171", fontSize: "0.75rem", marginTop: "0.5rem", background: "rgba(239,68,68,0.1)", padding: "0.4rem 0.75rem", borderRadius: "0.5rem" }}>
+              {error}
+            </motion.p>
+          )}
 
-          <button
-            onClick={handleSendOtp}
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handleSendOtp}
             disabled={loading || mobile.length !== 10}
-            className="mt-4 w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Sending OTP…" : "Continue"}
-          </button>
-        </div>
+            style={{ ...gradientBtn, opacity: loading || mobile.length !== 10 ? 0.45 : 1 }}>
+            {loading ? "Sending OTP…" : "Continue →"}
+          </motion.button>
+        </motion.div>
       </DarkShell>
     );
   }
@@ -316,128 +403,146 @@ export default function LoginScreen() {
   if (phase === "otp") {
     return (
       <DarkShell onBack={() => { setDigits(Array(6).fill("")); setError(null); setPhase("mobile"); }}>
-        <div className="mx-4 bg-white rounded-2xl p-5 mb-3">
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Verify OTP</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Sent to <span className="font-medium text-gray-700">{maskedMobile}</span>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} style={glassCard}>
+          <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "white", marginBottom: "0.25rem" }}>Verify OTP</h2>
+          <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.45)", marginBottom: "1.25rem" }}>
+            Sent to <span style={{ color: "#a5b4fc", fontWeight: 600 }}>{maskedMobile}</span>
           </p>
 
           {/* Dev hint */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-4 flex items-center gap-2">
-            <span className="text-base">🔑</span>
-            <p className="text-blue-700 text-xs">Dev OTP: <span className="font-bold tracking-widest">123456</span></p>
+          <div style={{ background: "rgba(37,99,235,0.15)", border: "1px solid rgba(37,99,235,0.35)", borderRadius: "0.625rem", padding: "0.5rem 0.75rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <span>🔑</span>
+            <span style={{ color: "#93c5fd", fontSize: "0.75rem" }}>Dev OTP: <strong style={{ letterSpacing: "0.15em" }}>123456</strong></span>
           </div>
 
           {/* 6 digit inputs */}
-          <div className="grid grid-cols-6 gap-2 mb-3" onPaste={handleDigitPaste}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: "0.5rem", marginBottom: "0.75rem" }} onPaste={handleDigitPaste}>
             {digits.map((d, i) => (
               <input
                 key={i}
                 ref={(el) => { digitRefs.current[i] = el; }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
+                type="text" inputMode="numeric" maxLength={1}
                 value={d}
                 onChange={(e) => handleDigitChange(i, e.target.value)}
                 onKeyDown={(e) => handleDigitKeyDown(i, e)}
-                className={`w-full h-12 text-center rounded-xl border-2 text-xl font-bold outline-none transition-colors ${
-                  d ? "border-brand-600 bg-brand-50 text-brand-700" : "border-gray-200 bg-gray-50 text-gray-900 focus:border-brand-400"
-                }`}
+                style={{
+                  width: "100%", height: 52, textAlign: "center", borderRadius: "0.75rem",
+                  border: `2px solid ${d ? "rgba(99,102,241,0.8)" : "rgba(99,102,241,0.25)"}`,
+                  background: d ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
+                  color: d ? "#a78bfa" : "white", fontSize: "1.3rem", fontWeight: 800,
+                  outline: "none", boxSizing: "border-box",
+                  transition: "border-color 0.15s, background 0.15s",
+                }}
               />
             ))}
           </div>
 
-          {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
+          {error && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ color: "#f87171", fontSize: "0.75rem", marginBottom: "0.5rem", background: "rgba(239,68,68,0.1)", padding: "0.4rem 0.75rem", borderRadius: "0.5rem" }}>
+              {error}
+            </motion.p>
+          )}
 
-          <button
-            onClick={handleVerifyOtp}
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handleVerifyOtp}
             disabled={loading || digits.join("").length < 6}
-            className="w-full bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Verifying…" : "Verify OTP"}
-          </button>
+            style={{ ...gradientBtn, marginTop: 0, opacity: loading || digits.join("").length < 6 ? 0.45 : 1 }}>
+            {loading ? "Verifying…" : "Verify OTP →"}
+          </motion.button>
 
-          <div className="flex items-center justify-between mt-3">
-            <button
-              onClick={() => { setPhase("mobile"); setDigits(Array(6).fill("")); setError(null); }}
-              className="text-xs text-gray-500 underline underline-offset-2"
-            >
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.875rem" }}>
+            <button onClick={() => { setPhase("mobile"); setDigits(Array(6).fill("")); setError(null); }}
+              style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
               Change number
             </button>
             {canResend ? (
-              <button onClick={handleResend} disabled={loading} className="text-xs text-brand-700 font-semibold">
+              <button onClick={handleResend} disabled={loading}
+                style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>
                 Resend OTP
               </button>
             ) : (
-              <span className="text-xs text-gray-400">
+              <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.35)" }}>
                 Resend in {String(Math.floor(countdown / 60)).padStart(2, "0")}:{String(countdown % 60).padStart(2, "0")}
               </span>
             )}
           </div>
-        </div>
+        </motion.div>
       </DarkShell>
     );
   }
 
   // ── Register phase ────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="px-6 pt-14 pb-6 text-white" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
-        <h1 className="text-xl font-bold">CarPool</h1>
-        <p className="text-brand-200 text-xs mt-0.5">Share rides · Save money</p>
+    <div style={{ minHeight: "100vh", background: "#0f172a", position: "relative", overflow: "hidden" }}>
+      <Orb x="5%" y="5%" size={280} color="rgba(37,99,235,0.35)" delay={0} />
+      <Orb x="55%" y="3%" size={240} color="rgba(124,58,237,0.3)" delay={1.5} />
+
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)", padding: "3.5rem 1.5rem 1.5rem", position: "relative", zIndex: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <TaraAvatar size={40} />
+          <div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 900, color: "white" }}>Complete your profile</div>
+            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>Just a few details and you're set</div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 px-6 py-8 overflow-y-auto">
-        <div className="animate-slide-up">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Complete your profile</h2>
-          <p className="text-gray-500 text-sm mb-6">You're new here — tell us a bit about yourself</p>
+      <div style={{ position: "relative", zIndex: 10, padding: "1.5rem", overflowY: "auto" }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "1.25rem", padding: "1.5rem" }}>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Display Name <span className="text-red-500">*</span>
-            </label>
+          <div style={{ marginBottom: "1rem" }}>
+            <label style={labelStyle}>Display Name *</label>
             <input type="text" placeholder="e.g. Rahul Sharma" value={name}
-              onChange={(e) => { setName(e.target.value); setError(null); }}
-              className="input-field" autoFocus />
+              onChange={(e) => { setName(e.target.value); setError(null); }} autoFocus style={inputStyle} />
           </div>
 
-          <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl mb-4">
+          {/* Offer rides toggle */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "0.75rem", padding: "0.875rem 1rem", marginBottom: "1rem" }}>
             <div>
-              <p className="text-sm font-medium text-gray-900">I also want to offer rides</p>
-              <p className="text-xs text-gray-500 mt-0.5">Add your car details to post rides</p>
+              <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "white", margin: 0 }}>I also want to offer rides</p>
+              <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.4)", margin: "0.1rem 0 0" }}>Add your car details to post rides</p>
             </div>
-            <button type="button" onClick={() => setOfferRides((v) => !v)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${offerRides ? "bg-brand-600" : "bg-gray-300"}`}>
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${offerRides ? "translate-x-6" : "translate-x-0"}`} />
+            <button type="button" onClick={() => { setOfferRides(v => !v); setError(null); }}
+              style={{ position: "relative", width: 48, height: 26, borderRadius: "9999px", border: "none", cursor: "pointer", transition: "background 0.2s", background: offerRides ? "linear-gradient(135deg,#2563eb,#7c3aed)" : "rgba(255,255,255,0.15)", flexShrink: 0 }}>
+              <span style={{ position: "absolute", top: 3, left: offerRides ? 25 : 3, width: 20, height: 20, background: "white", borderRadius: "50%", transition: "left 0.2s", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }} />
             </button>
           </div>
 
-          <div className={`overflow-hidden transition-all duration-300 ${offerRides ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
-            <div className="space-y-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Car Name <span className="text-red-500">*</span></label>
-                <input type="text" placeholder="e.g. Swift Dzire" value={carName}
-                  onChange={(e) => { setCarName(e.target.value); setError(null); }} className="input-field" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Car Color <span className="text-red-500">*</span></label>
-                <input type="text" placeholder="e.g. Silver" value={carColor}
-                  onChange={(e) => { setCarColor(e.target.value); setError(null); }} className="input-field" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Car Number <span className="text-red-500">*</span></label>
-                <input type="text" placeholder="e.g. UP14 AB 1234" value={carNumber}
-                  onChange={(e) => { setCarNumber(e.target.value.toUpperCase()); setError(null); }} className="input-field" />
-              </div>
-            </div>
-          </div>
+          <AnimatePresence>
+            {offerRides && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }} style={{ overflow: "hidden", marginBottom: "1rem" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+                  {[
+                    { label: "Car Name *", placeholder: "e.g. Swift Dzire", value: carName, onChange: setCarName },
+                    { label: "Car Color *", placeholder: "e.g. Silver", value: carColor, onChange: setCarColor },
+                    { label: "Car Number *", placeholder: "e.g. UP14 AB 1234", value: carNumber, onChange: (v: string) => setCarNumber(v.toUpperCase()) },
+                  ].map(f => (
+                    <div key={f.label}>
+                      <label style={labelStyle}>{f.label}</label>
+                      <input type="text" placeholder={f.placeholder} value={f.value}
+                        onChange={(e) => { f.onChange(e.target.value); setError(null); }} style={inputStyle} />
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {error && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ color: "#f87171", fontSize: "0.8rem", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "0.625rem", padding: "0.5rem 0.875rem", marginBottom: "1rem" }}>
+              {error}
+            </motion.p>
+          )}
 
-          <button onClick={handleRegister} disabled={loading} className="btn-primary">
-            {loading ? "Setting up…" : "Get Started"}
-          </button>
-        </div>
+          <motion.button whileTap={{ scale: 0.97 }} onClick={handleRegister} disabled={loading}
+            style={{ ...gradientBtn, marginTop: 0, opacity: loading ? 0.6 : 1 }}>
+            {loading ? "Setting up…" : "Get Started →"}
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );

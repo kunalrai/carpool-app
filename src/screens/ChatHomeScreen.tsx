@@ -471,10 +471,7 @@ export default function ChatHomeScreen() {
             <path d="M3 12h18M3 6h18M3 18h18" />
           </svg>
         </motion.button>
-        <div className="text-center">
-          <h1 className="text-base font-bold text-white tracking-wide">CarPool</h1>
-          <p className="text-[10px] text-blue-300">Gaur City · HCL</p>
-        </div>
+        <h1 className="text-base font-bold text-white tracking-wide">CarPool</h1>
         <div className="w-9" />
       </div>
 
