@@ -15,4 +15,4 @@ Disallow: /dm/
 Disallow: /ride-chat/
 Disallow: /call/
 
-Sitemap: https://carpool-virid.vercel.app/sitemap.xml
+Sitemap: https://carpool.mvpway.agency/sitemap.xml
