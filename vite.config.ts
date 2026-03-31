@@ -1,9 +1,49 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv, Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import fs from "fs";
+import path from "path";
+
+/** Writes firebase-messaging-sw.js into /public at build/dev time using env vars. */
+function fcmSwPlugin(): Plugin {
+  return {
+    name: "fcm-sw",
+    configResolved(config) {
+      const env = loadEnv(config.mode, config.root, "VITE_");
+      const sw = `
+importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js");
+
+firebase.initializeApp({
+  apiKey: "${env.VITE_FIREBASE_API_KEY}",
+  authDomain: "${env.VITE_FIREBASE_AUTH_DOMAIN}",
+  projectId: "${env.VITE_FIREBASE_PROJECT_ID}",
+  messagingSenderId: "${env.VITE_FIREBASE_SENDER_ID}",
+  appId: "${env.VITE_FIREBASE_APP_ID}",
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  const title = payload.notification?.title ?? "CarPool";
+  const body = payload.notification?.body ?? "";
+  self.registration.showNotification(title, {
+    body,
+    icon: "/icon-192.png",
+  });
+});
+`.trimStart();
+      fs.writeFileSync(
+        path.resolve(config.publicDir, "firebase-messaging-sw.js"),
+        sw
+      );
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
+    fcmSwPlugin(),
     react(),
     VitePWA({
       registerType: "autoUpdate",

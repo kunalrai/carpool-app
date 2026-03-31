@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const C = {
@@ -28,6 +29,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Privacy Policy — CarPool";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "Read how CarPool collects, uses, and protects your personal data. We never sell your information.");
+  }, []);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">

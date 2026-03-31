@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const C = {
@@ -27,6 +28,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function TermsOfService() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Terms of Service — CarPool";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "The rules and guidelines governing your use of the CarPool community carpooling platform.");
+  }, []);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">

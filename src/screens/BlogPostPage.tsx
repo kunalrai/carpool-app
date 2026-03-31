@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -23,6 +24,17 @@ export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const post = useQuery(api.blogs.getBlogBySlug, { slug: slug ?? "" });
+
+  useEffect(() => {
+    if (!post) return;
+    document.title = `${post.title} — CarPool Blog`;
+    const meta = document.querySelector('meta[name="description"]');
+    const excerpt = post.content.slice(0, 155).replace(/\n/g, " ").trimEnd();
+    if (meta) meta.setAttribute("content", excerpt + (post.content.length > 155 ? "…" : ""));
+    return () => {
+      document.title = "CarPool — Save Money on Your Daily Commute";
+    };
+  }, [post]);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">

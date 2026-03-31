@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const C = {
@@ -50,6 +51,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function DataSafety() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Data Safety — CarPool";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "See exactly what data CarPool collects on Android and iOS, why we collect it, and how it is kept safe.");
+  }, []);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">
