@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Doc } from "./_generated/dataModel";
 
 /** Strip sensitive fields before returning a user object to other users. */
@@ -292,14 +293,16 @@ export const cancelListing = mutation({
       .filter((b) => b.status === "confirmed")
       .map((b) => b.riderId);
 
+    const driver = await ctx.db.get(driverId);
     for (const riderId of riderIds) {
       const rider = await ctx.db.get(riderId);
-      const driver = await ctx.db.get(driverId);
-      console.log("[FCM] cancelListing →", {
-        to: rider?.fcmToken,
-        title: "Ride Cancelled",
-        body: `${driver?.name} cancelled the ${new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} ride.`,
-      });
+      if (rider?.fcmToken) {
+        await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+          token: rider.fcmToken,
+          title: "Ride Cancelled",
+          body: `${driver?.name ?? "Driver"} cancelled the ${new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} ride.`,
+        });
+      }
     }
 
     return riderIds;
@@ -326,11 +329,13 @@ export const startRide = mutation({
     const driver = await ctx.db.get(driverId);
     for (const booking of bookings.filter((b) => b.status === "confirmed")) {
       const rider = await ctx.db.get(booking.riderId);
-      console.log("[FCM] startRide →", {
-        to: rider?.fcmToken,
-        title: "Ride Started!",
-        body: `${driver?.name} has started. Be at pickup now.`,
-      });
+      if (rider?.fcmToken) {
+        await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+          token: rider.fcmToken,
+          title: "Ride Started!",
+          body: `${driver?.name ?? "Driver"} has started. Be at pickup now.`,
+        });
+      }
     }
   },
 });

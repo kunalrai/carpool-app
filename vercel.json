@@ -1,5 +1,11 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/((?!blog|privacy|terms|data-safety).*)", "destination": "/index.html" }]
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/((?!blog|privacy|terms|data-safety|$).*)",
+      "destination": "/index.html"
+    }
+  ]
 }

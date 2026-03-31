@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Generated at build time from env vars — never commit (contains Firebase keys)
+public/firebase-messaging-sw.js
+
 # Environment variables (keep .env.local out of git)
 .env.local
 .env.*.local

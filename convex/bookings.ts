@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Doc } from "./_generated/dataModel";
 
 function sanitizeUser(user: Doc<"users"> | null) {
@@ -116,18 +117,20 @@ export const joinRide = mutation({
 
     // Notify driver via FCM
     const driver = await ctx.db.get(listing.driverId);
-    if (newSeatsLeft === 0) {
-      console.log("[FCM] joinRide (full) →", {
-        to: driver?.fcmToken,
-        title: "Ride Full!",
-        body: `Your ride is full! 4 riders confirmed.`,
-      });
-    } else {
-      console.log("[FCM] joinRide →", {
-        to: driver?.fcmToken,
-        title: "New Rider",
-        body: `${rider?.name} joined your ride at ${listing.departureTime}.`,
-      });
+    if (driver?.fcmToken) {
+      if (newSeatsLeft === 0) {
+        await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+          token: driver.fcmToken,
+          title: "Ride Full!",
+          body: "Your ride is full! All riders confirmed.",
+        });
+      } else {
+        await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+          token: driver.fcmToken,
+          title: "New Rider",
+          body: `${rider?.name ?? "Someone"} joined your ride.`,
+        });
+      }
     }
 
     return bookingId;
@@ -209,10 +212,12 @@ export const cancelBooking = mutation({
     // Notify driver
     const driver = await ctx.db.get(listing.driverId);
     const rider = await ctx.db.get(riderId);
-    console.log("[FCM] cancelBooking →", {
-      to: driver?.fcmToken,
-      title: "Rider Left",
-      body: `${rider?.name} left your ride. ${newSeatsLeft} seat${newSeatsLeft !== 1 ? "s" : ""} free.`,
-    });
+    if (driver?.fcmToken) {
+      await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+        token: driver.fcmToken,
+        title: "Rider Left",
+        body: `${rider?.name ?? "A rider"} left your ride. ${newSeatsLeft} seat${newSeatsLeft !== 1 ? "s" : ""} free.`,
+      });
+    }
   },
 });

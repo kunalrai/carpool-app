@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { useEffect } from "react";
+import { requestPushPermission } from "./firebase";
 import LoginScreen from "./screens/LoginScreen";
 import ChatHomeScreen from "./screens/ChatHomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
@@ -20,6 +22,24 @@ import DataSafety from "./screens/DataSafety";
 import BlogsPage from "./screens/BlogsPage";
 import BlogPostPage from "./screens/BlogPostPage";
 import AdminBlogScreen from "./screens/AdminBlogScreen";
+
+// ── FCM token registration ────────────────────────────────────────────────
+
+function FcmRegistrar() {
+  const { userId } = useAuth();
+  const saveFcmToken = useMutation(api.users.saveFcmToken);
+
+  useEffect(() => {
+    if (!userId) return;
+    requestPushPermission()
+      .then((token) => {
+        if (token) saveFcmToken({ userId, token });
+      })
+      .catch(() => {/* permission denied or browser unsupported */});
+  }, [userId]);
+
+  return null;
+}
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -152,6 +172,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <FcmRegistrar />
         <AppShell />
       </AuthProvider>
     </BrowserRouter>
