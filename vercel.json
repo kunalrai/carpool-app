@@ -2,10 +2,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/((?!blog|privacy|terms|data-safety|$).*)",
-      "destination": "/index.html"
-    }
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/blog", "dest": "/blog/index.html" },
+    { "src": "/privacy", "dest": "/privacy/index.html" },
+    { "src": "/terms", "dest": "/terms/index.html" },
+    { "src": "/data-safety", "dest": "/data-safety/index.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
