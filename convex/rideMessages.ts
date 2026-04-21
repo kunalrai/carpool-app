@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { QueryCtx, MutationCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /** Check if a user is the driver or a confirmed rider on a listing. */
 async function isParticipant(
@@ -72,6 +73,39 @@ export const sendRideMessage = mutation({
       text: trimmed,
       createdAt: Date.now(),
     });
+
+    // Notify all other participants about the new message (except the sender)
+    const participants = await ctx.db.query("rideMessages").withIndex("by_listing", (q) => q.eq("listingId", listingId)).collect();
+    const senderName = sender?.name ?? "Someone";
+
+    // Get all unique user IDs who are participants (driver or confirmed riders)
+    const participantUserIds = new Set<string>();
+    participantUserIds.add(listing.driverId); // Add driver
+
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_listing", (q) => q.eq("listingId", listingId))
+      .collect();
+
+    for (const booking of bookings) {
+      if (booking.status === "confirmed") {
+        participantUserIds.add(booking.riderId);
+      }
+    }
+
+    // Notify all participants except the sender
+    for (const userId of participantUserIds) {
+      if (userId !== senderId) {
+        const user = await ctx.db.get(userId);
+        if (user?.fcmToken) {
+          await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+            token: user.fcmToken,
+            title: "New Ride Message",
+            body: `${senderName}: ${trimmed.substring(0, 50)}${trimmed.length > 50 ? "..." : ""}`,
+          });
+        }
+      }
+    }
   },
 });
 

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /** Returns all messages in a conversation between two users on a listing, oldest first. */
 export const getConversation = query({
@@ -65,6 +66,18 @@ export const sendDM = mutation({
       createdAt: Date.now(),
       read: false,
     });
+
+    // Notify the receiver about the new direct message
+    const receiver = await ctx.db.get(receiverId);
+    const senderName = sender?.name ?? "Someone";
+
+    if (receiver?.fcmToken) {
+      await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+        token: receiver.fcmToken,
+        title: "New Direct Message",
+        body: `${senderName}: ${trimmed.substring(0, 50)}${trimmed.length > 50 ? "..." : ""}`,
+      });
+    }
   },
 });
 

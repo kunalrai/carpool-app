@@ -70,6 +70,9 @@ async function getAccessToken(
 export const sendPush = internalAction({
   args: { token: v.string(), title: v.string(), body: v.string() },
   handler: async (_ctx, { token, title, body }) => {
+    // Dev shortcut: console.log instead of making actual FCM calls
+    console.log("[FCM] Notification payload:", { token, title, body });
+
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
     const projectId = process.env.FIREBASE_PROJECT_ID;
