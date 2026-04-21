@@ -323,7 +323,7 @@ export default function AdminScreen() {
       {/* ── Header ── */}
       <div style={{
         background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)",
-        padding: "3rem 1rem 1.25rem",
+        padding: "1rem 1rem 1.25rem",
         position: "relative", overflow: "hidden",
         boxShadow: "0 4px 24px rgba(30,58,138,0.4)",
       }}>

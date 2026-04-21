@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "../contexts/AuthContext";
 import LocationInput from "../components/LocationInput";
 import DrawerNav from "../components/DrawerNav";
@@ -42,6 +43,36 @@ function parseTimeToday(timeStr: string): number {
   const d = new Date();
   d.setHours(h, m, 0, 0);
   return d.getTime();
+}
+
+// ── User Avatar ───────────────────────────────────────────────────────────────
+
+function UserAvatar({
+  name,
+  photoStorageId,
+  photoUrl,
+}: {
+  name: string;
+  photoStorageId?: string | null;
+  photoUrl?: string | null;
+}) {
+  const fetchedUrl = useQuery(
+    api.users.getProfilePhotoUrl,
+    !photoUrl && photoStorageId
+      ? { storageId: photoStorageId as Id<"_storage"> }
+      : "skip"
+  );
+  const url = photoUrl ?? fetchedUrl ?? null;
+  const color = avatarColor(name);
+  const initials = avatarInitials(name);
+  return (
+    <div className={`w-11 h-11 rounded-full shrink-0 overflow-hidden flex items-center justify-center ${url ? "" : color}`}>
+      {url
+        ? <img src={url} alt={name} className="w-full h-full object-cover" />
+        : <span className="text-white text-sm font-bold">{initials}</span>
+      }
+    </div>
+  );
 }
 
 // ── Match Badge ───────────────────────────────────────────────────────────────
@@ -310,8 +341,6 @@ function RideCard({
   onClick: () => void;
 }) {
   const driverName = listing.driver?.name ?? "Driver";
-  const initials = avatarInitials(driverName);
-  const color = avatarColor(driverName);
   const takenSeats = listing.totalSeats - listing.seatsLeft;
   const carLine = [listing.driver?.carColor, listing.driver?.carName].filter(Boolean).join(" ");
 
@@ -322,9 +351,11 @@ function RideCard({
     >
       {/* ── Header: avatar · name · price ── */}
       <div className="flex items-start gap-3 mb-4">
-        <div className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shrink-0`}>
-          <span className="text-white text-sm font-bold">{initials}</span>
-        </div>
+        <UserAvatar
+          name={driverName}
+          photoStorageId={(listing.driver as any)?.photoStorageId}
+          photoUrl={(listing.driver as any)?.photoUrl}
+        />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 leading-tight">{driverName}</p>
           {carLine && (
@@ -403,16 +434,16 @@ type ActiveRequest = {
 
 function RideRequestCard({ request, matchPct }: { request: ActiveRequest; matchPct: number }) {
   const riderName = request.rider?.name ?? "Rider";
-  const initials = avatarInitials(riderName);
-  const color = avatarColor(riderName);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
       {/* Header */}
       <div className="flex items-start gap-3 mb-4">
-        <div className={`w-11 h-11 rounded-full ${color} flex items-center justify-center shrink-0`}>
-          <span className="text-white text-sm font-bold">{initials}</span>
-        </div>
+        <UserAvatar
+          name={riderName}
+          photoStorageId={(request.rider as any)?.photoStorageId}
+          photoUrl={(request.rider as any)?.photoUrl}
+        />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-gray-900 leading-tight">{riderName}</p>
           <p className="text-xs text-gray-400 mt-0.5">

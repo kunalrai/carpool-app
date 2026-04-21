@@ -58,7 +58,11 @@ export const getActiveRequests = query({
     return Promise.all(
       valid.map(async (r) => {
         const user = await ctx.db.get(r.riderId);
-        return { ...r, rider: sanitizeUser(user) };
+        const safe = sanitizeUser(user);
+        const photoUrl = safe?.photoStorageId
+          ? await ctx.storage.getUrl(safe.photoStorageId)
+          : null;
+        return { ...r, rider: safe ? { ...safe, photoUrl } : null };
       })
     );
   },

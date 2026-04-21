@@ -154,7 +154,11 @@ export const getActiveListings = query({
     return await Promise.all(
       filtered.map(async (listing) => {
         const driver = await ctx.db.get(listing.driverId);
-        return { ...listing, driver: sanitizeUser(driver) };
+        const safe = sanitizeUser(driver);
+        const photoUrl = safe?.photoStorageId
+          ? await ctx.storage.getUrl(safe.photoStorageId)
+          : null;
+        return { ...listing, driver: safe ? { ...safe, photoUrl } : null };
       })
     );
   },
