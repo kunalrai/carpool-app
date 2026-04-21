@@ -23,6 +23,7 @@ import type * as listings from "../listings.js";
 import type * as recurring from "../recurring.js";
 import type * as rideMessages from "../rideMessages.js";
 import type * as rideRequests from "../rideRequests.js";
+import type * as tara from "../tara.js";
 import type * as users from "../users.js";
 
 import type {
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   recurring: typeof recurring;
   rideMessages: typeof rideMessages;
   rideRequests: typeof rideRequests;
+  tara: typeof tara;
   users: typeof users;
 }>;
 

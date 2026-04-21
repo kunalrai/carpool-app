@@ -24,7 +24,7 @@ export default function BottomNav() {
     },
     {
       label: "TaraAI",
-      path: "/chat",
+      path: "/tara",
       icon: (active: boolean) => (
         <svg viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth={active ? 2.5 : 2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 2C6.48 2 2 5.92 2 10.8c0 2.64 1.28 5.01 3.33 6.65L4 21l4.5-2.25A11.4 11.4 0 0012 19.6c5.52 0 10-3.92 10-8.8S17.52 2 12 2z" fill={active ? "currentColor" : "none"} />

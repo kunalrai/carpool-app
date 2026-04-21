@@ -161,6 +161,35 @@ export const deleteTemplate = mutation({
   },
 });
 
+export const updateTemplate = mutation({
+  args: {
+    templateId: v.id("recurringTemplates"),
+    userId: v.id("users"),
+    departureTimeHHMM: v.optional(v.string()),
+    totalSeats: v.optional(v.number()),
+    fare: v.optional(v.number()),
+    daysOfWeek: v.optional(v.array(v.number())),
+    pickupPoint: v.optional(v.string()),
+    note: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { templateId, userId, ...changes }) => {
+    const template = await ctx.db.get(templateId);
+    if (!template || template.driverId !== userId) throw new Error("Not found or unauthorized");
+    if (changes.totalSeats !== undefined && (changes.totalSeats < 1 || changes.totalSeats > 4))
+      throw new Error("Seats must be between 1 and 4");
+    if (changes.fare !== undefined && (changes.fare < 1 || changes.fare > 2000))
+      throw new Error("Fare must be between ₹1 and ₹2000");
+    if (changes.daysOfWeek !== undefined && changes.daysOfWeek.length === 0)
+      throw new Error("Select at least one day");
+    const patch: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(changes)) {
+      if (v !== undefined) patch[k] = v;
+    }
+    await ctx.db.patch(templateId, patch as Parameters<typeof ctx.db.patch<"recurringTemplates">>[1]);
+  },
+});
+
 // ── Internal (cron) ───────────────────────────────────────────────────────────
 
 /** Called every hour by cron — spawns today's listing for each active template. */
