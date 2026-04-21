@@ -289,170 +289,6 @@ function MyRequestBanner({
   );
 }
 
-// ── Post Request Sheet ────────────────────────────────────────────────────────
-
-function PostRequestSheet({
-  onClose,
-  onSubmit,
-  initialFrom = null,
-  initialTo = null,
-}: {
-  onClose: () => void;
-  onSubmit: (data: {
-    fromLabel: string; fromLat: number; fromLng: number;
-    toLabel: string; toLat: number; toLng: number;
-    departureTime: number; seatsNeeded: number; note?: string;
-  }) => Promise<void>;
-  initialFrom?: PlaceResult | null;
-  initialTo?: PlaceResult | null;
-}) {
-  const [from, setFrom] = useState<PlaceResult | null>(initialFrom);
-  const [to, setTo] = useState<PlaceResult | null>(initialTo);
-  const [timeStr, setTimeStr] = useState(defaultTimeStr);
-  const [seats, setSeats] = useState(1);
-  const [note, setNote] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [locating, setLocating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleUseMyLocation = () => {
-    if (!navigator.geolocation) { setError("Geolocation not supported"); return; }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const result = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-          setFrom(result);
-        } catch {
-          setError("Could not determine your location");
-        } finally { setLocating(false); }
-      },
-      () => { setError("Location access denied"); setLocating(false); },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
-  const handleSubmit = async () => {
-    if (!from || !to) { setError("Please set pickup and drop locations"); return; }
-    setLoading(true);
-    setError(null);
-    try {
-      await onSubmit({
-        fromLabel: from.label, fromLat: from.lat, fromLng: from.lng,
-        toLabel: to.label, toLat: to.lat, toLng: to.lng,
-        departureTime: parseTimeToday(timeStr),
-        seatsNeeded: seats,
-        note: note.trim() || undefined,
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40" onClick={onClose}>
-      <div
-        className="w-full max-w-md bg-white rounded-t-3xl animate-slide-up pb-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
-          <h3 className="text-base font-bold text-gray-900">Post a Ride Request</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200">
-            <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="px-5 pt-4 space-y-4">
-          {/* From / To */}
-          <div className="bg-gray-50 rounded-2xl">
-            <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-              <div className="w-3 h-3 rounded-full bg-blue-500 shrink-0" />
-              <div className="flex-1">
-                <LocationInput placeholder="From — pickup area…" value={from} onChange={setFrom} />
-              </div>
-              <button
-                onClick={handleUseMyLocation}
-                disabled={locating}
-                title="Use my location"
-                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 active:bg-blue-100 disabled:opacity-40"
-              >
-                {locating ? (
-                  <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-                  </svg>
-                )}
-              </button>
-            </div>
-            <div className="ml-[3.25rem] mr-4 border-t border-dashed border-gray-200" />
-            <div className="flex items-center gap-3 px-4 pt-2 pb-4">
-              <div className="w-3 h-3 rounded-full bg-red-500 shrink-0" />
-              <div className="flex-1">
-                <LocationInput placeholder="To — drop area…" value={to} onChange={setTo} />
-              </div>
-            </div>
-          </div>
-
-          {/* Time + Seats */}
-          <div className="flex gap-3">
-            <div className="flex-1 bg-gray-50 rounded-xl px-3 py-3">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Departure</p>
-              <input
-                type="time"
-                value={timeStr}
-                onChange={(e) => setTimeStr(e.target.value)}
-                className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none"
-              />
-            </div>
-            <div className="flex-1 bg-gray-50 rounded-xl px-3 py-3">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Seats needed</p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSeats((s) => Math.max(1, s - 1))}
-                  className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300"
-                >−</button>
-                <span className="text-sm font-bold text-gray-800 w-4 text-center">{seats}</span>
-                <button
-                  onClick={() => setSeats((s) => Math.min(4, s + 1))}
-                  className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300"
-                >+</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Note */}
-          <div className="bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Note (optional)</p>
-            <textarea
-              rows={2}
-              maxLength={200}
-              placeholder="e.g. I'm near the main gate…"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="w-full bg-transparent text-sm text-gray-800 outline-none resize-none placeholder-gray-400"
-            />
-          </div>
-
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !from || !to}
-            className="w-full bg-brand-700 text-white font-semibold py-3.5 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
-          >
-            {loading ? "Posting…" : "Post Request"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ── Ride Card ─────────────────────────────────────────────────────────────────
 
 function RideCard({
@@ -620,14 +456,25 @@ export default function HomeScreen() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"find" | "offer">("find");
-  const [showPostReqSheet, setShowPostReqSheet] = useState(false);
 
+  // Find Pool — request form
   const [searchFrom, setSearchFrom] = useState<PlaceResult | null>(null);
-  const [searchTo, setSearchTo] = useState<PlaceResult | null>(null);
-  const [locating, setLocating] = useState(false);
+  const [searchTo,   setSearchTo]   = useState<PlaceResult | null>(null);
+  const [locating,   setLocating]   = useState(false);
+  const [reqTime,    setReqTime]    = useState(defaultTimeStr);
+  const [reqSeats,   setReqSeats]   = useState(1);
+  const [reqNote,    setReqNote]    = useState("");
+  const [reqError,   setReqError]   = useState<string | null>(null);
+  const [reqLoading, setReqLoading] = useState(false);
 
-  const [offerFrom, setOfferFrom] = useState<PlaceResult | null>(null);
-  const [offerTo, setOfferTo] = useState<PlaceResult | null>(null);
+  // Offer Pool — post ride form
+  const [offerFrom,    setOfferFrom]    = useState<PlaceResult | null>(null);
+  const [offerTo,      setOfferTo]      = useState<PlaceResult | null>(null);
+  const [offerTime,    setOfferTime]    = useState(defaultTimeStr);
+  const [offerSeats,   setOfferSeats]   = useState(2);
+  const [offerNote,    setOfferNote]    = useState("");
+  const [offerError,   setOfferError]   = useState<string | null>(null);
+  const [offerLoading, setOfferLoading] = useState(false);
 
 
   const [actionError, setActionError] = useState<string | null>(null);
@@ -646,8 +493,9 @@ export default function HomeScreen() {
   const startRideMut = useMutation(api.listings.startRide);
   const endRideMut = useMutation(api.listings.endRide);
   const cancelBookingMut = useMutation(api.bookings.cancelBooking);
-  const postRequestMut = useMutation(api.rideRequests.postRequest);
+  const postRequestMut  = useMutation(api.rideRequests.postRequest);
   const cancelRequestMut = useMutation(api.rideRequests.cancelRequest);
+  const postListingMut  = useMutation(api.listings.postListing);
 
   const hasCarDetails =
     userProfile &&
@@ -698,6 +546,48 @@ export default function HomeScreen() {
       () => { setActionError("Location access denied. Please allow location permission."); setLocating(false); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  const handlePostRequest = async () => {
+    if (!searchFrom || !searchTo) { setReqError("Please set pickup and drop locations"); return; }
+    setReqLoading(true);
+    setReqError(null);
+    try {
+      await postRequestMut({
+        riderId: userId!,
+        fromLabel: searchFrom.label, fromLat: searchFrom.lat, fromLng: searchFrom.lng,
+        toLabel: searchTo.label,     toLat: searchTo.lat,     toLng: searchTo.lng,
+        departureTime: parseTimeToday(reqTime),
+        seatsNeeded: reqSeats,
+        note: reqNote.trim() || undefined,
+      });
+      setSearchFrom(null); setSearchTo(null); setReqNote(""); setReqSeats(1); setReqTime(defaultTimeStr());
+    } catch (e) {
+      setReqError(e instanceof Error ? e.message : "Something went wrong");
+    } finally { setReqLoading(false); }
+  };
+
+  const handlePostListing = async () => {
+    if (!offerFrom || !offerTo) { setOfferError("Please set pickup and destination"); return; }
+    const departureMs = parseTimeToday(offerTime);
+    if (departureMs <= Date.now()) { setOfferError("Departure time must be in the future"); return; }
+    setOfferLoading(true);
+    setOfferError(null);
+    try {
+      await postListingMut({
+        userId: userId!,
+        fromLabel: offerFrom.label, fromLat: offerFrom.lat, fromLng: offerFrom.lng,
+        toLabel: offerTo.label,     toLat: offerTo.lat,     toLng: offerTo.lng,
+        fromPlaceId: offerFrom.placeId, toPlaceId: offerTo.placeId,
+        departureTime: departureMs,
+        totalSeats: offerSeats,
+        fare: 80,
+        note: offerNote.trim() || undefined,
+      });
+      setOfferFrom(null); setOfferTo(null); setOfferNote(""); setOfferSeats(2); setOfferTime(defaultTimeStr());
+    } catch (e) {
+      setOfferError(e instanceof Error ? e.message : "Something went wrong");
+    } finally { setOfferLoading(false); }
   };
 
   return (
@@ -815,17 +705,53 @@ export default function HomeScreen() {
                   <LocationInput placeholder="To — drop area…" value={searchTo} onChange={setSearchTo} />
                 </div>
               </div>
-              {/* Post Request button */}
+              {/* Time + Seats */}
+              <div className="flex gap-3 px-4 pb-3">
+                <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Departure</p>
+                  <input
+                    type="time"
+                    value={reqTime}
+                    onChange={(e) => setReqTime(e.target.value)}
+                    className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none"
+                  />
+                </div>
+                <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Seats needed</p>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setReqSeats((s) => Math.max(1, s - 1))} className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300">−</button>
+                    <span className="text-sm font-bold text-gray-800 w-4 text-center">{reqSeats}</span>
+                    <button onClick={() => setReqSeats((s) => Math.min(4, s + 1))} className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300">+</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Note */}
+              <div className="mx-4 mb-3 bg-gray-50 rounded-xl px-3 py-2.5">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Note (optional)</p>
+                <input
+                  type="text"
+                  maxLength={200}
+                  placeholder="e.g. I'm near the main gate…"
+                  value={reqNote}
+                  onChange={(e) => setReqNote(e.target.value)}
+                  className="w-full bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
+                />
+              </div>
+
+              {reqError && <p className="text-red-600 text-sm px-4 pb-2">{reqError}</p>}
+
+              {/* Submit */}
               <div className="px-4 pb-4">
                 <button
-                  onClick={() => setShowPostReqSheet(true)}
-                  disabled={!!myRequest}
+                  onClick={handlePostRequest}
+                  disabled={reqLoading || !!myRequest}
                   className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-semibold py-3 rounded-xl text-sm active:bg-purple-700 disabled:opacity-40"
                 >
                   <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
-                  {myRequest ? "Request already posted" : "Post Ride Request"}
+                  {reqLoading ? "Posting…" : myRequest ? "Request already active" : "Post Ride Request"}
                 </button>
               </div>
             </div>
@@ -938,16 +864,52 @@ export default function HomeScreen() {
                     </div>
                   </div>
                 </div>
+                {/* Time + Seats */}
+                <div className="flex gap-3 px-4 pb-3">
+                  <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2.5">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Departure</p>
+                    <input
+                      type="time"
+                      value={offerTime}
+                      onChange={(e) => setOfferTime(e.target.value)}
+                      className="w-full bg-transparent text-sm font-semibold text-gray-800 outline-none"
+                    />
+                  </div>
+                  <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2.5">
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Seats available</p>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setOfferSeats((s) => Math.max(1, s - 1))} className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300">−</button>
+                      <span className="text-sm font-bold text-gray-800 w-4 text-center">{offerSeats}</span>
+                      <button onClick={() => setOfferSeats((s) => Math.min(4, s + 1))} className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-bold text-sm active:bg-gray-300">+</button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Note */}
+                <div className="mx-4 mb-3 bg-gray-50 rounded-xl px-3 py-2.5">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Note (optional)</p>
+                  <input
+                    type="text"
+                    maxLength={200}
+                    placeholder="e.g. Meeting point, landmark…"
+                    value={offerNote}
+                    onChange={(e) => setOfferNote(e.target.value)}
+                    className="w-full bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400"
+                  />
+                </div>
+
+                {offerError && <p className="text-red-600 text-sm px-4 pb-2">{offerError}</p>}
+
                 <div className="px-4 pb-4">
                   <button
-                    onClick={() => navigate("/post-ride", { state: { from: offerFrom, to: offerTo } })}
-                    disabled={!offerFrom || !offerTo}
+                    onClick={handlePostListing}
+                    disabled={offerLoading || !offerFrom || !offerTo}
                     className="w-full flex items-center justify-center gap-2 bg-brand-700 text-white font-semibold py-3 rounded-xl text-sm active:bg-brand-800 disabled:opacity-40"
                   >
                     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14M13 6l6 6-6 6" />
+                      <path d="M12 5v14M5 12h14" />
                     </svg>
-                    Continue to Post Ride
+                    {offerLoading ? "Posting…" : "Post Ride"}
                   </button>
                 </div>
               </div>
@@ -1033,19 +995,6 @@ export default function HomeScreen() {
           </>
         )}
       </div>
-
-      {/* ── Post Request Sheet ── */}
-      {showPostReqSheet && (
-        <PostRequestSheet
-          onClose={() => setShowPostReqSheet(false)}
-          initialFrom={searchFrom}
-          initialTo={searchTo}
-          onSubmit={async (data) => {
-            await postRequestMut({ riderId: userId!, ...data });
-            setShowPostReqSheet(false);
-          }}
-        />
-      )}
 
       {/* ── Confirm dialogs ── */}
       {confirmCancelListing && (

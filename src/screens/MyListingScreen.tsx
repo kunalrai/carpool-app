@@ -8,6 +8,21 @@ import { Id } from "../../convex/_generated/dataModel";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+// Build Google Static Maps URL with route polyline
+function buildStaticMapUrl(fromLat: number, fromLng: number, toLat: number, toLng: number) {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const size = "600x300";
+  const scale = "2";
+  const zoom = 13;
+  // Center point between pickup and dropoff
+  const centerLat = (fromLat + toLat) / 2;
+  const centerLng = (fromLng + toLng) / 2;
+  // Path with markers - use pipe separator properly
+  const path = `color:0x4f46e5|weight:4|${fromLat},${fromLng}|${toLat},${toLng}`;
+  const markers = `markers=color:blue%7Clabel:A%7C${fromLat},${fromLng}|markers=color:red%7Clabel:B%7C${toLat},${toLng}`;
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLng}&zoom=${zoom}&size=${size}&scale=${scale}&path=${encodeURIComponent(path)}&${markers}&key=${apiKey}`;
+}
+
 const AVATAR_COLORS = [
   "linear-gradient(135deg,#8b5cf6,#6366f1)",
   "linear-gradient(135deg,#3b82f6,#6366f1)",
@@ -116,7 +131,7 @@ export default function MyListingScreen() {
 
   const Header = () => (
     <div
-      className="flex items-center justify-between px-4 pt-12 pb-4"
+      className="flex items-center justify-between px-4 pt-4 pb-4"
       style={{
         background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)",
         borderBottom: "1px solid rgba(99,102,241,0.3)",
@@ -128,9 +143,7 @@ export default function MyListingScreen() {
         style={{ color: "rgba(255,255,255,0.8)" }}
       >
         <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
+          <polyline points="15 18 9 12 15 6" />
         </svg>
       </button>
       <span className="text-base font-bold text-white">My Ride</span>
@@ -263,7 +276,7 @@ export default function MyListingScreen() {
             </div>
 
             {/* Route timeline */}
-            <div className="flex gap-4 mb-5">
+            <div className="flex gap-4 mb-4">
               <div className="flex flex-col items-center pt-1.5 shrink-0">
                 <div className="w-3 h-3 rounded-full bg-white" />
                 <div className="w-px flex-1 my-1.5" style={{ background: "rgba(255,255,255,0.3)", minHeight: 32 }} />
@@ -416,18 +429,19 @@ export default function MyListingScreen() {
             )}
           </div>
 
-          {/* Map placeholder */}
-          <div
-            className="rounded-2xl overflow-hidden h-32 flex items-center justify-center"
-            style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}
-          >
-            <div className="flex flex-col items-center gap-1" style={{ color: "rgba(129,140,248,0.5)" }}>
-              <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                <line x1="8" y1="2" x2="8" y2="18" />
-                <line x1="16" y1="6" x2="16" y2="22" />
-              </svg>
-              <span className="text-xs font-medium">Route Map</span>
+          {/* Route Map */}
+          <div>
+            <h2 className="text-base font-bold text-white mb-3">Route Map</h2>
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(99,102,241,0.2)" }}
+            >
+              <img
+                src={buildStaticMapUrl(listing.fromLat, listing.fromLng, listing.toLat, listing.toLng)}
+                alt="Route map"
+                className="w-full h-auto"
+                style={{ display: "block" }}
+              />
             </div>
           </div>
 

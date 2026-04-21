@@ -126,3 +126,7 @@ Admins author posts in `/admin/blog`. Public reads at `/blog` and `/blog/:slug`.
 - FCM: `console.log` the notification payload, do not call FCM API
 - AI parser degrades gracefully if `OPENROUTER_API_KEY` is unset
 - Calls require `DAILY_API_KEY` set in Convex environment variables
+
+
+-Instruction for claude
+- go to task.txt one at a time build that feature if not exist mark them complete and pick next feature until all marked completed 

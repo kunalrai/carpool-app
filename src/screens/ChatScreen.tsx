@@ -431,7 +431,7 @@ export default function ChatScreen() {
     <div className="flex flex-col" style={{ height: "calc(100vh - 65px)", background: "#f8faff" }}>
 
       {/* ── Header ── */}
-      <div className="shrink-0 px-4 pt-12 pb-4"
+      <div className="shrink-0 px-4 pt-4 pb-4"
         style={{
           background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)",
           boxShadow: "0 4px 24px rgba(30,58,138,0.25)",

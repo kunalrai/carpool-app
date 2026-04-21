@@ -22,6 +22,8 @@ import DataSafety from "./screens/DataSafety";
 import BlogsPage from "./screens/BlogsPage";
 import BlogPostPage from "./screens/BlogPostPage";
 import AdminBlogScreen from "./screens/AdminBlogScreen";
+import TaraScreen from "./screens/TaraScreen";
+import AdminRidesScreen from "./screens/AdminRidesScreen";
 
 // ── FCM token registration ────────────────────────────────────────────────
 
@@ -108,6 +110,14 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route
+        path="/tara"
+        element={
+          <PrivateRoute>
+            <TabLayout><TaraScreen /></TabLayout>
+          </PrivateRoute>
+        }
+      />
 
       {/* Admin tab */}
       <Route
@@ -145,6 +155,9 @@ function AppRoutes() {
       {/* Admin blog management */}
       <Route path="/admin/blog" element={<AdminRoute><AdminBlogScreen /></AdminRoute>} />
 
+      {/* Admin rides management */}
+      <Route path="/admin/rides" element={<AdminRoute><AdminRidesScreen /></AdminRoute>} />
+
       {/* Default */}
       <Route path="*" element={<Navigate to={userId ? "/home" : "/"} replace />} />
     </Routes>
@@ -154,7 +167,7 @@ function AppRoutes() {
 /** Applies the mobile-frame constraint for all app screens, but not the landing page. */
 function AppShell() {
   const location = useLocation();
-  const fullWidthPrefixes = ["/privacy", "/terms", "/data-safety", "/blog", "/admin/blog"];
+  const fullWidthPrefixes = ["/privacy", "/terms", "/data-safety", "/blog", "/admin/blog", "/admin/rides"];
   const isLanding = location.pathname === "/" || fullWidthPrefixes.some((p) => location.pathname.startsWith(p));
 
   if (isLanding) {

@@ -158,8 +158,10 @@ function UserRow({ user, adminId, isSelf, index }: { user: User; adminId: Id<"us
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const setAdminStatus = useMutation(api.admin.setAdminStatus);
   const setSuspendStatus = useMutation(api.admin.setSuspendStatus);
+  const adminDeleteUser = useMutation(api.admin.adminDeleteUser);
 
   const initials = user.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
   const avatarColors = ["#2563eb","#7c3aed","#059669","#dc2626","#ea580c","#0891b2"];
@@ -227,29 +229,60 @@ function UserRow({ user, adminId, isSelf, index }: { user: User; adminId: Id<"us
               {error && <p style={{ color: "#f87171", fontSize: "0.75rem", margin: 0 }}>{error}</p>}
 
               {!isSelf && (
-                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
-                  <motion.button whileTap={{ scale: 0.96 }}
-                    onClick={async () => {
-                      setLoading(true); setError(null);
-                      try { await setAdminStatus({ adminId, targetUserId: user._id, isAdmin: !user.isAdmin }); }
-                      catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
-                      finally { setLoading(false); }
-                    }}
-                    disabled={loading || !!user.isSuspended}
-                    style={{ flex: 1, padding: "0.625rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", opacity: loading || user.isSuspended ? 0.45 : 1, background: user.isAdmin ? "rgba(239,68,68,0.15)" : "rgba(37,99,235,0.15)", color: user.isAdmin ? "#f87171" : "#60a5fa" }}>
-                    {loading ? "…" : user.isAdmin ? "Remove Admin" : "Make Admin"}
-                  </motion.button>
-                  <motion.button whileTap={{ scale: 0.96 }}
-                    onClick={async () => {
-                      setLoading(true); setError(null);
-                      try { await setSuspendStatus({ adminId, targetUserId: user._id, isSuspended: !user.isSuspended }); }
-                      catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
-                      finally { setLoading(false); }
-                    }}
-                    disabled={loading}
-                    style={{ flex: 1, padding: "0.625rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", opacity: loading ? 0.45 : 1, background: user.isSuspended ? "rgba(5,150,105,0.15)" : "rgba(239,68,68,0.15)", color: user.isSuspended ? "#34d399" : "#f87171" }}>
-                    {loading ? "…" : user.isSuspended ? "Unsuspend" : "Suspend"}
-                  </motion.button>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", marginTop: "0.25rem" }}>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <motion.button whileTap={{ scale: 0.96 }}
+                      onClick={async () => {
+                        setLoading(true); setError(null);
+                        try { await setAdminStatus({ adminId, targetUserId: user._id, isAdmin: !user.isAdmin }); }
+                        catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
+                        finally { setLoading(false); }
+                      }}
+                      disabled={loading || !!user.isSuspended}
+                      style={{ flex: 1, padding: "0.625rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", opacity: loading || user.isSuspended ? 0.45 : 1, background: user.isAdmin ? "rgba(239,68,68,0.15)" : "rgba(37,99,235,0.15)", color: user.isAdmin ? "#f87171" : "#60a5fa" }}>
+                      {loading ? "…" : user.isAdmin ? "Remove Admin" : "Make Admin"}
+                    </motion.button>
+                    <motion.button whileTap={{ scale: 0.96 }}
+                      onClick={async () => {
+                        setLoading(true); setError(null);
+                        try { await setSuspendStatus({ adminId, targetUserId: user._id, isSuspended: !user.isSuspended }); }
+                        catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
+                        finally { setLoading(false); }
+                      }}
+                      disabled={loading}
+                      style={{ flex: 1, padding: "0.625rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", opacity: loading ? 0.45 : 1, background: user.isSuspended ? "rgba(5,150,105,0.15)" : "rgba(239,68,68,0.15)", color: user.isSuspended ? "#34d399" : "#f87171" }}>
+                      {loading ? "…" : user.isSuspended ? "Unsuspend" : "Suspend"}
+                    </motion.button>
+                  </div>
+
+                  {/* Delete user */}
+                  {showDeleteConfirm ? (
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <motion.button whileTap={{ scale: 0.96 }}
+                        onClick={async () => {
+                          setLoading(true); setError(null);
+                          try { await adminDeleteUser({ adminId, targetUserId: user._id }); }
+                          catch (e) { setError(e instanceof Error ? e.message : "Failed"); setShowDeleteConfirm(false); }
+                          finally { setLoading(false); }
+                        }}
+                        disabled={loading}
+                        style={{ flex: 1, padding: "0.625rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", background: "rgba(239,68,68,0.3)", color: "#f87171", opacity: loading ? 0.5 : 1 }}>
+                        {loading ? "Deleting…" : "Confirm Delete"}
+                      </motion.button>
+                      <motion.button whileTap={{ scale: 0.96 }}
+                        onClick={() => setShowDeleteConfirm(false)}
+                        style={{ padding: "0.625rem 0.875rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}>
+                        Cancel
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <motion.button whileTap={{ scale: 0.96 }}
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={loading}
+                      style={{ width: "100%", padding: "0.525rem", borderRadius: "0.75rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "1px solid rgba(239,68,68,0.3)", background: "transparent", color: "#f87171", opacity: loading ? 0.45 : 1 }}>
+                      Delete User
+                    </motion.button>
+                  )}
                 </div>
               )}
             </div>
@@ -312,6 +345,22 @@ export default function AdminScreen() {
 
       {/* ── Quick actions ── */}
       <div style={{ padding: "1rem 1rem 0" }}>
+        {/* Manage Rides */}
+        <motion.button whileTap={{ scale: 0.97 }} onClick={() => navigate("/admin/rides")}
+          style={{
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: "rgba(5,150,105,0.1)", border: "1px solid rgba(5,150,105,0.2)",
+            borderRadius: "1rem", padding: "0.875rem 1rem", cursor: "pointer", marginBottom: "0.75rem",
+          }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+            <div style={{ width: 36, height: 36, borderRadius: "0.625rem", background: "rgba(5,150,105,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>🚗</div>
+            <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "#6ee7b7" }}>Manage Rides</span>
+          </div>
+          <svg viewBox="0 0 24 24" width={16} height={16} fill="none" stroke="rgba(110,231,183,0.6)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </motion.button>
+
         {/* Blog Management */}
         <motion.button whileTap={{ scale: 0.97 }} onClick={() => navigate("/admin/blog")}
           style={{

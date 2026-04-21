@@ -458,7 +458,7 @@ export default function ChatHomeScreen() {
       <DrawerNav open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       {/* ── Header ── */}
-      <div className="flex-shrink-0 px-4 pt-12 pb-4 flex items-center justify-between"
+      <div className="flex-shrink-0 px-4 pt-4 pb-4 flex items-center justify-between"
         style={{
           background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)",
           boxShadow: "0 4px 24px rgba(30,58,138,0.25)",

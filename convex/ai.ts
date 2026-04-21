@@ -54,7 +54,7 @@ export const parseRideOffer = action({
           "HTTP-Referer": "https://carpool-virid.vercel.app",
         },
         body: JSON.stringify({
-          model: "z-ai/glm-4.5-air:free",
+          model: "nvidia/nemotron-3-super-120b-a12b:free",
           messages: [
             { role: "system", content: SYSTEM_PROMPT },
             { role: "user", content: text },

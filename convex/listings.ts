@@ -207,6 +207,36 @@ export const getListingRiders = query({
   },
 });
 
+/** Text-based search for active listings — used by Tara AI for natural language ride queries. */
+export const searchListings = query({
+  args: {
+    fromQuery: v.optional(v.string()),
+    toQuery: v.optional(v.string()),
+    departureTimeMs: v.optional(v.number()),
+    windowMs: v.optional(v.number()),
+  },
+  handler: async (ctx, { fromQuery, toQuery, departureTimeMs, windowMs = 2 * 3600 * 1000 }) => {
+    const open = await ctx.db.query("listings").withIndex("by_status", (q) => q.eq("status", "open")).collect();
+    const full = await ctx.db.query("listings").withIndex("by_status", (q) => q.eq("status", "full")).collect();
+    const active = [...open, ...full].filter((l) => !isExpired(l));
+
+    const results = active.filter((l) => {
+      const fromMatch = !fromQuery || l.fromLabel.toLowerCase().includes(fromQuery.toLowerCase());
+      const toMatch = !toQuery || l.toLabel.toLowerCase().includes(toQuery.toLowerCase());
+      const timeMatch =
+        !departureTimeMs || Math.abs(l.departureTime - departureTimeMs) <= windowMs;
+      return fromMatch && toMatch && timeMatch;
+    });
+
+    return await Promise.all(
+      results.slice(0, 6).map(async (l) => {
+        const driver = await ctx.db.get(l.driverId);
+        return { ...l, driverName: driver?.name ?? "Unknown" };
+      })
+    );
+  },
+});
+
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 export const postListing = mutation({
