@@ -87,7 +87,7 @@ export default function DirectChatScreen() {
     <div className="flex flex-col min-h-screen" style={{ background: "#0f172a" }}>
       {/* Header */}
       <div
-        className="flex items-center gap-3 px-4 pt-12 pb-4 shrink-0"
+        className="flex items-center gap-3 px-4 pt-4 pb-4 shrink-0"
         style={{
           background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)",
           borderBottom: "1px solid rgba(99,102,241,0.3)",

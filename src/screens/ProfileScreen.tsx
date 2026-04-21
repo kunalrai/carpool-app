@@ -161,7 +161,7 @@ export default function ProfileScreen() {
         <div className="pb-24 bg-gray-50 min-h-screen">
 
           {/* ── Dark hero header ── */}
-          <div className="pb-14 pt-12 px-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
+          <div className="pb-14 pt-4 px-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
             <div className="flex items-center justify-between mb-6">
               <button onClick={() => navigate(-1)} className="p-1 active:opacity-60">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -352,7 +352,7 @@ export default function ProfileScreen() {
       <div className="pb-24 bg-white min-h-screen">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-12 pb-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-4" style={{ background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)" }}>
           <button onClick={() => { setMode("view"); setError(null); }} className="p-1 active:opacity-60">
             <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
