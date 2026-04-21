@@ -222,4 +222,15 @@ export default defineSchema({
     active: v.boolean(),
     startedAt: v.number(),
   }).index("by_listing_active", ["listingId", "active"]),
+
+  /**
+   * taraMessages — persisted Tara AI chat history per user.
+   * Loaded on each taraChat call so Tara remembers prior context.
+   */
+  taraMessages: defineTable({
+    userId: v.id("users"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    createdAt: v.number(),
+  }).index("by_user_time", ["userId", "createdAt"]),
 });

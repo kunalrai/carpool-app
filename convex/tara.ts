@@ -60,33 +60,31 @@ Day numbers: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
 
 For ride search, extract fromQuery, toQuery, and timeHHMM from the user's message. Use partial location names (e.g. "HCL", "GaurCity", "office", "home").
 
+STRICT RULES — you must follow these without exception:
+1. NEVER include raw database IDs (the long alphanumeric _id strings) in your "reply" text. IDs are for internal JSON fields only (templateId). When referring to a ride/template in your reply, use descriptive names like "your Monday 8:30 AM ride" or "template #1".
+2. NEVER delete, remove, or permanently cancel anything. If the user asks to delete a ride, template, booking, or anything else, set action:"none" and politely explain: "I can't delete rides or templates — please use the Admin panel for deletions."
+3. You CAN pause/resume a template (isActive: false/true) — that is NOT deletion.
+
 Respond ONLY with JSON (no markdown, no extra text):
 {
   "action": "none" | "edit" | "search",
-  "templateId": "<_id>" | null,
+  "templateId": "<_id from template list>" | null,
   "changes": { "departureTimeHHMM":"HH:MM"|null, "totalSeats":number|null, "fare":number|null, "daysOfWeek":[...]|null, "pickupPoint":string|null, "note":string|null, "isActive":boolean|null } | null,
   "searchParams": { "fromQuery": string|null, "toQuery": string|null, "timeHHMM": "HH:MM"|null } | null,
-  "reply": "<warm, brief message to show the user>"
+  "reply": "<warm, brief message — NO raw IDs allowed>"
 }
 
-Only include changed fields in "changes" (omit null fields if action is edit).
-If intent is unclear, set action:"none" and ask for clarification.`;
+Only include changed fields in "changes". If intent is unclear, set action:"none" and ask for clarification.`;
 }
 
 export const taraChat = action({
   args: {
     userId: v.id("users"),
     message: v.string(),
-    history: v.array(
-      v.object({
-        role: v.union(v.literal("user"), v.literal("assistant")),
-        content: v.string(),
-      })
-    ),
   },
   handler: async (
     ctx,
-    { userId, message, history }
+    { userId, message }
   ): Promise<{
     reply: string;
     applied: boolean;
@@ -100,6 +98,27 @@ export const taraChat = action({
         applied: false,
       };
     }
+
+    // ── Hard-block delete requests before hitting the AI ───────────────────
+    const DELETE_PATTERN = /\b(delete|remove|erase|wipe|drop|destroy|cancel booking|cancel ride|cancel listing|remove ride|remove template)\b/i;
+    if (DELETE_PATTERN.test(message)) {
+      const refusal = "I can't delete rides, templates, or bookings through chat. For any deletions, please use the Admin panel. I can help you pause a recurring ride if you'd like!";
+      await ctx.runMutation(api.taraHistory.saveMessages, {
+        userId,
+        messages: [
+          { role: "user", content: message },
+          { role: "assistant", content: refusal },
+        ],
+      });
+      return { reply: refusal, applied: false };
+    }
+
+    // Load conversation history from DB (source of truth for context)
+    const dbHistory = await ctx.runQuery(api.taraHistory.getHistory, { userId });
+    const history = dbHistory.map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
 
     const templates = await ctx.runQuery(api.recurring.listMyTemplates, { userId });
     const systemPrompt = buildSystemPrompt(
@@ -162,6 +181,13 @@ export const taraChat = action({
         reply: string;
       };
 
+      // Sanitise reply: strip any leaked Convex-style IDs (20+ char alphanumeric tokens)
+      const sanitiseReply = (text: string) =>
+        text.replace(/\bj[0-9a-zA-Z]{15,}\b/g, "[id]").replace(/\b[0-9a-zA-Z]{20,}\b/g, "[id]");
+
+      // Collect result, then save to DB before returning
+      let result: { reply: string; applied: boolean; error?: string; rides?: RideResult[] };
+
       // ── Handle ride search ──────────────────────────────────────────────
       if (parsed.action === "search" && parsed.searchParams) {
         const { fromQuery, toQuery, timeHHMM } = parsed.searchParams;
@@ -173,10 +199,7 @@ export const taraChat = action({
           const nowIST = Date.now() + IST_OFFSET_MS;
           const midnightIST = nowIST - (nowIST % (24 * 3600 * 1000));
           departureTimeMs = midnightIST - IST_OFFSET_MS + h * 3600000 + m * 60000;
-          // If the computed time is in the past (> 1h ago), try tomorrow
-          if (departureTimeMs < Date.now() - 3600000) {
-            departureTimeMs += 24 * 3600 * 1000;
-          }
+          if (departureTimeMs < Date.now() - 3600000) departureTimeMs += 24 * 3600 * 1000;
         }
 
         const found = await ctx.runQuery(api.listings.searchListings, {
@@ -191,36 +214,42 @@ export const taraChat = action({
           if (fromQuery) parts.push(`from ${fromQuery}`);
           if (toQuery) parts.push(`to ${toQuery}`);
           if (timeHHMM) parts.push(`around ${timeHHMM}`);
-          return {
+          result = {
             reply: `I couldn't find any active rides${parts.length ? ` ${parts.join(" ")}` : ""} right now. Try adjusting your search or check back later!`,
             applied: false,
             rides: [],
           };
+        } else {
+          const replyText = sanitiseReply(
+            parsed.reply ||
+            `Found ${found.length} ride${found.length !== 1 ? "s" : ""}! Here ${found.length === 1 ? "it is" : "they are"}:`
+          );
+          result = {
+            reply: replyText,
+            applied: false,
+            rides: found.map((r) => ({
+              _id: r._id,
+              fromLabel: r.fromLabel,
+              toLabel: r.toLabel,
+              departureTime: r.departureTime,
+              driverName: (r as { driverName?: string }).driverName ?? "Unknown",
+              seatsLeft: r.seatsLeft,
+              totalSeats: r.totalSeats,
+              fare: r.fare,
+              pickupPoint: r.pickupPoint,
+            })),
+          };
         }
 
-        const replyText =
-          parsed.reply ||
-          `Found ${found.length} ride${found.length !== 1 ? "s" : ""}! Here ${found.length === 1 ? "it is" : "they are"}:`;
-
-        return {
-          reply: replyText,
+      // ── Block any action the AI might label as "delete" ──────────────────
+      } else if (parsed.action === "delete" || parsed.action === "remove") {
+        result = {
+          reply: "I can't delete rides, templates, or bookings through chat. For any deletions, please use the Admin panel. I can help you pause a recurring ride if you'd like!",
           applied: false,
-          rides: found.map((r) => ({
-            _id: r._id,
-            fromLabel: r.fromLabel,
-            toLabel: r.toLabel,
-            departureTime: r.departureTime,
-            driverName: (r as { driverName?: string }).driverName ?? "Unknown",
-            seatsLeft: r.seatsLeft,
-            totalSeats: r.totalSeats,
-            fare: r.fare,
-            pickupPoint: r.pickupPoint,
-          })),
         };
-      }
 
       // ── Handle recurring template edit ──────────────────────────────────
-      if (parsed.action === "edit" && parsed.templateId && parsed.changes) {
+      } else if (parsed.action === "edit" && parsed.templateId && parsed.changes) {
         const cleanChanges: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(parsed.changes)) {
           if (value !== null && value !== undefined) cleanChanges[key] = value;
@@ -241,22 +270,28 @@ export const taraChat = action({
                 isActive?: boolean;
               }),
             });
-            return {
-              reply: parsed.reply ?? "Done! Your ride schedule has been updated.",
-              applied: true,
-            };
+            result = { reply: sanitiseReply(parsed.reply ?? "Done! Your ride schedule has been updated."), applied: true };
           } catch (e) {
             const msg = e instanceof Error ? e.message : "Unknown error";
-            return {
-              reply: `I tried to update your ride but got an error: ${msg}`,
-              applied: false,
-              error: msg,
-            };
+            result = { reply: `I tried to update your ride but got an error: ${msg}`, applied: false, error: msg };
           }
+        } else {
+          result = { reply: sanitiseReply(parsed.reply ?? "Got it!"), applied: false };
         }
+      } else {
+        result = { reply: sanitiseReply(parsed.reply ?? "Got it!"), applied: false };
       }
 
-      return { reply: parsed.reply ?? "Got it!", applied: false };
+      // ── Persist both sides of the exchange to DB ────────────────────────
+      await ctx.runMutation(api.taraHistory.saveMessages, {
+        userId,
+        messages: [
+          { role: "user", content: message },
+          { role: "assistant", content: result.reply },
+        ],
+      });
+
+      return result;
     } catch (e) {
       console.error("[Tara] exception:", e);
       return { reply: "Something went wrong. Please try again!", applied: false };
