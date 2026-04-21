@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Allow: /blog
+Allow: /blog/*
+Allow: /privacy
+Allow: /terms
+Allow: /data-safety
+Disallow: /admin
+Disallow: /home
+Disallow: /profile
+Disallow: /chat
+Disallow: /my-listing
+Disallow: /listing/
+Disallow: /dm/
+Disallow: /ride-chat/
+Disallow: /call/
+
+Sitemap: https://carpool.mvpway.agency/sitemap.xml
