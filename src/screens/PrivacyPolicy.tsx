@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const C = {
@@ -28,6 +29,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Privacy Policy — CarPool";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "Read how CarPool collects, uses, and protects your personal data. We never sell your information.");
+  }, []);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">
@@ -66,7 +73,7 @@ export default function PrivacyPolicy() {
           <p>Your information is used solely to operate the GC Ridepool service:</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
             <li>Authenticating your identity via OTP (no passwords are stored).</li>
-            <li>Matching riders with drivers for the Gaur City ↔ HCL commute.</li>
+            <li>Matching riders with drivers for the City ↔ HCL commute.</li>
             <li>Enabling in-app group chat and voice calls between ride participants.</li>
             <li>Sending push notifications about your bookings and listings.</li>
           </ul>
@@ -124,7 +131,7 @@ export default function PrivacyPolicy() {
 
         {/* Footer */}
         <div className="pt-10 border-t mt-10 text-xs" style={{ borderColor: C.outlineVariant + "33", color: C.outline }}>
-          © 2025 GC Ridepool · Gaur City ↔ HCL Tech Park
+          © 2025 GC Ridepool · City ↔ HCL Tech Park
         </div>
       </div>
     </div>

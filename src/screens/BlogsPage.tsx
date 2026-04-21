@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -22,6 +23,12 @@ function formatDate(ts: number) {
 export default function BlogsPage() {
   const navigate = useNavigate();
   const blogs = useQuery(api.blogs.getPublishedBlogs);
+
+  useEffect(() => {
+    document.title = "Carpooling Tips & Stories — CarPool Blog";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "Practical guides and real stories on saving money, cutting commute stress, and building greener habits through daily carpooling.");
+  }, []);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">
@@ -64,7 +71,7 @@ export default function BlogsPage() {
             <span style={{ color: C.primary }}>Read, learn, share.</span>
           </h1>
           <p className="text-lg max-w-xl" style={{ color: C.onSurfaceVariant }}>
-            Tips, stories, and guides for Gaur City ↔ HCL commuters.
+            Tips, stories, and guides for City ↔ HCL commuters.
           </p>
         </div>
       </section>

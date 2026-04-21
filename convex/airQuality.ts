@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
 import { api } from "./_generated/api";
 
-// Fixed location: Gaur City 2, Greater Noida West
+// Default location for air quality (can be configured per deployment)
 const LOCATION = { latitude: 28.6141, longitude: 77.4304 };
 
 // 30 minutes — caps API usage at ≤ 2 calls/hour (48/day) regardless of user count

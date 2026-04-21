@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const C = {
@@ -27,6 +28,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function TermsOfService() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Terms of Service — CarPool";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", "The rules and guidelines governing your use of the CarPool community carpooling platform.");
+  }, []);
 
   return (
     <div style={{ fontFamily: "'Inter', sans-serif", background: C.surface }} className="min-h-screen">
@@ -60,7 +67,7 @@ export default function TermsOfService() {
 
         <Section title="2. Eligibility">
           <p>
-            GC Ridepool is intended for residents of Gaur City (GC1 / GC2) and employees of HCL Tech Park, Noida.
+            GC Ridepool is intended for residents of City (GC1 / GC2) and employees of HCL Tech Park, Noida.
             You must provide a valid Indian mobile number to register. By using the app you confirm that
             the information you provide is accurate.
           </p>
@@ -69,7 +76,7 @@ export default function TermsOfService() {
         <Section title="3. User Conduct">
           <p>You agree to:</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li>Use the app only for legitimate carpooling between Gaur City and HCL campus.</li>
+            <li>Use the app only for legitimate carpooling between City and HCL campus.</li>
             <li>Be punctual and honour commitments made to drivers and co-riders.</li>
             <li>Treat all other users with respect in chats and voice calls.</li>
             <li>Not share offensive, abusive, or illegal content in any chat.</li>
@@ -141,7 +148,7 @@ export default function TermsOfService() {
 
         {/* Footer */}
         <div className="pt-10 border-t mt-10 text-xs" style={{ borderColor: C.outlineVariant + "33", color: C.outline }}>
-          © 2025 GC Ridepool · Gaur City ↔ HCL Tech Park
+          © 2025 GC Ridepool 
         </div>
       </div>
     </div>

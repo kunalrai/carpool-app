@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { Doc } from "./_generated/dataModel";
 
 /** Strip sensitive fields before returning a user object to other users. */
@@ -69,14 +70,14 @@ export const expireListings = internalMutation({
 
 /**
  * One-time migration — run from Convex dashboard after deploying new schema.
- * Patches old GC↔HCL listings (which have a `direction` field) with hardcoded coordinates.
+ * Patches old listings with hardcoded coordinates (direction field).
  * Safe to run multiple times (skips already-migrated listings).
  */
 export const migrateListingsToGeo = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const GC = { label: "Gaur City, Greater Noida", lat: 28.6123, lng: 77.4312 };
-    const HCL = { label: "HCL Campus, Sector 136, Noida", lat: 28.5245, lng: 77.3799 };
+    const HOME = { label: "Home", lat: 28.6123, lng: 77.4312 };
+    const OFFICE = { label: "Office", lat: 28.5245, lng: 77.3799 };
 
     const all = await ctx.db.query("listings").collect();
     let patched = 0;
@@ -88,9 +89,9 @@ export const migrateListingsToGeo = internalMutation({
       const dir = (listing as Record<string, unknown>).direction as string | undefined;
       if (!dir) continue;
 
-      const isGcToHcl = dir === "GC_TO_HCL";
-      const from = isGcToHcl ? GC : HCL;
-      const to = isGcToHcl ? HCL : GC;
+      const isToOffice = dir === "TO_OFFICE";
+      const from = isToOffice ? HOME : OFFICE;
+      const to = isToOffice ? OFFICE : HOME;
 
       await ctx.db.patch(listing._id, {
         fromLabel: from.label,
@@ -99,7 +100,7 @@ export const migrateListingsToGeo = internalMutation({
         fromLng: from.lng,
         toLat: to.lat,
         toLng: to.lng,
-        fare: 80,
+        fare: 80, // default fare for old listings
       });
       patched++;
     }
@@ -292,14 +293,16 @@ export const cancelListing = mutation({
       .filter((b) => b.status === "confirmed")
       .map((b) => b.riderId);
 
+    const driver = await ctx.db.get(driverId);
     for (const riderId of riderIds) {
       const rider = await ctx.db.get(riderId);
-      const driver = await ctx.db.get(driverId);
-      console.log("[FCM] cancelListing →", {
-        to: rider?.fcmToken,
-        title: "Ride Cancelled",
-        body: `${driver?.name} cancelled the ${new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} ride.`,
-      });
+      if (rider?.fcmToken) {
+        await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+          token: rider.fcmToken,
+          title: "Ride Cancelled",
+          body: `${driver?.name ?? "Driver"} cancelled the ${new Date(listing.departureTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} ride.`,
+        });
+      }
     }
 
     return riderIds;
@@ -326,11 +329,13 @@ export const startRide = mutation({
     const driver = await ctx.db.get(driverId);
     for (const booking of bookings.filter((b) => b.status === "confirmed")) {
       const rider = await ctx.db.get(booking.riderId);
-      console.log("[FCM] startRide →", {
-        to: rider?.fcmToken,
-        title: "Ride Started!",
-        body: `${driver?.name} has started. Be at pickup now.`,
-      });
+      if (rider?.fcmToken) {
+        await ctx.scheduler.runAfter(0, internal.fcm.sendPush, {
+          token: rider.fcmToken,
+          title: "Ride Started!",
+          body: `${driver?.name ?? "Driver"} has started. Be at pickup now.`,
+        });
+      }
     }
   },
 });

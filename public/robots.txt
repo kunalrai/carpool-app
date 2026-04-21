@@ -9,11 +9,10 @@ Disallow: /admin
 Disallow: /home
 Disallow: /profile
 Disallow: /chat
-Disallow: /post-ride
 Disallow: /my-listing
 Disallow: /listing/
 Disallow: /dm/
 Disallow: /ride-chat/
 Disallow: /call/
 
-Sitemap: https://carpool-virid.vercel.app/sitemap.xml
+Sitemap: https://carpool.mvpway.agency/sitemap.xml

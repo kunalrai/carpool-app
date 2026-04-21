@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import BottomNav from "./components/BottomNav";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
+import { useEffect } from "react";
+import { requestPushPermission } from "./firebase";
 import LoginScreen from "./screens/LoginScreen";
-import HomeScreen from "./screens/HomeScreen";
-import PostRideScreen from "./screens/PostRideScreen";
+import ChatHomeScreen from "./screens/ChatHomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import AdminScreen from "./screens/AdminScreen";
 import ListingDetailScreen from "./screens/ListingDetailScreen";
@@ -21,6 +22,24 @@ import DataSafety from "./screens/DataSafety";
 import BlogsPage from "./screens/BlogsPage";
 import BlogPostPage from "./screens/BlogPostPage";
 import AdminBlogScreen from "./screens/AdminBlogScreen";
+
+// ── FCM token registration ────────────────────────────────────────────────
+
+function FcmRegistrar() {
+  const { userId } = useAuth();
+  const saveFcmToken = useMutation(api.users.saveFcmToken);
+
+  useEffect(() => {
+    if (!userId) return;
+    requestPushPermission()
+      .then((token) => {
+        if (token) saveFcmToken({ userId, token });
+      })
+      .catch(() => {/* permission denied or browser unsupported */});
+  }, [userId]);
+
+  return null;
+}
 
 // ── Layouts ───────────────────────────────────────────────────────────────
 
@@ -69,7 +88,7 @@ function AppRoutes() {
         path="/home"
         element={
           <PrivateRoute>
-            <TabLayout><HomeScreen /></TabLayout>
+            <TabLayout><ChatHomeScreen /></TabLayout>
           </PrivateRoute>
         }
       />
@@ -101,7 +120,6 @@ function AppRoutes() {
       />
 
       {/* Full-screen pushed screens (no bottom nav) */}
-      <Route path="/post-ride" element={<PrivateRoute><PostRideScreen /></PrivateRoute>} />
       <Route path="/listing/:id" element={<PrivateRoute><ListingDetailScreen /></PrivateRoute>} />
       <Route path="/my-listing" element={<PrivateRoute><MyListingScreen /></PrivateRoute>} />
       <Route path="/dm/:listingId/:otherUserId" element={<PrivateRoute><DirectChatScreen /></PrivateRoute>} />
@@ -154,6 +172,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <FcmRegistrar />
         <AppShell />
       </AuthProvider>
     </BrowserRouter>

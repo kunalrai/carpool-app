@@ -1,36 +1,38 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 
-const SYSTEM_PROMPT = `You are a ride-offer parser for a carpooling app between Gaur City and HCL campus (Noida, India).
+const SYSTEM_PROMPT = `You are a ride-offer parser for a community carpooling app.
 
 Analyze a chat message and extract ride offer details. Return JSON only — no explanation, no markdown, no code block.
 
 Location rules:
-- GC, GC1, GC2, Gaur City, gaur = Gaur City side
-- HCL, HCL campus, HCL gate, office, Tech Park = HCL side
-- "going to HCL" / "leaving for HCL" / "to office" / "from GC to HCL" → direction: "GC_TO_HCL"
-- "going to GC" / "leaving from HCL" / "from HCL to GC" / "returning" / "back" → direction: "HCL_TO_GC"
+- When someone mentions "going to [place]" or "to [place]" → that is the destination
+- When someone mentions "coming from [place]" or "from [place]" → that is the origin
+- "going to office" / "to work" / "heading to office" → direction: "TO_OFFICE"
+- "going home" / "returning" / "back" / "leaving office" → direction: "FROM_OFFICE"
+- "going to [X]" where X is clearly a destination → direction: "TO_OFFICE"
+- "leaving from [X]" where X is clearly an origin → direction: "FROM_OFFICE"
 
 Time rules:
 - Convert any time format to 24h "HH:MM" string
 - Examples: "7:30" → "07:30", "7:30 AM" → "07:30", "7:30 PM" → "19:30", "05:20 PM" → "17:20", "11.30 AM" → "11:30", "9pm" → "21:00"
 
 isRideOffer rules — set to true if the message announces the sender is leaving/going somewhere at a specific time, even without mentioning seats or a car. Examples that ARE ride offers:
-- "I will leave at 5:20 PM from HCL to Gaur City"
-- "leaving @7:30 from HCL gate 2"
-- "going to HCL at 9am"
-- "Will go to HCL at 11.30 AM. Seats available"
+- "I will leave at 5:20 PM from office to home"
+- "leaving @7:30 from home"
+- "going to office at 9am"
+- "Will go home at 11.30 AM. Seats available"
 
-Set isRideOffer=false ONLY if they are explicitly ASKING/LOOKING for a ride (e.g. "anyone going to HCL?", "need a ride to GC").
+Set isRideOffer=false ONLY if they are explicitly ASKING/LOOKING for a ride (e.g. "anyone going to office?", "need a ride home").
 
 Return exactly this JSON with no other text:
-{"isRideOffer":boolean,"direction":"GC_TO_HCL"|"HCL_TO_GC"|null,"departureTime":"HH:MM"|null,"seats":number|null,"pickupPoint":string|null}`;
+{"isRideOffer":boolean,"direction":"TO_OFFICE"|"FROM_OFFICE"|null,"departureTime":"HH:MM"|null,"seats":number|null,"pickupPoint":string|null}`;
 
 export const parseRideOffer = action({
   args: { text: v.string() },
   handler: async (_ctx, { text }): Promise<{
     isRideOffer: boolean;
-    direction: "GC_TO_HCL" | "HCL_TO_GC" | null;
+    direction: "TO_OFFICE" | "FROM_OFFICE" | null;
     departureTime: string | null;
     seats: number | null;
     pickupPoint: string | null;
@@ -49,7 +51,7 @@ export const parseRideOffer = action({
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://gaurcity-hcl-carpool.vercel.app",
+          "HTTP-Referer": "https://carpool-virid.vercel.app",
         },
         body: JSON.stringify({
           model: "z-ai/glm-4.5-air:free",

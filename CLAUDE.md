@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**GaurCity-HCL Carpool** — A fixed-route carpooling PWA between Gaur City (GC1/GC2) and HCL campus. Fixed fare ₹80/seat, max 4 riders, no in-app payment.
+**CarPool** — A community carpooling PWA for sharing rides. Max 4 riders per ride, configurable fare, no in-app payment.
 
 ## Commands
 
@@ -76,7 +76,7 @@ Convex URL is injected at runtime via `VITE_CONVEX_URL` env var (set in `.env.lo
 
 ### Database Schema (7 tables)
 - **`users`** — indexed `by_mobile`. Car fields only required when role is `giver`/`both`. `isAdmin` and `isSuspended` are optional booleans.
-- **`listings`** — status lifecycle: `open → full → started → completed | cancelled | expired`. Fare always 80. A cron (`crons.ts`) runs every 5 min to patch listings to `expired` status.
+- **`listings`** — status lifecycle: `open → full → started → completed | cancelled | expired`. Fare set by driver. A cron (`crons.ts`) runs every 5 min to patch listings to `expired` status.
 - **`bookings`** — one confirmed booking per rider at a time (enforced in mutations).
 - **`messages`** — community group chat messages, indexed `by_time`.
 - **`rideMessages`** — ride-specific group chat, indexed `by_listing_time`.
@@ -94,7 +94,7 @@ Key indexes to use in queries:
 - One active listing per driver at a time
 - `joinRide` must atomically decrement `seatsLeft` and create booking
 - `cancelBooking` must revert `status` from `full → open` if needed
-- `postListing` sets `fare: 80`, `seatsLeft: totalSeats`, `status: 'open'`
+- `postListing` sets `seatsLeft: totalSeats`, `status: 'open'`
 
 ## Admin Setup (first-time)
 

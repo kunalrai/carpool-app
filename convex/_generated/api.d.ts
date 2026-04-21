@@ -18,6 +18,7 @@ import type * as calls from "../calls.js";
 import type * as chat from "../chat.js";
 import type * as crons from "../crons.js";
 import type * as directMessages from "../directMessages.js";
+import type * as fcm from "../fcm.js";
 import type * as listings from "../listings.js";
 import type * as recurring from "../recurring.js";
 import type * as rideMessages from "../rideMessages.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   chat: typeof chat;
   crons: typeof crons;
   directMessages: typeof directMessages;
+  fcm: typeof fcm;
   listings: typeof listings;
   recurring: typeof recurring;
   rideMessages: typeof rideMessages;

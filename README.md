@@ -1,8 +1,8 @@
-# GaurCity-HCL Carpool
+# CarPool
 
-A fixed-route carpooling PWA connecting **Gaur City (GC1/GC2)** and **HCL campus**.
+A community carpooling PWA for sharing rides.
 
-- Fixed fare: **₹80 per seat**
+- Fixed fare per seat (set by driver)
 - Max **4 riders** per ride
 - No in-app payment — fare paid directly to driver
 - Installable on Android & iOS as a PWA
