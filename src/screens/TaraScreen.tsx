@@ -147,7 +147,7 @@ export default function TaraScreen() {
       <div
         style={{
           background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)",
-          padding: "3rem 1rem 1rem",
+          padding: "1rem 1rem 1rem",
           display: "flex",
           alignItems: "center",
           gap: "0.75rem",

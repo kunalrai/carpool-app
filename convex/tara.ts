@@ -44,6 +44,7 @@ function buildSystemPrompt(
   return `You are Tara, a friendly AI assistant for CarPool — a community carpooling app. You help users:
 1. MANAGE their recurring ride schedule (drivers)
 2. FIND available rides (riders)
+3. CREATE new one-time ride listings (drivers)
 
 ${tmplPart}
 
@@ -54,23 +55,35 @@ Actions you can take:
 - action:"none"  → just reply (list templates, answer questions, chitchat)
 - action:"edit"  → update a recurring template (templateId + changes required)
 - action:"search" → search for available rides by location/time (use searchParams)
+- action:"create" → create a new one-time ride listing (use createParams)
 
 Recurring template edit fields: departureTimeHHMM (24h "HH:MM"), totalSeats (1-4), fare (₹1-2000), daysOfWeek ([0-6], 0=Sun), pickupPoint (string), note (string), isActive (boolean)
 Day numbers: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat
 
 For ride search, extract fromQuery, toQuery, and timeHHMM from the user's message. Use partial location names (e.g. "HCL", "GaurCity", "office", "home").
 
+For ride creation, extract these fields:
+- fromLabel: where the driver is starting from (e.g. "HCL Sector 126", "Home", "Gaur City")
+- toLabel: destination (e.g. "VIP Homes Gaur City 2", "Office", "Home")
+- departureTime: when they're leaving (convert to 24h "HH:MM" format)
+- totalSeats: number of seats offered (1-4, default to 2 if not specified)
+- fare: price per seat in rupees (default to 80 if not specified)
+- pickupPoint: specific pickup spot (optional)
+- note: any additional info (optional)
+
 STRICT RULES — you must follow these without exception:
 1. NEVER include raw database IDs (the long alphanumeric _id strings) in your "reply" text. IDs are for internal JSON fields only (templateId). When referring to a ride/template in your reply, use descriptive names like "your Monday 8:30 AM ride" or "template #1".
 2. NEVER delete, remove, or permanently cancel anything. If the user asks to delete a ride, template, booking, or anything else, set action:"none" and politely explain: "I can't delete rides or templates — please use the Admin panel for deletions."
 3. You CAN pause/resume a template (isActive: false/true) — that is NOT deletion.
+4. For ride creation, if any required field is missing (from, to, or time), ask for clarification before creating.
 
 Respond ONLY with JSON (no markdown, no extra text):
 {
-  "action": "none" | "edit" | "search",
+  "action": "none" | "edit" | "search" | "create",
   "templateId": "<_id from template list>" | null,
   "changes": { "departureTimeHHMM":"HH:MM"|null, "totalSeats":number|null, "fare":number|null, "daysOfWeek":[...]|null, "pickupPoint":string|null, "note":string|null, "isActive":boolean|null } | null,
   "searchParams": { "fromQuery": string|null, "toQuery": string|null, "timeHHMM": "HH:MM"|null } | null,
+  "createParams": { "fromLabel":string|null, "toLabel":string|null, "departureTime":"HH:MM"|null, "totalSeats":number|null, "fare":number|null, "pickupPoint":string|null, "note":string|null } | null,
   "reply": "<warm, brief message — NO raw IDs allowed>"
 }
 
@@ -178,6 +191,7 @@ export const taraChat = action({
         templateId: string | null;
         changes: Record<string, unknown> | null;
         searchParams: { fromQuery: string | null; toQuery: string | null; timeHHMM: string | null } | null;
+        createParams: { fromLabel: string | null; toLabel: string | null; departureTime: string | null; totalSeats: number | null; fare: number | null; pickupPoint: string | null; note: string | null } | null;
         reply: string;
       };
 
@@ -239,6 +253,73 @@ export const taraChat = action({
               pickupPoint: r.pickupPoint,
             })),
           };
+        }
+
+      // ── Handle one-time ride creation ──────────────────────────────────
+      } else if (parsed.action === "create") {
+        const cp = parsed.createParams;
+        if (!cp || !cp.fromLabel || !cp.toLabel || !cp.departureTime) {
+          result = {
+            reply: sanitiseReply(parsed.reply ?? "I need a starting point, destination, and departure time to create a ride. Could you share those details?"),
+            applied: false,
+          };
+        } else {
+          try {
+            // Geocode labels → lat/lng via Google Maps (falls back to Noida area)
+            const geocode = async (label: string): Promise<{ lat: number; lng: number }> => {
+              const gKey = process.env.GOOGLE_MAPS_API_KEY;
+              if (gKey) {
+                const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(label + ", Noida, India")}&key=${gKey}`;
+                try {
+                  const gr = await fetch(url);
+                  if (gr.ok) {
+                    const gd = await gr.json() as { status: string; results: { geometry: { location: { lat: number; lng: number } } }[] };
+                    if (gd.status === "OK" && gd.results[0]) {
+                      return gd.results[0].geometry.location;
+                    }
+                  }
+                } catch { /* fall through to default */ }
+              }
+              return { lat: 28.5355, lng: 77.391 }; // Noida default
+            };
+
+            const [fromCoords, toCoords] = await Promise.all([
+              geocode(cp.fromLabel),
+              geocode(cp.toLabel),
+            ]);
+
+            // Convert "HH:MM" departure time to epoch ms (IST today or tomorrow)
+            const [h, m] = cp.departureTime.split(":").map(Number);
+            const IST_OFFSET_MS = 5.5 * 3600 * 1000;
+            const nowIST = Date.now() + IST_OFFSET_MS;
+            const midnightIST = nowIST - (nowIST % (24 * 3600 * 1000));
+            let departureMs = midnightIST - IST_OFFSET_MS + h * 3600000 + m * 60000;
+            // If the time has already passed today, schedule for tomorrow
+            if (departureMs < Date.now() - 5 * 60000) departureMs += 24 * 3600 * 1000;
+
+            await ctx.runMutation(api.listings.postListing, {
+              userId,
+              fromLabel: cp.fromLabel,
+              toLabel: cp.toLabel,
+              fromLat: fromCoords.lat,
+              fromLng: fromCoords.lng,
+              toLat: toCoords.lat,
+              toLng: toCoords.lng,
+              departureTime: departureMs,
+              totalSeats: cp.totalSeats ?? 2,
+              fare: cp.fare ?? 80,
+              pickupPoint: cp.pickupPoint ?? undefined,
+              note: cp.note ?? undefined,
+            });
+
+            result = {
+              reply: sanitiseReply(parsed.reply ?? `Your ride from ${cp.fromLabel} to ${cp.toLabel} has been posted! Riders can now find and join it.`),
+              applied: true,
+            };
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "Unknown error";
+            result = { reply: `I tried to create your ride but got an error: ${msg}`, applied: false, error: msg };
+          }
         }
 
       // ── Block any action the AI might label as "delete" ──────────────────
